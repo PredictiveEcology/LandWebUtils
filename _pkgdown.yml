@@ -1,0 +1,6 @@
+url: http://LandWeb.predictiveecology.org
+
+template:
+  params:
+    bootswatch: flatly
+    ganalytics: UA-58633549-5
