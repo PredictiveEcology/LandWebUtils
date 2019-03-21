@@ -66,6 +66,8 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
     data <- allData[!grepl("CC", group)]
     dataCC <- allData[grepl("CC", group)]
 
+    data$rep <- as.numeric(factor(data$group)) ## TODO: workaround for incorrect rep values from LargePatches
+
     slices <- c("ageClass", "polygonName", "vegCover", "rep")
     slicesNoRep <- slices[slices != "rep"]
 
@@ -73,7 +75,7 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
     emptyDT <- data.table(expand.grid(ageClass = unique(data$ageClass),
                                       vegCover = unique(data$vegCover),
                                       polygonName = unique(data$polygonName),
-                                      rep = unique(data$rep))) ## move to internal
+                                      rep = unique(data$rep)))
 
     patchSizes <- c(100, 500, 1000, 5000) ## minPatchSize <- 100
 
@@ -82,9 +84,10 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
       nClustersDT <- nClustersDT[emptyDT, on = slices, nomatch = NA]
       nClustersDT[is.na(N), N := 0]
 
-      nClustersDT_CC <- dataCC[sizeInHa >= minPatchSize, .N, by = slices]
+      nClustersDT_CC <- dataCC[sizeInHa >= minPatchSize, .N, by = slicesNoRep]
+      #nClustersDT_CC$rep <- as.numeric(nClustersDT_CC$rep)
       setnames(nClustersDT_CC, "N", "NCC")
-      nClustersDT_CC <- nClustersDT_CC[emptyDT, on = slices, nomatch = NA]
+      nClustersDT_CC <- nClustersDT_CC[emptyDT, on = slicesNoRep, nomatch = NA]
       nClustersDT_CC[is.na(NCC), NCC := 0]
 
       nClustersDT <- nClustersDT[nClustersDT_CC, on = slices]
@@ -94,10 +97,10 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
                                                          "_", minPatchSize, ".csv"))))
 
       saveDir <- checkPath(file.path(dPath, poly, "largePatches", minPatchSize), create = TRUE)
-      savePng <- quote(file.path(saveDir, paste0(unique(paste(polygonName,
-                                                              vegCover,
-                                                              ageClass,
-                                                              collapse = " ")), ".png")))
+      savePng <- quote(file.path(saveDir, paste0(paste(unique(polygonName),
+                                                       unique(vegCover),
+                                                       unique(ageClass),
+                                                       collapse = " "), ".png")))
 
       #browser()
       xlim <- c(0, max(nClustersDT$N))
@@ -106,7 +109,10 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
                                               # ccLine = NCC,
                                               border = "grey",
                                               col = "darkgrey",
-                                              main = paste(polygonName, ageClass, vegCover, collapse = " "),
+                                              main = paste(unique(polygonName),
+                                                           unique(vegCover),
+                                                           unique(ageClass),
+                                                           collapse = " "),
                                               space = 0,
                                               xlab = paste0("Number of patches greater than ",
                                                             minPatchSize, " ha"),
