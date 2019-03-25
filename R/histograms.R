@@ -103,7 +103,7 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
                                                        collapse = " "), ".png")))
 
       #browser()
-      xlim <- c(0, max(nClustersDT$N))
+      xlim <- c(0, max(nClustersDT$N, nClustersDT$NCC))
       nClustersDT[, tryCatch(.doPlotHistogram(data = .SD,
                                               fname = eval(savePng),
                                               # ccLine = NCC,
