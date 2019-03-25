@@ -31,7 +31,7 @@ if (getRversion() >= "3.1.0") {
   addAxisParams <- list(side = 1, labels = breaksLabels, at = barplotBreaks - min(breaksLabels))
   verticalLineAtX <- unique(data$NCC)[1] / breaksInterval + 0.5 # The barplot xaxis is 1/2 a barwidth off
 
-  if (!is.null(fname)) png(fname, width = 600, height = 400, units = "px")
+  if (!is.null(fname)) png(fname, width = 800, height = 600, units = "px")
   barplot(histogramData, ...)
   if (!is.null(addAxisParams)) do.call(axis, addAxisParams)
   if (!is.null(verticalLineAtX)) abline(v = verticalLineAtX, col = "red", lwd = 3)
