@@ -52,7 +52,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
   # Individual species
   nas3 <- is.na(rasRepPoly[])
-  nas2 <- is.na(rasVeg[]) | (factorValues2(rasVeg, rasVeg[], att = 1) == 0)
+  nas2 <- is.na(rasVeg[]) | is.na(factorValues2(rasVeg, rasVeg[], att = 1))
   nas1 <- is.na(tsf[])
   nas <- nas3 | nas2 | nas1
 
