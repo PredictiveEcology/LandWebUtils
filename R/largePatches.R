@@ -52,7 +52,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
   # Individual species
   nas3 <- is.na(rasRepPoly[])
-  nas2 <- is.na(rasVeg[]) | (factorValues2(rasVeg, rasVeg[], att = 1) == 0)
+  nas2 <- is.na(rasVeg[]) | is.na(factorValues2(rasVeg, rasVeg[], att = 1))
   nas1 <- is.na(tsf[])
   nas <- nas3 | nas2 | nas1
 
@@ -62,7 +62,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
     colID <- which(colnames(raster::levels(rasVeg)[[1]]) %in% c("category", "Factor", "VALUE"))
 
-    #name2 <- as.character(raster::levels(rasVeg)[[1]][[colID]])[rasVeg[][!nas]]
+    #name2a <- as.character(raster::levels(rasVeg)[[1]][[colID]])[rasVeg[][!nas]]
     name2 <- as.character(factorValues2(rasVeg, rasVeg[], att = colID)[!nas])
 
     # rasRepPoly will have the numeric values of the *factor* in poly$tmp, NOT
@@ -75,7 +75,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     ff <- paste(name1, name2, name3, sep = splitVal) # 4 seconds
     ras <- raster(rasVeg)
     ffFactor <- factor(ff)
-    ras[!nas] <- ffFactor # 2 seconds
+    ras[!nas] <- ffFactor # 2 seconds ## note: sum(!nas, na.rm = TRUE) should equal length(ffFactor)
 
     areaAndPolyOut <- Cache(areaAndPolyValue, ras, length = Inf) # maybe lots of NAs on edge
     eTable <- data.frame(ID = seq_along(levels(ffFactor)), VALUE = levels(ffFactor))
