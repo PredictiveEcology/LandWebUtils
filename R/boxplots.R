@@ -4,11 +4,28 @@ if (getRversion() >= "3.1.0") {
 }
 
 #' @export
+#' @importFrom data.table data.table
 #' @importFrom graphics boxplot points
 #' @importFrom grDevices dev.off png
-.doPlotBoxplot <- function(data, authStatus, fname = NULL, ageClasses, ...) {
+#' @importFrom utils write.table
+.doPlotBoxplot <- function(data, authStatus, fname = NULL, ageClasses,
+                           fout = NULL, vegCover, zone, ...) {
   if (!is.null(fname)) png(fname, height = 600, width = 800, units = "px")
-  boxplot(proportion ~ as.factor(ageClass), data, ...)
+  a <- boxplot(proportion ~ as.factor(ageClass), data, ...)
+
+  boxplotData <- data.table(zone = rep(zone, 4),
+                            vegCover = rep(vegCover, 4),
+                            ageClass = ageClasses,
+                            proportionCC = data$proportionCC[1:4],
+                            MIN = a$stats[1, ],
+                            Q1 = a$stats[2, ],
+                            MED = a$stats[3, ],
+                            Q3 = a$stats[4, ],
+                            MAX = a$stats[5, ])
+
+  if (!is.null(fout))
+    try(write.table(boxplotData, file = fout, append = TRUE, col.names = FALSE,
+                    row.names = FALSE, sep = ","))
 
   if (isTRUE(authStatus)) {
     ids <- match(factor(data$ageClass[1:4]), data[1:4, ]$ageClass)
@@ -66,8 +83,16 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
           by = c("group", "vegCover", "zone")]
     data2[, totalPixels2 := as.double(base::mean(totalPixels, na.rm = TRUE)),
           by = c("vegCover", "zone")] ## use mean for plot labels below
-
     try(write.csv(data2, file.path(dPath, paste0("leading_", gsub(" ", "_", poly), ".csv"))))
+
+    ## output the box and whisker plot ranges (quartiles, etc.)
+    empty <- data.table(zone = character(0),  vegCover = character(0),
+                        ageClass = character(0), proportionCC = numeric(0),
+                        MIN = numeric(0), Q1 = numeric(0), MED = numeric(0),
+                        Q3 = numeric(0), MAX = numeric(0))
+    fout <- file.path(dPath, paste0("leading_boxplots_", gsub(" ", "_", poly), ".csv"))
+    try(write.csv(empty, fout, row.names = FALSE))
+
     saveDir <- checkPath(file.path(dPath, poly), create = TRUE)
     savePng <- quote(file.path(saveDir, paste0(unique(paste(zone, vegCover, collapse = " ")), ".png")))
     slices <- c("zone", "vegCover")
@@ -76,6 +101,9 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
                                     col = "limegreen",
                                     fname = eval(savePng),
                                     ageClasses = ageClasses,
+                                    fout = fout,
+                                    vegCover = vegCover,
+                                    zone = zone,
                                     horizontal = TRUE,
                                     main = unique(paste(zone, vegCover, collapse = "_")),
                                     xlab = paste0("Proportion of forest area (total ",
