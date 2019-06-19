@@ -47,7 +47,7 @@ updateSpeciesTable <- function(speciesTable, runName) {
   speciesTable[species == "Pinu_ban", growthcurve := 1] # original default 0
   speciesTable[species == "Pinu_con", growthcurve := 1] # original default 0
   speciesTable[species == "Pinu_sp", growthcurve := 1]  # original default 0
-  speciesTable[species == "Popu_sp", growthcurve := 0]  # original default 0
+  speciesTable[species == "Popu_sp", growthcurve := 1]  # original default 0
 
   ## mortality
   speciesTable[species == "Abie_sp", mortalityshape := 15]  # default 15
