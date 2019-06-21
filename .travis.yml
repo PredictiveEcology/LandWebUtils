@@ -25,6 +25,8 @@ matrix:
           - gdal-bin
     services:
       - xvfb
+    r_binary_packages:
+      - BH
     r_packages:
       - rgdal
       - rgeos
@@ -46,6 +48,8 @@ matrix:
           - gdal-bin
     services:
       - xvfb
+    r_binary_packages:
+      - BH
     r_packages:
       - covr
       - devtools
@@ -74,6 +78,8 @@ matrix:
           - gdal-bin
     services:
       - xvfb
+    r_binary_packages:
+      - BH
     r_packages:
       - devtools
       - rgdal
@@ -92,4 +98,3 @@ notifications:
   email:
     on_success: change
     on_failure: change
-
