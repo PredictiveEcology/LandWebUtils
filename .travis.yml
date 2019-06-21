@@ -29,7 +29,6 @@ matrix:
       - BH
       - dplyr
       - git2r
-      - ggplot2
       - igraph
       - raster
       - RSQlite
@@ -59,7 +58,6 @@ matrix:
       - BH
       - dplyr
       - git2r
-      - ggplot2
       - igraph
       - raster
       - RSQlite
@@ -96,7 +94,6 @@ matrix:
       - BH
       - dplyr
       - git2r
-      - ggplot2
       - igraph
       - raster
       - RSQlite
