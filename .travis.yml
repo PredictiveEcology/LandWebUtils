@@ -27,6 +27,13 @@ matrix:
       - xvfb
     r_binary_packages:
       - BH
+      - dplyr
+      - git2r
+      - ggplot2
+      - igraph
+      - raster
+      - RSQlite
+      - stringi
     r_packages:
       - rgdal
       - rgeos
@@ -50,6 +57,13 @@ matrix:
       - xvfb
     r_binary_packages:
       - BH
+      - dplyr
+      - git2r
+      - ggplot2
+      - igraph
+      - raster
+      - RSQlite
+      - stringi
     r_packages:
       - covr
       - devtools
@@ -80,6 +94,13 @@ matrix:
       - xvfb
     r_binary_packages:
       - BH
+      - dplyr
+      - git2r
+      - ggplot2
+      - igraph
+      - raster
+      - RSQlite
+      - stringi
     r_packages:
       - devtools
       - rgdal
