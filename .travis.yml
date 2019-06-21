@@ -96,6 +96,7 @@ matrix:
       - Rscript -e 'install.packages(c("ggplot2", "quickPlot"), type = "source")'
     r_binary_packages:
       - BH
+      - DiagrammeR
       - dplyr
       - git2r
       - igraph
