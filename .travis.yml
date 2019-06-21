@@ -25,6 +25,8 @@ matrix:
           - gdal-bin
     services:
       - xvfb
+    before_install:
+      - Rscript -e 'install.packages(c("ggplot2", "quickPlot"), type = "source")'
     r_binary_packages:
       - BH
       - dplyr
@@ -32,7 +34,6 @@ matrix:
       - igraph
       - raster
       - RSQlite
-      - stringi
     r_packages:
       - rgdal
       - rgeos
@@ -54,6 +55,8 @@ matrix:
           - gdal-bin
     services:
       - xvfb
+    before_install:
+      - Rscript -e 'install.packages(c("ggplot2", "quickPlot"), type = "source")'
     r_binary_packages:
       - BH
       - dplyr
@@ -61,7 +64,6 @@ matrix:
       - igraph
       - raster
       - RSQlite
-      - stringi
     r_packages:
       - covr
       - devtools
@@ -90,6 +92,8 @@ matrix:
           - gdal-bin
     services:
       - xvfb
+    before_install:
+      - Rscript -e 'install.packages(c("ggplot2", "quickPlot"), type = "source")'
     r_binary_packages:
       - BH
       - dplyr
@@ -97,7 +101,6 @@ matrix:
       - igraph
       - raster
       - RSQlite
-      - stringi
     r_packages:
       - devtools
       - rgdal
