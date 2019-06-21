@@ -18,6 +18,7 @@ matrix:
           - libgdal-dev
           - libgdal1-dev
           - libgeos-dev
+          - libgit2-dev
           - libnlopt-dev
           - libproj-dev
           - libudunits2-dev
@@ -38,6 +39,7 @@ matrix:
           - libgdal-dev
           - libgdal1-dev
           - libgeos-dev
+          - libgit2-dev
           - libnlopt-dev
           - libproj-dev
           - libudunits2-dev
@@ -65,6 +67,7 @@ matrix:
           - libgdal-dev
           - libgdal1-dev
           - libgeos-dev
+          - libgit2-dev
           - libnlopt-dev
           - libproj-dev
           - libudunits2-dev
