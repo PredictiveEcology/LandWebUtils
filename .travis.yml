@@ -101,7 +101,9 @@ matrix:
       - git2r
       - igraph
       - raster
+      - RCurl
       - RSQlite
+      - testthat
     r_packages:
       - devtools
       - rgdal
