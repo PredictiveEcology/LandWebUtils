@@ -12,13 +12,13 @@ if (getRversion() >= "3.1.0") {
 updateSpeciesTable <- function(speciesTable, runName) {
   if (grepl("aspenDispersal", runName)) {
     ## seed dispersal (see LandWeb#96, LandWeb#112)
-    speciesTable[species == "Abie_sp", `:=`(seeddistance_eff = 0, seeddistance_max = 125)] # defaults 25, 160
-    speciesTable[species == "Pice_gla", `:=`(seeddistance_eff = 0, seeddistance_max = 125)] # defaults 100, 303
-    speciesTable[species == "Pice_mar", `:=`(seeddistance_eff = 0, seeddistance_max = 125)] # defaults 80, 200
-    speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = 0, seeddistance_max = 125)] # defaults 30, 100
-    speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = 0, seeddistance_max = 125)] # defaults 30, 100
-    speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = 0, seeddistance_max = 125)] # defaults 30, 100
-    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 100, seeddistance_max = 235)] # defaults 200, 5000
+    speciesTable[species == "Abie_sp", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]     # defaults 25, 160
+    speciesTable[species == "Pice_gla", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 100, 303
+    speciesTable[species == "Pice_mar", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 80, 200
+    speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 30, 100
+    speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 30, 100
+    speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]     # defaults 30, 100
+    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 100, seeddistance_max = 235)]   # defaults 200, 5000
   } else if (grepl("highDispersal", runName)) {
     ## seed dispersal (see LandWeb#96, LandWeb#112)
     speciesTable[species == "Abie_sp", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)]  # defaults 25, 160
@@ -27,7 +27,7 @@ updateSpeciesTable <- function(speciesTable, runName) {
     speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 30, 100
     speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 30, 100
     speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)]  # defaults 30, 100
-    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)] # defaults 200, 500
+    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)]  # defaults 200, 500
   }
 
   ## resprouting (normally, only aspen resprouts)
