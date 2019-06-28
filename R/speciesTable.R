@@ -27,7 +27,7 @@ updateSpeciesTable <- function(speciesTable, runName) {
     speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 30, 100
     speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 30, 100
     speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)]  # defaults 30, 100
-    #speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)] # defaults 200, 500
+    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)] # defaults 200, 500
   }
 
   ## resprouting (normally, only aspen resprouts)
