@@ -6,32 +6,29 @@ if (getRversion() >= "3.1.0") {
 #' Customize species trait table values for LandWeb
 #'
 #' @param speciesTable The species traits table
-#' @param runName      The LandWeb run name
+#' @param runName      Character string indicating the LandWeb run name (scenario)
+#' @param params       A named list (of parameters) of named lists (by species), providing species
+#'                     table overrides (e.g., \code{list(seeddistance_eff = list(Abie_sp = 25))}).
 #'
 #' @export
-updateSpeciesTable <- function(speciesTable, runName) {
-  if (grepl("aspenDispersal", runName)) {
-    ## seed dispersal (see LandWeb#96, LandWeb#112)
-    speciesTable[species == "Abie_sp", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]     # defaults 25, 160
-    speciesTable[species == "Pice_gla", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 100, 303
-    speciesTable[species == "Pice_mar", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 80, 200
-    speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 30, 100
-    speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]    # defaults 30, 100
-    speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = 0, seeddistance_max = 125)]     # defaults 30, 100
-    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 100, seeddistance_max = 235)]   # defaults 200, 5000
-  } else if (grepl("highDispersal", runName)) {
-    ## seed dispersal (see LandWeb#96, LandWeb#112)
-    speciesTable[species == "Abie_sp", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)]  # defaults 25, 160
-    speciesTable[species == "Pice_gla", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 100, 303
-    speciesTable[species == "Pice_mar", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 80, 200
-    speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 30, 100
-    speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = 500, seeddistance_max = 1250)] # defaults 30, 100
-    speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)]  # defaults 30, 100
-    speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = 300, seeddistance_max = 3000)]  # defaults 200, 500
-  }
+updateSpeciesTable <- function(speciesTable, runName, params) {
+  speciesTable[species == "Abie_sp", `:=`(seeddistance_eff = params$seeddistance_eff$Abie_sp,
+                                          seeddistance_max = params$seeddistance_max$Abie_sp)]
+  speciesTable[species == "Pice_gla", `:=`(seeddistance_eff = params$seeddistance_eff$Pice_gla,
+                                           seeddistance_max = params$seeddistance_max$Pice_gla)]
+  speciesTable[species == "Pice_mar", `:=`(seeddistance_eff = params$seeddistance_eff$Pice_mar,
+                                           seeddistance_max = params$seeddistance_max$Pice_mar)]
+  speciesTable[species == "Pinu_ban", `:=`(seeddistance_eff = params$seeddistance_eff$Pinu_ban,
+                                           seeddistance_max = params$seeddistance_max$Pinu_ban)]
+  speciesTable[species == "Pinu_con", `:=`(seeddistance_eff = params$seeddistance_eff$Pinu_con,
+                                           seeddistance_max = params$seeddistance_max$Pinu_con)]
+  speciesTable[species == "Pinu_sp", `:=`(seeddistance_eff = params$seeddistance_eff$Pinu_sp,
+                                          seeddistance_max = params$seeddistance_max$Pinu_sp)]
+  speciesTable[species == "Popu_sp", `:=`(seeddistance_eff = params$seeddistance_eff$Popu_sp,
+                                          seeddistance_max = params$seeddistance_max$Popu_sp)]
 
   ## resprouting (normally, only aspen resprouts)
-  if (grepl("noDispersal|aspenDispersal", runName)) {
+  if (grepl("noDispersal|aspenDispersal|highDispersal", runName)) {
     speciesTable[, postfireregen := "resprout"] ## force all species to resprout
     speciesTable[, resproutprob := 1.0]  # default 0.5
     speciesTable[, shadetolerance := 5]  # defaults vary by species
