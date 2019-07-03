@@ -30,8 +30,10 @@ updateSpeciesTable <- function(speciesTable, runName, params) {
   ## resprouting (normally, only aspen resprouts)
   if (grepl("noDispersal|aspenDispersal|highDispersal", runName)) {
     speciesTable[, postfireregen := "resprout"] ## force all species to resprout
-    speciesTable[, resproutprob := 1.0]  # default 0.5
-    speciesTable[, shadetolerance := 5]  # defaults vary by species
+    speciesTable[, resproutprob := 1.0]     # default 0.5
+    speciesTable[, resproutage_min := 0]    # defaults vary by species
+    speciesTable[, resproutage_max := 400]  # defaults vary by species
+    #speciesTable[, shadetolerance := 5]     # defaults vary by species
   }
   speciesTable[species == "Popu_sp", resproutage_min := 25] # default 10
   #speciesTable[species == "Popu_sp", resproutprob := 0.1]  # default 0.5
