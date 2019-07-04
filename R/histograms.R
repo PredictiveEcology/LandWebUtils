@@ -26,7 +26,7 @@ if (getRversion() >= "3.1.0") {
 
   histogramData <- dataForHistogram$counts / sum(dataForHistogram$counts) ## use proportion
   histogramData[is.na(histogramData)] <- 0 # NA means that there were no large patches in dt
-#browser()
+
   barplotBreaks <- seq_along(breaksLabels) - 0.5
   addAxisParams <- list(side = 1, labels = breaksLabels, at = barplotBreaks - min(breaksLabels))
   verticalLineAtX <- unique(data$NCC)[1] / breaksInterval + 0.5 # The barplot xaxis is 1/2 a barwidth off

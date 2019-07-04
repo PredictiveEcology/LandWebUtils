@@ -28,6 +28,8 @@ updateSpeciesTable <- function(speciesTable, runName, params) {
                                           seeddistance_max = params$seeddistance_max$Popu_sp)]
 
   ## resprouting (normally, only aspen resprouts)
+  speciesTable[species == "Popu_sp", resproutage_min := 25] # default 10
+  #speciesTable[species == "Popu_sp", resproutprob := 0.1]  # default 0.5
   if (grepl("noDispersal|aspenDispersal|highDispersal", runName)) {
     speciesTable[, postfireregen := "resprout"] ## force all species to resprout
     speciesTable[, resproutprob := 1.0]     # default 0.5
@@ -35,8 +37,6 @@ updateSpeciesTable <- function(speciesTable, runName, params) {
     speciesTable[, resproutage_max := 400]  # defaults vary by species
     #speciesTable[, shadetolerance := 5]     # defaults vary by species
   }
-  speciesTable[species == "Popu_sp", resproutage_min := 25] # default 10
-  #speciesTable[species == "Popu_sp", resproutprob := 0.1]  # default 0.5
 
   ## growth curves:
   #   Biomass Succession User Guide p17, 0 is faster growth, 1 was the prev assumption
