@@ -40,13 +40,13 @@ updateSpeciesTable <- function(speciesTable, runName, params) {
 
   ## growth curves:
   #   Biomass Succession User Guide p17, 0 is faster growth, 1 was the prev assumption
-  speciesTable[species == "Abie_sp", growthcurve := 1]  # original default 0
+  speciesTable[species == "Abie_sp", growthcurve := 0]  # original default 0
   speciesTable[species == "Pice_gla", growthcurve := 1] # original default 1
   speciesTable[species == "Pice_mar", growthcurve := 1] # original default 1
-  speciesTable[species == "Pinu_ban", growthcurve := 1] # original default 0
-  speciesTable[species == "Pinu_con", growthcurve := 1] # original default 0
-  speciesTable[species == "Pinu_sp", growthcurve := 1]  # original default 0
-  speciesTable[species == "Popu_sp", growthcurve := 1]  # original default 0
+  speciesTable[species == "Pinu_ban", growthcurve := 0] # original default 0
+  speciesTable[species == "Pinu_con", growthcurve := 0] # original default 0
+  speciesTable[species == "Pinu_sp", growthcurve := 0]  # original default 0
+  speciesTable[species == "Popu_sp", growthcurve := 0]  # original default 0
 
   ## mortality
   speciesTable[species == "Abie_sp", mortalityshape := 15]  # default 15
