@@ -13,8 +13,8 @@ if (getRversion() >= "3.1.0") {
 #' @param id TODO: description needed
 #' @param ageClassCutOffs TODO: description needed
 #' @param ageClasses TODO: description needed
-#' @param sppEquiv TODO: description needed
 #' @param sppEquivCol TODO: description needed
+#' @param sppEquiv TODO: description needed
 #'
 #' @export
 #' @importFrom data.table data.table rbindlist

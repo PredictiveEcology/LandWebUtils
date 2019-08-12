@@ -21,6 +21,10 @@ if (getRversion() >= "3.1.0") {
 #' @param ageClassCutOffs A numeric vector with the endpoints for the \code{ageClasses}.
 #'                        Should be \code{length(ageClasses) + 1}
 #'
+#' @param sppEquivCol TODO: description needed
+#'
+#' @param sppEquiv TODO: description needed
+#'
 #' @return A \code{data.table} with proportion of the pixels in each vegetation class,
 #'         for each given age class within each polygon.
 #'
@@ -29,7 +33,8 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom raster factorValues ncell
 #' @importFrom stats na.omit
 #' @importFrom utils tail
-LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses) {
+LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses,
+                                     sppEquivCol, sppEquiv) {
   # main function code
   startTime <- Sys.time()
   if (tail(ageClassCutOffs, 1) != Inf)
@@ -79,6 +84,11 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   eTable <- data.frame(ID = seq_along(levels(ffFactor)), VALUE = levels(ffFactor))
   types <- strsplit(as.character(eTable$VALUE), split = splitVal)
   types <- do.call(rbind, types)
+
+  ## ensure species names all consistent (TODO: ensure this propagates)
+  whMixed <- which(types[, 2] == "Mixed")
+  types[, 2] <- equivalentName(types[, 2], sppEquiv, sppEquivCol)
+  types[whMixed, 2] <- "Mixed"
 
   levels(ras) <- data.frame(eTable, ageClass = types[, 1], vegCover = types[, 2])
 

@@ -42,7 +42,6 @@ if (getRversion() >= "3.1.0") {
 #' @param functionName TODO: description needed
 #' @param analysisGroups TODO: description needed
 #' @param dPath Destination path for the resulting png files.
-# @param ageClasses Character vector of vegetation class names.
 #'
 #' @export
 #' @importFrom data.table setnames
@@ -52,8 +51,7 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom reproducible checkPath
 #' @importFrom tools toTitleCase
 #' @importFrom utils write.csv
-runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
-  #ageClasses = c("Young", "Immature", "Mature", "Old")
+runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath, sppEquivCol, sppEquiv) {
   ageClasses <- c("Young", "Immature", "Mature", "Old")
   allRepPolys <- na.omit(map@metadata[[analysisGroups]])
   names(allRepPolys) <- allRepPolys
@@ -63,9 +61,17 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
     if (is.null(allData))
       allData <- map@analysesData[[functionName]][[poly]] ## TODO: fix upstream
     allData <- unique(allData) ## remove duplicates; with LandWeb#89
-    allData$vegCover <- gsub(" leading", "", allData$vegCover) %>%
+
+    ## WORKAROUND inconsistent species names
+    allData[["vegCover"]] <- gsub(" leading", "", allData[["vegCover"]]) %>% ## no longer needed?
       tools::toTitleCase() %>%
       as.factor() ## match CC raster names
+    allData[vegCover == "Fir", vegCover := "Abie_sp"] ## so far, rep01 is the only one needing fixing
+    allData[vegCover == "Wh Spruce", vegCover := "Pice_gla"]
+    allData[vegCover == "Bl Spruce", vegCover := "Pice_mar"]
+    allData[vegCover == "Pine", vegCover := "Pinu_sp"]
+    allData[vegCover == "Decid", vegCover := "Popu_sp"]
+
     allData$ageClass <- factor(allData$ageClass, ageClasses)
 
     data <- allData[!grepl("CC", group)]
