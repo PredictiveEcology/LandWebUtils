@@ -1,6 +1,7 @@
 if (getRversion() >= "3.1.0") {
   utils::globalVariables(c("growthcurve", "longevity", "mortalityshape", "postfireregen",
-                           "resproutage_min", "resproutprob", "shadetolerance", "species"))
+                           "resproutage_max", "resproutage_min", "resproutprob",
+                           "shadetolerance", "species"))
 }
 
 #' Customize species trait table values for LandWeb

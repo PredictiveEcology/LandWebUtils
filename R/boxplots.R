@@ -51,7 +51,7 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom reproducible checkPath
 #' @importFrom tools toTitleCase
 #' @importFrom utils write.csv
-runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath, sppEquivCol, sppEquiv) {
+runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
   ageClasses <- c("Young", "Immature", "Mature", "Old")
   allRepPolys <- na.omit(map@metadata[[analysisGroups]])
   names(allRepPolys) <- allRepPolys

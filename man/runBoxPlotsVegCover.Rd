@@ -4,8 +4,7 @@
 \alias{runBoxPlotsVegCover}
 \title{Generate box and whisker plots for leading vegetation cover}
 \usage{
-runBoxPlotsVegCover(map, functionName, analysisGroups, dPath, sppEquivCol,
-  sppEquiv)
+runBoxPlotsVegCover(map, functionName, analysisGroups, dPath)
 }
 \arguments{
 \item{map}{A \code{map} object.}
