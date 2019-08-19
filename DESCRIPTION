@@ -5,7 +5,7 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2019-06-20
+Date: 2019-08-19
 Version: 0.0.1
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@canada.ca",
@@ -28,6 +28,7 @@ Imports:
     pemisc,
     raster,
     reproducible,
+    SpaDES.core,
     stats,
     tools,
     utils
