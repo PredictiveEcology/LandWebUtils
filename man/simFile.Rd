@@ -4,14 +4,14 @@
 \alias{simFile}
 \title{Generate simulation file name}
 \usage{
-simFile(name, path, time)
+simFile(name, path, time = NULL)
 }
 \arguments{
 \item{name}{Object name (e.g., \code{"mySimOut"})}
 
 \item{path}{Directory location in where the file will be located (e.g., an \code{outputPath}).}
 
-\item{time}{Optional simulation time to use as filename suffix.}
+\item{time}{Optional simulation time to use as filename suffix. Default \code{NULL}.}
 }
 \description{
 Assists with saving/retrieving LandWeb simulations.

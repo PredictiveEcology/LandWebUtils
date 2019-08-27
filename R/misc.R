@@ -4,12 +4,12 @@
 #'
 #' @param name Object name (e.g., \code{"mySimOut"})
 #' @param path Directory location in where the file will be located (e.g., an \code{outputPath}).
-#' @param time Optional simulation time to use as filename suffix.
+#' @param time Optional simulation time to use as filename suffix. Default \code{NULL}.
 #'
 #' @export
 #' @importFrom SpaDES.core paddedFloatToChar
 #' @importFrom reproducible normPath
-simFile <- function(name, path, time) {
+simFile <- function(name, path, time = NULL) {
   if (is.null(time))
     file.path(normPath(path), paste0(name, ".rds"))
   else {
