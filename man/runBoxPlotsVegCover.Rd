@@ -13,7 +13,7 @@ runBoxPlotsVegCover(map, functionName, analysisGroups, dPath)
 
 \item{analysisGroups}{TODO: description needed}
 
-\item{dPath}{Destination path for the resulting png files.}
+\item{dPath}{Destination path for the resulting PNG files.}
 }
 \description{
 TODO: description needed

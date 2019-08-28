@@ -1,3 +1,6 @@
+#' @keywords internal
+.ageClasses <- c("Young", "Immature", "Mature", "Old")
+
 #' Generate simulation file name
 #'
 #' Assists with saving/retrieving LandWeb simulations.

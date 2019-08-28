@@ -41,7 +41,7 @@ if (getRversion() >= "3.1.0") {
 #' @param map A \code{map} object.
 #' @param functionName TODO: description needed
 #' @param analysisGroups TODO: description needed
-#' @param dPath Destination path for the resulting png files.
+#' @param dPath Destination path for the resulting PNG files.
 #'
 #' @export
 #' @importFrom data.table setnames
@@ -51,8 +51,8 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom reproducible checkPath
 #' @importFrom tools toTitleCase
 #' @importFrom utils write.csv
+#' @include misc.R
 runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
-  ageClasses <- c("Young", "Immature", "Mature", "Old")
   allRepPolys <- na.omit(map@metadata[[analysisGroups]])
   names(allRepPolys) <- allRepPolys
 
@@ -72,10 +72,9 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
     allData[vegCover == "Pine", vegCover := "Pinu_sp"]
     allData[vegCover == "Decid", vegCover := "Popu_sp"]
 
-    allData$ageClass <- factor(allData$ageClass, ageClasses)
+    allData$ageClass <- factor(allData$ageClass, .ageClasses)
 
     data <- allData[!grepl("CC", group)]
-
     dataCC <- allData[grepl("CC", group)]
     setnames(dataCC, "proportion", "proportionCC") ## rename the column to proportionCC
     dataCC <- dataCC[, c("group", "label", "NPixels") := list(NULL, NULL, NULL)]
@@ -106,7 +105,7 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
                                     authStatus = TRUE,
                                     col = "limegreen",
                                     fname = eval(savePng),
-                                    ageClasses = ageClasses,
+                                    ageClasses = .ageClasses,
                                     fout = fout,
                                     vegCover = vegCover,
                                     zone = zone,
