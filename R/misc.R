@@ -1,4 +1,7 @@
 #' @keywords internal
+.ageClassCutOffs <- c(0, 40, 80, 120)
+
+#' @keywords internal
 .ageClasses <- c("Young", "Immature", "Mature", "Old")
 
 #' Generate simulation file name

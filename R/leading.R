@@ -17,9 +17,9 @@ if (getRversion() >= "3.1.0") {
 #' @param poly A single \code{SpatialPolygonsDataFrame} object or a factor \code{RasterLayer}.
 #'             This layer MUST have a column labelled \code{shinyLabel}
 #' @param ageClasses A character vector with labels for age classes to bin the \code{tsf} times,
-#'                   e.g., \code{c("Young", "Immature", "Mature", "Old")}
+#'                   e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.
 #' @param ageClassCutOffs A numeric vector with the endpoints for the \code{ageClasses}.
-#'                        Should be \code{length(ageClasses) + 1}
+#'                        Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.
 #'
 #' @param sppEquivCol TODO: description needed
 #'
