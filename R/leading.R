@@ -116,17 +116,14 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     cell = seq_len(ncell(ras))
   )
 
-  # add age and vegCover by reference
   bb[, c("ageClass", "vegCover") := factorValues(ras, ras[][bb$cell], att = c("ageClass", "vegCover"))]
   bb <- na.omit(bb)
 
   # One species at a time -- collapse polygons with same 'zone' name
-  #tabulated <- bb[, list(NPixels = .N), by = c("zone", "polygonID", "ageClass", "vegCover")] ## keeps polyID
   tabulated <- bb[, list(NPixels = .N), by = c("zone", "ageClass", "vegCover")] ## dedupes the zones
   tabulated[, proportion := round(NPixels / sum(NPixels), 4), by = c("zone", "vegCover")]
 
   # All species -- collapse polygons with same 'zone' name
-  #tabulated2 <- bb[, list(NPixels = .N), by = c("zone", "polygonID", "ageClass")] ## keeps polyID
   tabulated2 <- bb[, list(NPixels = .N), by = c("zone", "ageClass")] ## dedupes the zones
   tabulated2[, proportion := round(NPixels / sum(NPixels), 4), by = c("zone")]
   set(tabulated2, NULL, "vegCover", "All species")
@@ -140,12 +137,19 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     coverClasses <- levels(coverClasses)
 
   coverClasses <- as.character(coverClasses)
+
   emptyID <- which(coverClasses == "")
   if (length(emptyID))
     coverClasses <- coverClasses[-emptyID]
 
   if (!("All species" %in% levels(coverClasses)))
     coverClasses <- c(coverClasses, "All species")
+
+  ## ensure species names all consistent (TODO: ensure this propagates)
+  whAll <- which(coverClasses == "All species")
+  whMixed <- which(coverClasses == "Mixed")
+  coverClasses <- equivalentName(coverClasses, sppEquiv, sppEquivCol)
+  coverClasses[c(whAll, whMixed)] <- c("All species", "Mixed")
 
   allCombos <- expand.grid(
     ageClass = ageClasses,

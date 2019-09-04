@@ -62,15 +62,11 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
       allData <- map@analysesData[[functionName]][[poly]] ## TODO: fix upstream
     allData <- unique(allData) ## remove duplicates; with LandWeb#89
 
-    ## WORKAROUND inconsistent species names
-    allData[["vegCover"]] <- gsub(" leading", "", allData[["vegCover"]]) %>% ## no longer needed?
-      tools::toTitleCase() %>%
-      as.factor() ## match CC raster names
-    allData[vegCover == "Fir", vegCover := "Abie_sp"] ## so far, rep01 is the only one needing fixing
-    allData[vegCover == "Wh Spruce", vegCover := "Pice_gla"]
-    allData[vegCover == "Bl Spruce", vegCover := "Pice_mar"]
-    allData[vegCover == "Pine", vegCover := "Pinu_sp"]
-    allData[vegCover == "Decid", vegCover := "Popu_sp"]
+    # allData[vegCover == "Fir", vegCover := "Abie_sp"] ## so far, rep01 is the only one needing fixing
+    # allData[vegCover == "Wh Spruce", vegCover := "Pice_gla"]
+    # allData[vegCover == "Bl Spruce", vegCover := "Pice_mar"]
+    # allData[vegCover == "Pine", vegCover := "Pinu_sp"]
+    # allData[vegCover == "Decid", vegCover := "Popu_sp"]
 
     allData$ageClass <- factor(allData$ageClass, .ageClasses)
 
