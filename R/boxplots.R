@@ -53,6 +53,8 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom utils write.csv
 #' @include misc.R
 runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
+  dPath <- checkPath(dPath, create = TRUE)
+
   allRepPolys <- na.omit(map@metadata[[analysisGroups]])
   names(allRepPolys) <- allRepPolys
 
