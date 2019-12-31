@@ -4,7 +4,7 @@
 \alias{simFile}
 \title{Generate simulation file name}
 \usage{
-simFile(name, path, time = NULL)
+simFile(name, path, time = NULL, ext = "rds")
 }
 \arguments{
 \item{name}{Object name (e.g., \code{"mySimOut"})}
@@ -12,6 +12,8 @@ simFile(name, path, time = NULL)
 \item{path}{Directory location in where the file will be located (e.g., an \code{outputPath}).}
 
 \item{time}{Optional simulation time to use as filename suffix. Default \code{NULL}.}
+
+\item{ext}{The file extension to use (default \code{"rds"}).}
 }
 \description{
 Assists with saving/retrieving LandWeb simulations.

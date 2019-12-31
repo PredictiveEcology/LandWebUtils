@@ -4,8 +4,15 @@
 \alias{LeadingVegTypeByAgeClass}
 \title{Calculate proportion of landscape occupied by each vegetation class}
 \usage{
-LeadingVegTypeByAgeClass(tsf, vtm, poly, ageClassCutOffs, ageClasses,
-  sppEquivCol, sppEquiv)
+LeadingVegTypeByAgeClass(
+  tsf,
+  vtm,
+  poly,
+  ageClassCutOffs,
+  ageClasses,
+  sppEquivCol,
+  sppEquiv
+)
 }
 \arguments{
 \item{tsf}{A single filename, relative or absolute, pointing to a Time Since Fire raster.
