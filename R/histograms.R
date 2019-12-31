@@ -112,7 +112,7 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
                                                        unique(ageClass),
                                                        collapse = " "), ".png")))
 
-      xlim <- c(0, max(nClustersDT$N, nClustersDT$NCC))
+      xlim <- c(0, max(nClustersDT[["N"]], nClustersDT[["NCC"]]))
       nClustersDT[, tryCatch(.doPlotHistogram(data = .SD,
                                               colName = "N",
                                               colNameCC = "NCC",
