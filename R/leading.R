@@ -17,9 +17,13 @@ if (getRversion() >= "3.1.0") {
 #' @param poly A single \code{SpatialPolygonsDataFrame} object or a factor \code{RasterLayer}.
 #'             This layer MUST have a column labelled \code{shinyLabel}
 #' @param ageClasses A character vector with labels for age classes to bin the \code{tsf} times,
-#'                   e.g., \code{c("Young", "Immature", "Mature", "Old")}
+#'                   e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.
 #' @param ageClassCutOffs A numeric vector with the endpoints for the \code{ageClasses}.
-#'                        Should be \code{length(ageClasses) + 1}
+#'                        Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.
+#'
+#' @param sppEquivCol TODO: description needed
+#'
+#' @param sppEquiv TODO: description needed
 #'
 #' @return A \code{data.table} with proportion of the pixels in each vegetation class,
 #'         for each given age class within each polygon.
@@ -29,7 +33,8 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom raster factorValues ncell
 #' @importFrom stats na.omit
 #' @importFrom utils tail
-LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses) {
+LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses,
+                                     sppEquivCol, sppEquiv) {
   # main function code
   startTime <- Sys.time()
   if (tail(ageClassCutOffs, 1) != Inf)
@@ -80,6 +85,11 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   types <- strsplit(as.character(eTable$VALUE), split = splitVal)
   types <- do.call(rbind, types)
 
+  ## ensure species names all consistent (TODO: ensure this propagates)
+  whMixed <- which(types[, 2] == "Mixed")
+  types[, 2] <- equivalentName(types[, 2], sppEquiv, sppEquivCol)
+  types[whMixed, 2] <- "Mixed"
+
   levels(ras) <- data.frame(eTable, ageClass = types[, 1], vegCover = types[, 2])
 
   # prepare poly factor raster
@@ -106,17 +116,14 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     cell = seq_len(ncell(ras))
   )
 
-  # add age and vegCover by reference
   bb[, c("ageClass", "vegCover") := factorValues(ras, ras[][bb$cell], att = c("ageClass", "vegCover"))]
   bb <- na.omit(bb)
 
   # One species at a time -- collapse polygons with same 'zone' name
-  #tabulated <- bb[, list(NPixels = .N), by = c("zone", "polygonID", "ageClass", "vegCover")] ## keeps polyID
   tabulated <- bb[, list(NPixels = .N), by = c("zone", "ageClass", "vegCover")] ## dedupes the zones
   tabulated[, proportion := round(NPixels / sum(NPixels), 4), by = c("zone", "vegCover")]
 
   # All species -- collapse polygons with same 'zone' name
-  #tabulated2 <- bb[, list(NPixels = .N), by = c("zone", "polygonID", "ageClass")] ## keeps polyID
   tabulated2 <- bb[, list(NPixels = .N), by = c("zone", "ageClass")] ## dedupes the zones
   tabulated2[, proportion := round(NPixels / sum(NPixels), 4), by = c("zone")]
   set(tabulated2, NULL, "vegCover", "All species")
@@ -130,12 +137,19 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     coverClasses <- levels(coverClasses)
 
   coverClasses <- as.character(coverClasses)
+
   emptyID <- which(coverClasses == "")
   if (length(emptyID))
     coverClasses <- coverClasses[-emptyID]
 
   if (!("All species" %in% levels(coverClasses)))
     coverClasses <- c(coverClasses, "All species")
+
+  ## ensure species names all consistent (TODO: ensure this propagates)
+  whAll <- which(coverClasses == "All species")
+  whMixed <- which(coverClasses == "Mixed")
+  coverClasses <- equivalentName(coverClasses, sppEquiv, sppEquivCol)
+  coverClasses[c(whAll, whMixed)] <- c("All species", "Mixed")
 
   allCombos <- expand.grid(
     ageClass = ageClasses,

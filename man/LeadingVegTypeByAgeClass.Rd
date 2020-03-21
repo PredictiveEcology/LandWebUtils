@@ -4,7 +4,15 @@
 \alias{LeadingVegTypeByAgeClass}
 \title{Calculate proportion of landscape occupied by each vegetation class}
 \usage{
-LeadingVegTypeByAgeClass(tsf, vtm, poly, ageClassCutOffs, ageClasses)
+LeadingVegTypeByAgeClass(
+  tsf,
+  vtm,
+  poly,
+  ageClassCutOffs,
+  ageClasses,
+  sppEquivCol,
+  sppEquiv
+)
 }
 \arguments{
 \item{tsf}{A single filename, relative or absolute, pointing to a Time Since Fire raster.
@@ -17,10 +25,14 @@ Can be any format that \code{raster} can use.}
 This layer MUST have a column labelled \code{shinyLabel}}
 
 \item{ageClassCutOffs}{A numeric vector with the endpoints for the \code{ageClasses}.
-Should be \code{length(ageClasses) + 1}}
+Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.}
 
 \item{ageClasses}{A character vector with labels for age classes to bin the \code{tsf} times,
-e.g., \code{c("Young", "Immature", "Mature", "Old")}}
+e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.}
+
+\item{sppEquivCol}{TODO: description needed}
+
+\item{sppEquiv}{TODO: description needed}
 }
 \value{
 A \code{data.table} with proportion of the pixels in each vegetation class,

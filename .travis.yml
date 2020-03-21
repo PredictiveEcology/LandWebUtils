@@ -8,51 +8,7 @@ env:
 matrix:
   include:
   - os: linux
-    dist: trusty
-    r: 3.3
-    addons:
-      apt:
-        sources:
-          - sourceline: 'ppa:ubuntugis/ubuntugis-unstable'
-        packages:
-          - libgdal-dev
-          - libgdal1-dev
-          - libgeos-dev
-          - libnlopt-dev
-          - libproj-dev
-          - libudunits2-dev
-          - gdal-bin
-    before_script:
-      - "export DISPLAY=:99.0"
-      - "sh -e /etc/init.d/xvfb start"
-      - sleep 3 # give xvfb some time to start
-    r_packages:
-      - rgdal
-      - rgeos
-  - os: linux
-    dist: trusty
-    r: 3.4
-    addons:
-      apt:
-        sources:
-          - sourceline: 'ppa:ubuntugis/ubuntugis-unstable'
-        packages:
-          - libgdal-dev
-          - libgdal1-dev
-          - libgeos-dev
-          - libnlopt-dev
-          - libproj-dev
-          - libudunits2-dev
-          - gdal-bin
-    before_script:
-      - "export DISPLAY=:99.0"
-      - "sh -e /etc/init.d/xvfb start"
-      - sleep 3 # give xvfb some time to start
-    r_packages:
-      - rgdal
-      - rgeos
-  - os: linux
-    dist: trusty
+    dist: xenial
     r: oldrel
     addons:
       apt:
@@ -62,19 +18,27 @@ matrix:
           - libgdal-dev
           - libgdal1-dev
           - libgeos-dev
+          - libgit2-dev
           - libnlopt-dev
           - libproj-dev
           - libudunits2-dev
           - gdal-bin
-    before_script:
-      - "export DISPLAY=:99.0"
-      - "sh -e /etc/init.d/xvfb start"
-      - sleep 3 # give xvfb some time to start
+    services:
+      - xvfb
+    before_install:
+      - Rscript -e 'install.packages(c("ggplot2", "quickPlot", "reproducible"), type = "source")'
+    r_binary_packages:
+      - BH
+      - dplyr
+      - git2r
+      - igraph
+      - raster
+      - RSQlite
     r_packages:
       - rgdal
       - rgeos
   - os: linux
-    dist: trusty
+    dist: xenial
     r: release
     addons:
       apt:
@@ -84,14 +48,22 @@ matrix:
           - libgdal-dev
           - libgdal1-dev
           - libgeos-dev
+          - libgit2-dev
           - libnlopt-dev
           - libproj-dev
           - libudunits2-dev
           - gdal-bin
-    before_script:
-      - "export DISPLAY=:99.0"
-      - "sh -e /etc/init.d/xvfb start"
-      - sleep 3 # give xvfb some time to start
+    services:
+      - xvfb
+    before_install:
+      - Rscript -e 'install.packages(c("ggplot2", "quickPlot"), type = "source")'
+    r_binary_packages:
+      - BH
+      - dplyr
+      - git2r
+      - igraph
+      - raster
+      - RSQlite
     r_packages:
       - covr
       - devtools
@@ -103,7 +75,7 @@ matrix:
       - Rscript -e 'covr::coveralls(type = "all", quiet = FALSE)'
       - Rscript -e 'lintr::lint_package()'
   - os: linux
-    dist: trusty
+    dist: xenial
     r: devel
     addons:
       apt:
@@ -113,14 +85,25 @@ matrix:
           - libgdal-dev
           - libgdal1-dev
           - libgeos-dev
+          - libgit2-dev
           - libnlopt-dev
           - libproj-dev
           - libudunits2-dev
           - gdal-bin
-    before_script:
-      - "export DISPLAY=:99.0"
-      - "sh -e /etc/init.d/xvfb start"
-      - sleep 3 # give xvfb some time to start
+    services:
+      - xvfb
+    before_install:
+      - Rscript -e 'install.packages(c("ggplot2", "quickPlot"), type = "source")'
+    r_binary_packages:
+      - BH
+      - DiagrammeR
+      - dplyr
+      - git2r
+      - igraph
+      - raster
+      - RCurl
+      - RSQlite
+      - testthat
     r_packages:
       - devtools
       - rgdal

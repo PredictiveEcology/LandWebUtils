@@ -4,8 +4,17 @@
 \alias{LargePatches}
 \title{Calculate proportion of large patches in NRV}
 \usage{
-LargePatches(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageClasses,
-  sppEquivCol, sppEquiv)
+LargePatches(
+  tsf,
+  vtm,
+  poly,
+  labelColumn,
+  id,
+  ageClassCutOffs,
+  ageClasses,
+  sppEquivCol,
+  sppEquiv
+)
 }
 \arguments{
 \item{tsf}{TODO: description needed}
