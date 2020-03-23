@@ -154,7 +154,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   allCombos <- expand.grid(
     ageClass = ageClasses,
     vegCover = coverClasses,
-    zone = levs$shinyLabel,
+    zone = unique(levs$shinyLabel),
     stringsAsFactors = FALSE
   )
   #allCombos$polygonID <- match(allCombos$zone, levs$shinyLabel)
