@@ -12,7 +12,7 @@ if (getRversion() >= "3.1.0") {
 #'                     traits overrides (e.g., \code{list(seeddistance_eff = list(Abie_sp = 25))}).
 #'
 #' @export
-updateSpeciesTable <- function(speciesTable, runName, params) {
+updateSpeciesTable <- function(speciesTable, runName = NULL, params) {
   ## checks:
   traits <- names(params)
   missingTraits <- traits[!traits %in% names(speciesTable)]
