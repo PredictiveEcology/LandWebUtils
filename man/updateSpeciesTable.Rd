@@ -4,15 +4,15 @@
 \alias{updateSpeciesTable}
 \title{Customize species trait table values for LandWeb}
 \usage{
-updateSpeciesTable(speciesTable, runName, params)
+updateSpeciesTable(speciesTable, runName = NULL, params)
 }
 \arguments{
 \item{speciesTable}{The species traits table}
 
-\item{runName}{Character string indicating the LandWeb run name (scenario)}
+\item{runName}{Optional. Character string indicating the LandWeb run name (scenario).}
 
-\item{params}{A named list (of parameters) of named lists (by species), providing species
-table overrides (e.g., \code{list(seeddistance_eff = list(Abie_sp = 25))}).}
+\item{params}{A named list (of parameters) of named lists (by species), with species
+traits overrides (e.g., \code{list(seeddistance_eff = list(Abie_sp = 25))}).}
 }
 \description{
 Customize species trait table values for LandWeb
