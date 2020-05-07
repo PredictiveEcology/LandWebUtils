@@ -2,18 +2,16 @@
 % Please edit documentation in R/speciesTable.R
 \name{updateSpeciesTable}
 \alias{updateSpeciesTable}
-\title{Customize species trait table values for LandWeb}
+\title{Customize species trait table values}
 \usage{
-updateSpeciesTable(speciesTable, runName = NULL, params)
+updateSpeciesTable(speciesTable, params)
 }
 \arguments{
 \item{speciesTable}{The species traits table}
-
-\item{runName}{Optional. Character string indicating the LandWeb run name (scenario).}
 
 \item{params}{A named list (of parameters) of named lists (by species), with species
 traits overrides (e.g., \code{list(seeddistance_eff = list(Abie_sp = 25))}).}
 }
 \description{
-Customize species trait table values for LandWeb
+Customize species trait table values
 }
