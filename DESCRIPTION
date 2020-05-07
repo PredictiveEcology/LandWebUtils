@@ -5,8 +5,8 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2020-04-27
-Version: 0.0.3
+Date: 2020-05-07
+Version: 0.1.0
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@canada.ca",
     role = c("aut", "cre"), comment=c(ORCID = "0000-0002-6914-8316")),
@@ -21,7 +21,7 @@ Imports:
     data.table (>= 1.10.4),
     graphics,
     grDevices,
-    LandR,
+    LandR (>= 0.0.5),
     magrittr,
     map,
     methods,
@@ -47,5 +47,4 @@ Collate:
     'histograms.R'
     'largePatches.R'
     'leading.R'
-    'speciesTable.R'
     'zzz.R'
