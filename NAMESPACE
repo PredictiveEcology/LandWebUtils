@@ -3,6 +3,7 @@
 export(.doPlotBoxplot)
 export(LargePatches)
 export(LeadingVegTypeByAgeClass)
+export(cleanAreaName)
 export(runBoxPlotsVegCover)
 export(runHistsLargePatches)
 export(runHistsVegCover)
