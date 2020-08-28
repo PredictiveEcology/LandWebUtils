@@ -180,8 +180,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
       ))
 
   endTime <- Sys.time()
-  message("    Leading cover calculation took ",
-          format(endTime - startTime, digits = 2))
+  message("    Leading cover calculation took ", format(endTime - startTime, digits = 2))
 
   return(tabulated)
 }
