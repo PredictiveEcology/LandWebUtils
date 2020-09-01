@@ -53,7 +53,7 @@ jobs:
 
       - name: Install additional dependencies
         run: |
-          install.packages('rgeos')
+          install.packages(c('rgdal', 'rgeos', 'sf', 'sp'))
           remotes::install_github('PredictiveEcology/Require@development')
           remotes::install_github('PredictiveEcology/reproducible@development')
           remotes::install_github('PredictiveEcology/pemisc@development')
