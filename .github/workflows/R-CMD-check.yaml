@@ -53,7 +53,7 @@ jobs:
 
       - name: Install additional dependencies
         run: |
-          remotes::install_github('traversc/stringfish')
+          install.packages('rgeos')
           remotes::install_github('PredictiveEcology/Require@development')
           remotes::install_github('PredictiveEcology/reproducible@development')
           remotes::install_github('PredictiveEcology/pemisc@development')

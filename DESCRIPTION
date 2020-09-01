@@ -38,6 +38,7 @@ Remotes:
     PredictiveEcology/pemisc@development
 License: GPL-3
 Encoding: UTF-8
+Language: en-CA
 LazyData: true
 RoxygenNote: 7.1.0
 Collate: 
