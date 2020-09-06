@@ -90,15 +90,13 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
     patchSizes <- c(100, 500, 1000, 5000) ## minPatchSize <- 100
 
     fout <- lapply(patchSizes, function(minPatchSize) {
-      nClustersDT <- data[sizeInHa >= minPatchSize, .N, by = slices]
+      nClustersDT <- data[sizeInHa >= minPatchSize, c(N = .N, .(totalArea = sum(sizeInHa))), by = slices]
       nClustersDT <- nClustersDT[emptyDT, on = slices, nomatch = NA]
-      nClustersDT[is.na(N), N := 0]
+      nClustersDT[is.na(N), ':='(N = 0, totalArea = 0)]
 
-      nClustersDT_CC <- dataCC[sizeInHa >= minPatchSize, .N, by = slicesNoRep]
-      #nClustersDT_CC$rep <- as.numeric(nClustersDT_CC$rep)
-      setnames(nClustersDT_CC, "N", "NCC")
+      nClustersDT_CC <- dataCC[sizeInHa >= minPatchSize, c(NCC = .N, .(totalAreaCC = sum(sizeInHa))), by = slicesNoRep]
       nClustersDT_CC <- nClustersDT_CC[emptyDT, on = slicesNoRep, nomatch = NA]
-      nClustersDT_CC[is.na(NCC), NCC := 0]
+      nClustersDT_CC[is.na(NCC), ':='(NCC = 0, totalAreaCC = 0.0)]
 
       nClustersDT <- nClustersDT[nClustersDT_CC, on = slices]
 
