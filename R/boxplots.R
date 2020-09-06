@@ -1,12 +1,13 @@
 if (getRversion() >= "3.1.0") {
   utils::globalVariables(c(".", ":=", ".SD", "ageClass", "group", "proportionCC",
-                           "totalPixels", "totalPixels2", "vegCover", "zone"))
+                           "totalPixels", "totalPixels2", "quants", "vegCover", "zone"))
 }
 
 #' @export
 #' @importFrom data.table data.table
 #' @importFrom graphics boxplot points
 #' @importFrom grDevices dev.off png
+#' @importFrom stats quantile
 #' @importFrom utils write.table
 .doPlotBoxplot <- function(data, authStatus, fname = NULL, ageClasses,
                            fout = NULL, vegCover, zone, ...) {
