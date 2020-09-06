@@ -13,14 +13,31 @@ if (getRversion() >= "3.1.0") {
   if (!is.null(fname)) png(fname, height = 600, width = 800, units = "px")
   a <- boxplot(proportion ~ as.factor(ageClass), data, ...)
 
+  ## calculate the 12.5% and 87.5% quantiles in addition to the quartiles
+  q12.5 <- data %>%
+    dplyr::group_by(as.factor(ageClass)) %>%
+    dplyr::summarize(
+      quants = quantile(proportion, probs = 0.125)
+    ) %>%
+    `$`(quants)
+
+  q87.5 <- data %>%
+    dplyr::group_by(as.factor(ageClass)) %>%
+    dplyr::summarize(
+      quants = quantile(proportion, probs = 0.875)
+    ) %>%
+    `$`(quants)
+
   boxplotData <- data.table(zone = rep(zone, 4),
                             vegCover = rep(vegCover, 4),
                             ageClass = ageClasses,
                             proportionCC = data$proportionCC[c(4, 1:3)], ## order by age not alphabet
                             MIN = a$stats[1, ],
-                            Q1 = a$stats[2, ],
+                            q12_5 = q12.5,
+                            q25_0 = a$stats[2, ],
                             MED = a$stats[3, ],
-                            Q3 = a$stats[4, ],
+                            q75_0 = a$stats[4, ],
+                            q87_5 = q87.5,
                             MAX = a$stats[5, ])
 
   if (!is.null(fout))
@@ -91,8 +108,9 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
     ## output the box and whisker plot ranges (quartiles, etc.)
     empty <- data.table(zone = character(0),  vegCover = character(0),
                         ageClass = character(0), proportionCC = numeric(0),
-                        MIN = numeric(0), Q1 = numeric(0), MED = numeric(0),
-                        Q3 = numeric(0), MAX = numeric(0))
+                        MIN = numeric(0), q12_5 = numeric(0), q25_0 = numeric(0),
+                        MED = numeric(0), q75_0 = numeric(0), q87_5 = numeric(0),
+                        MAX = numeric(0))
     fout <- file.path(dPath, paste0("leading_boxplots_", gsub(" ", "_", poly), ".csv"))
     try(write.csv(empty, fout, row.names = FALSE))
 
