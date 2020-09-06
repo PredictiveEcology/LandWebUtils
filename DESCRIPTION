@@ -21,6 +21,7 @@ Imports:
     data.table (>= 1.10.4),
     graphics,
     grDevices,
+    dplyr,
     LandR (>= 0.0.5),
     magrittr,
     map,

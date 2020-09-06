@@ -5,8 +5,10 @@ if (getRversion() >= "3.1.0") {
 
 #' @export
 #' @importFrom data.table data.table
+#' @importFrom dplyr group_by summarize
 #' @importFrom graphics boxplot points
 #' @importFrom grDevices dev.off png
+#' @importFrom magrittr %>%
 #' @importFrom stats quantile
 #' @importFrom utils write.table
 .doPlotBoxplot <- function(data, authStatus, fname = NULL, ageClasses,
