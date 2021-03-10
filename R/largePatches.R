@@ -1,6 +1,4 @@
-if (getRversion() >= "3.1.0") {
-  utils::globalVariables(c(":=", "sizeInHa"))
-}
+utils::globalVariables(c(":=", "sizeInHa"))
 
 #' Calculate proportion of large patches in NRV
 #'
