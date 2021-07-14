@@ -65,7 +65,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
     # rasRepPoly will have the numeric values of the *factor* in poly$tmp, NOT
     #   the raster::levels(rasRepPoly)[[1]])
-    name3 <- as.character(poly$tmp)[rasRepPoly[][!nas]]
+    name3 <- raster::levels(poly$tmp)[rasRepPoly[][!nas]] ## fixed 2021-05-05
 
     if (!identical(length(name1), length(name2)) || !identical(length(name1), length(name3)))
       stop("There is something wrong with tsf or rasVeg or rasRepPoly inside LargePatches")
@@ -80,7 +80,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     types <- strsplit(as.character(eTable$VALUE), split = splitVal)
     types <- do.call(rbind, types)
 
-    facPolygonID <- factor(types[areaAndPolyOut$polyID,3])
+    facPolygonID <- factor(types[areaAndPolyOut$polyID, 3])
     outBySpecies <- data.table(polygonID = as.numeric(facPolygonID),
                                sizeInHa = areaAndPolyOut$sizeInHa,
                                vegCover = types[areaAndPolyOut$polyID, 2],

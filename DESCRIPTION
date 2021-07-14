@@ -5,8 +5,8 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2021-03-10
-Version: 0.1.3
+Date: 2021-05-06
+Version: 0.1.4
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@canada.ca",
     role = c("aut", "cre"), comment=c(ORCID = "0000-0002-6914-8316")),
