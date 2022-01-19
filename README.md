@@ -13,7 +13,7 @@ Additional utilities for [LandWeb](https://github.com/PredictiveEcology/LandWeb)
 ### Current release
 
 [![R build status](https://github.com/PredictiveEcology/LandWebUtils/workflows/R-CMD-check/badge.svg?branch=master)](https://github.com/PredictiveEcology/LandWebUtils/actions)
-[![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/master/graph/badge.svg)](https://codecov.io/gh/PredictiveEcology/LandWebUtils?branch=master)
+[![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/master/graph/badge.svg)](https://app.codecov.io/gh/PredictiveEcology/LandWebUtils?branch=master)
 
 **Install from CRAN:**
 
@@ -32,7 +32,7 @@ install_github("PredictiveEcology/LandWebUtils", dependencies = TRUE)
 ### Development version
 
 [![R build status](https://github.com/PredictiveEcology/LandWebUtils/workflows/R-CMD-check/badge.svg?branch=development)](https://github.com/PredictiveEcology/LandWebUtils/actions)
-[![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/development/graph/badge.svg)](https://codecov.io/gh/PredictiveEcology/LandWebUtils?branch=development)
+[![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/development/graph/badge.svg)](https://app.codecov.io/gh/PredictiveEcology/LandWebUtils?branch=development)
 
 **Install from GitHub:**
 
