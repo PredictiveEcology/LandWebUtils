@@ -114,8 +114,8 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     out <- rbindlist(list(outBySpecies, outAllSpecies))
     out <- out[sizeInHa >= 100] # never will need patches smaller than 100 ha
   } else {
-    out <- data.table(polygonID = character(), sizeInHa = numeric(), vegCover = character(),
-                      rep = numeric(), ageClass = numeric(), polygonName = numeric())
+    out <- data.table(polygonID = character(0), sizeInHa = numeric(0), vegCover = character(0),
+                      rep = numeric(0), ageClass = numeric(0), polygonName = numeric(0))
   }
 
   out[!is.na(equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
