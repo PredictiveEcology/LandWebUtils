@@ -18,7 +18,7 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #' @importFrom data.table data.table rbindlist
 #' @importFrom LandR equivalentName
 #' @importFrom map areaAndPolyValue fasterize2 .rasterToMemory
-#' @importFrom raster levels raster reclassify
+#' @importFrom raster compareRaster levels raster reclassify
 #' @importFrom reproducible Cache
 LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageClasses,
                          sppEquivCol, sppEquiv) {
