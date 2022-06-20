@@ -21,9 +21,9 @@ if (getRversion() >= "3.1.0") {
 #' @param ageClassCutOffs A numeric vector with the endpoints for the `ageClasses`.
 #'                        Should be `length(ageClasses) + 1`. See `.ageClassCutOffs`.
 #'
-#' @param sppEquivCol TODO: description needed
+#' @param sppEquivCol Character giving the column name to use in `sppEquiv`.
 #'
-#' @param sppEquiv TODO: description needed
+#' @param sppEquiv Species equivalency table, e.g., derived from `LandR::sppEquivalencies_CA`.
 #'
 #' @return A `data.table` with proportion of the pixels in each vegetation class,
 #'         for each given age class within each polygon.

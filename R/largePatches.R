@@ -4,15 +4,24 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #'
 #' TODO: needs description
 #'
-#' @param tsf TODO: description needed
-#' @param vtm TODO: description needed
-#' @param poly TODO: description needed
+#' @param tsf A single filename, relative or absolute, pointing to a Time Since Fire raster.
+#'            Can be any format that `raster` can use.
+#' @param vtm A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
+#'            Can be any format that `raster` can use.
+#' @param poly A single `SpatialPolygonsDataFrame` object or a factor `RasterLayer`.
+#'             This layer MUST have a column labelled `shinyLabel`
+#'
 #' @param labelColumn TODO: description needed
 #' @param id TODO: description needed
-#' @param ageClassCutOffs TODO: description needed
-#' @param ageClasses TODO: description needed
-#' @param sppEquivCol TODO: description needed
-#' @param sppEquiv TODO: description needed
+#' @param ageClasses A character vector with labels for age classes to bin the `tsf` times,
+#'                   e.g., `c("Young", "Immature", "Mature", "Old")`. See `.ageClasses`.
+#' @param ageClassCutOffs A numeric vector with the endpoints for the `ageClasses`.
+#'                        Should be `length(ageClasses) + 1`. See `.ageClassCutOffs`.
+#'
+#' @param sppEquivCol Character giving the column name to use in `sppEquiv`.
+#'
+#' @param sppEquiv Species equivalency table, e.g., derived from `LandR::sppEquivalencies_CA`.
+#'
 #' @param crop2poly logical indicating whether to crop/mask `vtm` and `tsf`
 #'                  rasters to `poly`. Default `FALSE` for backwards compatibility.
 #'
