@@ -36,7 +36,7 @@ e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.}
 }
 \value{
 A \code{data.table} with proportion of the pixels in each vegetation class,
-        for each given age class within each polygon.
+for each given age class within each polygon.
 }
 \description{
 This function is recursive.

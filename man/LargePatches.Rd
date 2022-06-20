@@ -36,7 +36,8 @@ LargePatches(
 
 \item{sppEquiv}{TODO: description needed}
 
-\item{crop2poly}{logical indicating whether to crop/mask `vtm` and `tsf` rasters to `poly`.}
+\item{crop2poly}{logical indicating whether to crop/mask \code{vtm} and \code{tsf}
+rasters to \code{poly}. Default \code{FALSE} for backwards compatibility.}
 }
 \description{
 TODO: needs description
