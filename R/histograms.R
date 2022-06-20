@@ -50,7 +50,7 @@ if (getRversion() >= "3.1.0") {
 #'
 #' TODO: description needed
 #'
-#' @param map A \code{map} object.
+#' @param map A `map` object.
 #' @param functionName TODO: description needed
 #' @param analysisGroups TODO: description needed
 #' @param dPath Destination path for the resulting PNG files.
@@ -142,7 +142,7 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
 #'
 #' TODO: description needed
 #'
-#' @param map A \code{map} object.
+#' @param map A `map` object.
 #' @param functionName TODO: description needed
 #' @param analysisGroups TODO: description needed
 #' @param dPath Destination path for the resulting PNG files.

@@ -51,3 +51,4 @@ Collate:
     'zzz.R'
 Suggests: 
     covr
+Roxygen: list(markdown = TRUE)

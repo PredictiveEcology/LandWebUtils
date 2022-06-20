@@ -13,8 +13,8 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #' @param ageClasses TODO: description needed
 #' @param sppEquivCol TODO: description needed
 #' @param sppEquiv TODO: description needed
-#' @param crop2poly logical indicating whether to crop/mask \code{vtm} and \code{tsf}
-#'                  rasters to \code{poly}. Default \code{FALSE} for backwards compatibility.
+#' @param crop2poly logical indicating whether to crop/mask `vtm` and `tsf`
+#'                  rasters to `poly`. Default `FALSE` for backwards compatibility.
 #'
 #' @export
 #' @importFrom data.table data.table rbindlist

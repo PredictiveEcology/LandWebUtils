@@ -5,27 +5,27 @@ if (getRversion() >= "3.1.0") {
 #' Calculate proportion of landscape occupied by each vegetation class
 #'
 #' This function is recursive.
-#' If \code{poly} is a \code{SpatialPolygon}, then the function
+#' If `poly` is a `SpatialPolygon`, then the function
 #' will enter once, and convert this to a fasterized version, and pass that into
-#' the function replacing \code{poly}.
-#' It is also recursive of passed a vector of filenames for \code{tsf} and \code{vtm}.
+#' the function replacing `poly`.
+#' It is also recursive of passed a vector of filenames for `tsf` and `vtm`.
 #'
 #' @param tsf A single filename, relative or absolute, pointing to a Time Since Fire raster.
-#'            Can be any format that \code{raster} can use.
+#'            Can be any format that `raster` can use.
 #' @param vtm A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
-#'            Can be any format that \code{raster} can use.
-#' @param poly A single \code{SpatialPolygonsDataFrame} object or a factor \code{RasterLayer}.
-#'             This layer MUST have a column labelled \code{shinyLabel}
-#' @param ageClasses A character vector with labels for age classes to bin the \code{tsf} times,
-#'                   e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.
-#' @param ageClassCutOffs A numeric vector with the endpoints for the \code{ageClasses}.
-#'                        Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.
+#'            Can be any format that `raster` can use.
+#' @param poly A single `SpatialPolygonsDataFrame` object or a factor `RasterLayer`.
+#'             This layer MUST have a column labelled `shinyLabel`
+#' @param ageClasses A character vector with labels for age classes to bin the `tsf` times,
+#'                   e.g., `c("Young", "Immature", "Mature", "Old")`. See `.ageClasses`.
+#' @param ageClassCutOffs A numeric vector with the endpoints for the `ageClasses`.
+#'                        Should be `length(ageClasses) + 1`. See `.ageClassCutOffs`.
 #'
 #' @param sppEquivCol TODO: description needed
 #'
 #' @param sppEquiv TODO: description needed
 #'
-#' @return A \code{data.table} with proportion of the pixels in each vegetation class,
+#' @return A `data.table` with proportion of the pixels in each vegetation class,
 #'         for each given age class within each polygon.
 #'
 #' @export
