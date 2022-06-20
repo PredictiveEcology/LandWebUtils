@@ -13,7 +13,8 @@ LargePatches(
   ageClassCutOffs,
   ageClasses,
   sppEquivCol,
-  sppEquiv
+  sppEquiv,
+  crop2poly = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ LargePatches(
 \item{sppEquivCol}{TODO: description needed}
 
 \item{sppEquiv}{TODO: description needed}
+
+\item{crop2poly}{logical indicating whether to crop/mask `vtm` and `tsf` rasters to `poly`.}
 }
 \description{
 TODO: needs description

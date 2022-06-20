@@ -13,21 +13,26 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #' @param ageClasses TODO: description needed
 #' @param sppEquivCol TODO: description needed
 #' @param sppEquiv TODO: description needed
+#' @param crop2poly logical indicating whether to crop/mask \code{vtm} and \code{tsf}
+#'                  rasters to \code{poly}. Default \code{FALSE} for backwards compatibility.
 #'
 #' @export
 #' @importFrom data.table data.table rbindlist
 #' @importFrom LandR equivalentName
 #' @importFrom map areaAndPolyValue fasterize2 .rasterToMemory
 #' @importFrom raster compareRaster extend levels raster reclassify
-#' @importFrom reproducible Cache
+#' @importFrom reproducible Cache postProcess
 LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageClasses,
-                         sppEquivCol, sppEquiv) {
+                         sppEquivCol, sppEquiv, crop2poly = FALSE) {
   vtm <- vtm[1]
 
   if (basename(vtm) == "CurrentConditionVTM.tif") ## TODO: LandWeb workaround
     tsf <- file.path(dirname(vtm), "CurrentConditionTSF.tif")
 
   timeSinceFireFilesRast <- Cache(.rasterToMemory, tsf[1])
+  if (isTRUE(crop2poly)) {
+    timeSinceFireFilesRast <- Cache(postProcess, timeSinceFireFilesRast, studyArea = poly)
+  }
 
   tsf <- reclassify(timeSinceFireFilesRast,
                     cbind(from = ageClassCutOffs - 0.1,
@@ -45,6 +50,9 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
   # 3rd raster
   rasVeg <- Cache(.rasterToMemory, vtm)
+  if (isTRUE(crop2poly)) {
+    rasVeg <- Cache(postProcess, rasVeg, studyArea = poly)
+  }
   if (!compareRaster(rasVeg, timeSinceFireFilesRast, stopiffalse = FALSE)) {
     rasVeg <- extend(rasVeg, timeSinceFireFilesRast)
   }
