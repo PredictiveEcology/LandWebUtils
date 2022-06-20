@@ -16,7 +16,7 @@ Authors@R: c(
     role = "cph")
     )
 Depends:
-    R (>= 3.6)
+    R (>= 4.0)
 Imports:
     data.table (>= 1.10.4),
     graphics,
