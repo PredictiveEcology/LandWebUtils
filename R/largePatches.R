@@ -45,6 +45,9 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
   # 3rd raster
   rasVeg <- Cache(.rasterToMemory, vtm)
+  if (!compareRaster(rasVeg, timeSinceFireFilesRast, stopiffalse = FALSE)) {
+    rasVeg <- extend(rasVeg, timeSinceFireFilesRast)
+  }
 
   splitVal <- paste0("_", 75757575, "_") # unlikely to occur for any other reason
 
