@@ -1,5 +1,5 @@
 #' @keywords internal
-.ageClassCutOffs <- c(0, 40, 80, 120)
+.ageClassCutOffs <- c(0L, 40L, 80L, 120L) ## keep as integer
 
 #' @keywords internal
 .ageClasses <- c("Young", "Immature", "Mature", "Old")
