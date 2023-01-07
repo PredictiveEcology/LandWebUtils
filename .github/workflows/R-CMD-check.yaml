@@ -54,15 +54,6 @@ jobs:
             PredictiveEcology/SpaDES.core@development
             PredictiveEcology/SpaDES.tools@development
 
-      - name: Install additional package dependencies
-        run: |
-          pak::pkg_install("remotes")
-          pak::pkg_install("ropensci/NLMR")
-          remotes::install_github("s-u/fastshp")
-          install.packages("https://sourceforge.net/projects/repiceasource/files/latest", repos = NULL,  type = "source") ## J4R
-          install.packages("https://sourceforge.net/projects/biosimclient.mrnfforesttools.p/files/latest", repos = NULL,  type = "source") ## BioSIM
-        shell: Rscript {0}
-
       - uses: r-lib/actions/check-r-package@v2
 
       - name: Show testthat output
