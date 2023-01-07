@@ -5,3 +5,4 @@
 ^\.httr-oauth$
 ^\.github$
 ^codecov\.yml$
+^man-roxygen$
