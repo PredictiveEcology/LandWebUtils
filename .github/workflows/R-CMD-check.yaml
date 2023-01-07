@@ -48,10 +48,6 @@ jobs:
           extra-packages: |
             any::rcmdcheck
             any::XML
-            BioSIM=?ignore
-            fastshp=?ignore
-            J4R=?ignore
-            NLMR=?ignore
             PredictiveEcology/quickPlot@development
             PredictiveEcology/reproducible@development
             PredictiveEcology/Require@development
