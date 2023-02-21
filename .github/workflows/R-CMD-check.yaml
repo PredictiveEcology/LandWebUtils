@@ -49,6 +49,9 @@ jobs:
           use-public-rspm: true
 
       - uses: r-lib/actions/check-r-package@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
 
       - name: Show testthat output
         if: always()
