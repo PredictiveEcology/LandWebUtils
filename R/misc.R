@@ -31,25 +31,24 @@ cleanAreaName <- Vectorize(function(area) {
 #' Find LandWeb simulation output file
 #'
 #' @param outputDir path to LandWeb output directory.
-#' @param area character string giving study area with run name.
 #' @param rep integer giving the replicate id, or character string in the form of `"rep01"`.
 #'
 #' @return path to the file
 #' @export
-findSimFile <- function(outputDir, area, rep) {
+findSimFile <- function(outputDir, rep) {
   if (is.numeric(rep)) {
     rep <- sprintf("rep%02d", as.integer(rep))
   }
 
-  fsim <- file.path(outputDir, area, rep, "mySimOut_1000.qs")
+  fsim <- file.path(outputDir, rep, "mySimOut_1000.qs")
 
   ## try alt/older names
   if (!file.exists(fsim)) {
-    fsim <- file.path(outputDir, area, rep, "mySimOut_1000.rds")
+    fsim <- file.path(outputDir, rep, "mySimOut_1000.rds")
   }
 
   if (!file.exists(fsim)) {
-    fsim <- file.path(outputDir, area, rep, "mySimOut_year1000.rds")
+    fsim <- file.path(outputDir, rep, "mySimOut_year1000.rds")
   }
 
   stopifnot(file.exists(fsim))

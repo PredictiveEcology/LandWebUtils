@@ -4,12 +4,10 @@
 \alias{findSimFile}
 \title{Find LandWeb simulation output file}
 \usage{
-findSimFile(outputDir, area, rep)
+findSimFile(outputDir, rep)
 }
 \arguments{
 \item{outputDir}{path to LandWeb output directory.}
-
-\item{area}{character string giving study area with run name.}
 
 \item{rep}{integer giving the replicate id, or character string in the form of \code{"rep01"}.}
 }
