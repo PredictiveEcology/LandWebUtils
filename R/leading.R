@@ -1,6 +1,6 @@
-if (getRversion() >= "3.1.0") {
-  utils::globalVariables(c(".", ":=", ".N", ".SD", "NPixels", "proportion"))
-}
+utils::globalVariables(c(
+  ".", ":=", ".N", ".SD", "NPixels", "proportion"
+))
 
 #' Calculate proportion of landscape occupied by each vegetation class
 #'

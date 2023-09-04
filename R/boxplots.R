@@ -1,7 +1,7 @@
-if (getRversion() >= "3.1.0") {
-  utils::globalVariables(c(".", ":=", ".SD", "ageClass", "group", "proportionCC",
-                           "totalPixels", "totalPixels2", "quants", "vegCover", "zone"))
-}
+utils::globalVariables(c(
+  ".", ":=", ".SD", "ageClass", "group", "proportionCC",
+  "totalPixels", "totalPixels2", "quants", "vegCover", "zone"
+))
 
 #' @export
 #' @importFrom data.table data.table

@@ -1,7 +1,6 @@
-if (getRversion() >= "3.1.0") {
-  utils::globalVariables(c(":=", ".N", ".SD", "ageClass", "group", "N", "NCC",
-                           "polygonName", "vegCover"))
-}
+utils::globalVariables(c(
+  ":=", ".N", ".SD", "ageClass", "group", "N", "NCC", "polygonName", "vegCover"
+))
 
 #' @importFrom graphics abline axis barplot hist
 #' @importFrom pemisc factorValues2
