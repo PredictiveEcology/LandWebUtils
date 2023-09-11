@@ -5,14 +5,14 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2023-09-04
-Version: 0.1.5.9002
+Date: 2023-09-11
+Version: 0.1.6
 Authors@R: c(
-    person("Eliot J B", "McIntire", email = "eliot.mcintire@canada.ca",
-    role = c("aut", "cre"), comment=c(ORCID = "0000-0002-6914-8316")),
+    person("Eliot J B", "McIntire", email = "eliot.mcintire@NRCan-RNCan.gc.ca",
+    role = c("aut"), comment=c(ORCID = "0000-0002-6914-8316")),
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
-    role = c("aut"), comment = c(ORCID = "0000-0001-7146-8135")),
-    person("Her Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada",
+    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
+    person("His Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada",
     role = "cph")
     )
 Depends:
@@ -31,13 +31,23 @@ Imports:
     purrr,
     raster,
     reproducible,
+    SpaDES.tools,
     stats,
     tools,
     utils
+Suggests:
+    covr,
+    parallel,
+    parallelly,
+    SDMTools,
+    testthat (>= 3.0.0)
 Remotes:
     PredictiveEcology/LandR@LandWeb,
     PredictiveEcology/map@development,
-    PredictiveEcology/pemisc@development
+    PredictiveEcology/pemisc@development,
+    cran/SDMTools,
+    PredictiveEcology/SpaDES.tools@development
+Additional_repositories: https://prodictiveecology.r-universe.dev
 License: GPL-3
 Encoding: UTF-8
 Language: en-CA
@@ -50,10 +60,11 @@ Collate:
     'boxplots.R'
     'cleanLandWebStudyArea.R'
     'histograms.R'
+    'landmine-helpers.R'
+    'landmine.R'
     'largePatches.R'
     'leading.R'
     'rasterListByPoly.R'
     'zzz.R'
-Suggests: 
-    covr
 Roxygen: list(markdown = TRUE)
+Config/testthat/edition: 3
