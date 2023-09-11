@@ -67,7 +67,7 @@ landmine_optim_clusterSetup <- function(nodes = NULL) {
   nnodes <- if (is.numeric(nodes) && length(nodes) == 1) {
     as.integer(nodes)
   } else if (is.character(nodes)) {
-    unique(nodes) |> length()
+    length(nodes)
   } else {
     stop("nodes must be an integer of length 1 or a character vector of nodenames")
   }
