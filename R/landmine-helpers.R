@@ -108,7 +108,7 @@ landmine_optim_clusterExport <- function(cl = NULL, objs = NULL, pkgs = NULL) {
 
   if (!is.null(cl)) {
     objs <- c(objs)
-    parallel::clusterExport(cl,  objs)
+    parallel::clusterExport(cl, objs)
     # env <- environment()
     parallel::clusterExport(cl, "pkgs", envir = parent.frame())
     parallel::clusterEvalQ(cl, {
