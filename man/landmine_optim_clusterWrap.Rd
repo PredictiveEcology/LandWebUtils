@@ -4,9 +4,11 @@
 \alias{landmine_optim_clusterWrap}
 \title{Wrapper function to setup cluster, export objects and load packages}
 \usage{
-landmine_optim_clusterWrap(nodes, reps, objs, pkgs)
+landmine_optim_clusterWrap(cl = NULL, nodes, reps, objs, pkgs)
 }
 \arguments{
+\item{cl}{a cluster object or \code{NULL}}
+
 \item{nodes}{positive integer of length 1 specifying the number of threads
 to use on the current machine (\code{localhost}), or a character vector of
 hostnames on which to run worker copies.}

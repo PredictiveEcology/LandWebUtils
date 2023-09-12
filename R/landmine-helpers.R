@@ -132,10 +132,12 @@ landmine_optim_clusterExport <- function(cl = NULL, objs = NULL, pkgs = NULL) {
 #'   `cl` - a cluster object;
 #'   `out` - a list of burn maps (aka `burnMapList`)
 #' @export
-landmine_optim_clusterWrap <- function(nodes, reps, objs, pkgs) {
+landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
   stopifnot(requireNamespace("parallel", quietly = TRUE))
 
-  cl <- landmine_optim_clusterSetup(nodes)
+  if (is.null(cl)) {
+    cl <- landmine_optim_clusterSetup(nodes)
+  }
   landmine_optim_clusterExport(cl, objs, pkgs)
   objs <- mget(objs, envir = parent.frame())
 
