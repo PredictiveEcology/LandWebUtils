@@ -35,6 +35,8 @@ jobs:
         with:
           extra-packages: |
             any::covr
+            any::sf
+            any::terra
 
       - name: Test coverage
         run: covr::codecov()
