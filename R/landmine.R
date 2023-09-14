@@ -1,4 +1,4 @@
-globalVariables(c(
+utils::globalVariables(c(
   "active", "id", "initialPixels", "numActive", "pSpawnNewActive", "size", "spreadProb", "state"
 ))
 
