@@ -36,7 +36,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
   vtm <- vtm[1]
 
   if (basename(vtm) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) ## TODO: LandWeb workaround
-    tsf <- file.path(dirname(vtm), "CurrentConditionTSF.tif")
+    tsf <- file.path(dirname(vtm), "CurrentConditionSAM.tif")
 
   timeSinceFireFilesRast <- Cache(.rasterToMemory, tsf[1])
   if (isTRUE(crop2poly)) {
