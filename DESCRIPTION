@@ -46,7 +46,6 @@ Remotes:
     PredictiveEcology/LandR@LandWeb,
     PredictiveEcology/map@development,
     PredictiveEcology/pemisc@development,
-    cran/rgeos,
     cran/SDMTools,
     PredictiveEcology/SpaDES.tools@development
 Additional_repositories: https://prodictiveecology.r-universe.dev
