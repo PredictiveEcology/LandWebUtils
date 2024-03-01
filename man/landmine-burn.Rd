@@ -65,6 +65,10 @@ The main function for the Andison Fire Module. See details.
 \details{
 This algorithm is a modified contagious cellular automaton.
 }
+\note{
+The original version (\code{landmine_burn()}) is deprecated and should not be used.
+Use \code{landmine_burn1()} instead.
+}
 \section{Algorithm}{
 
 

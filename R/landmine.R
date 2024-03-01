@@ -6,6 +6,9 @@ utils::globalVariables(c(
 #'
 #' @description The main function for the Andison Fire Module. See details.
 #'
+#' @note The original version (`landmine_burn()`) is deprecated and should not be used.
+#'       Use `landmine_burn1()` instead.
+#'
 #' @param landscape      A `RasterLayer`. This only provides the extent and
 #'                       resolution for the fire spread algorithm.
 #'
@@ -88,45 +91,23 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
     landscape,
     start = startCells,
     spreadProb = 1,  ## initial step can have spreadProb 1 so guarantees something
-    spreadProbRel = spreadProbRel,
-    # persistence = 0,
-    neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1]),
-    iterations = 1,
-    # mask=NULL,
-    maxRetriesPerID = maxRetriesPerID,
     asRaster = FALSE,
     exactSize = fireSizes,
-    directions = 8
-    # returnIndices = TRUE,
-    # id = TRUE,
-    # plot.it = FALSE
+    directions = 8,
+    iterations = 1,
+    maxRetriesPerID = maxRetriesPerID,
+    spreadProbRel = spreadProbRel,
+    neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1])
+    # skipChecks = FALSE
   )
   whActive <- attr(a, "spreadState")$whActive
   while (any(whActive)) {
-    # a2 <- data.table::copy(a)
-    # microbenchmark(times = 6, a = {
-    #   a <- data.table::copy(a2)
-    #   b <- a[,list(numActive = sum(state=="activeSource"), size = .N),by=initialPixels]
-    #
-    #  }, b = {
-    #   a <- data.table::copy(a2)
     set(a, NULL, "numActive", 0L)
     a[whActive, numActive := .N, by = initialPixels]
     b <- attr(a, "spreadState")$clusterDT
     b <- a[b, mult = "last"]
     set(b, NULL, c("numRetries", "maxSize", "exactSize", "id", "state", "pixels"), NULL)
-    set(a, NULL, c("numActive"), NULL)
-    #
-    # }, d = {
-    #   a <- data.table::copy(a2)
-    #   b <- a[,list(numActive = sum(state=="activeSource")),by=initialPixels]
-    #   set(b, , "size", attr(a, "spreadState")$cluster$size)
-    # }, f = {
-    #   a <- data.table::copy(a2)
-    #   b <- a[,list(numActive = sum(state=="activeSource")),by=initialPixels]
-    #
-    # })
-    #
+    set(a, NULL, "numActive", NULL)
     set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
 
     b[numActive >= nActiveCells1[1] & numActive < nActiveCells1[2] &
@@ -140,20 +121,17 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
     b <- b[a]
     a <- spread2(
       landscape,
-      spreadProbRel = spreadProbRel,
-      spreadProb = spreadProb,
       start = a,
-      # persistence = 0,
-      neighProbs = data.table::transpose(as.list(b[state == "activeSource", c("pNoNewSpawn", "pSpawnNewActive")])),
-      iterations = 1, skipChecks = TRUE, asRaster = FALSE,
+      spreadProb = spreadProb,
+      asRaster = FALSE,
       exactSize = attr(a, "spreadState")$clusterDT$maxSize,
-      # mask = NULL,
-      # maxSize = fireSizes,
+      directions = 8L,
+      iterations = 1L,
       maxRetriesPerID = maxRetriesPerID,
-      directions = 8,
-      # returnIndices = TRUE,
-      # id = TRUE,
-      plot.it = FALSE
+      spreadProbRel = spreadProbRel,
+      plot.it = FALSE,
+      neighProbs = data.table::transpose(as.list(b[state == "activeSource", c("pNoNewSpawn", "pSpawnNewActive")])),
+      skipChecks = TRUE
     )
 
     set(a, NULL, "order", seq_len(NROW(a)))
@@ -164,7 +142,6 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
 }
 
 ## the original burn function below is no longer used:
-
 #' @rdname landmine-burn
 landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
                           spawnNewActive = c(0.46, 0.2, 0.26, 0.11),
