@@ -53,10 +53,10 @@ utils::globalVariables(c(
 #' large and very small fires, so over time has been adjusted to vary depending on:
 #' a) number of active "firelets" (NF); and b) fire size (FS), such that:
 #' ```
-#'   - If 10 <= NF < 36 and FS < 20,000 ha then P = 20%
-#'   - If NF > 36 and FS < 8,000 ha, P = 11%
-#'   - If NF < 36 and FS > 20,000 ha, P = 26%
-#'   - If NF < 10 then P = 46%
+#'   - If 10 <= NF < 36 and FS < 20,000 ha then P = 20%;
+#'   - If NF > 36 and FS < 8,000 ha, P = 11%;
+#'   - If NF < 36 and FS > 20,000 ha, P = 26%;
+#'   - If NF < 10 then P = 46%;
 #' ````
 #' These rule create more heterogeneity in the pattern of burning.
 #' }
@@ -69,7 +69,7 @@ utils::globalVariables(c(
 #' then it will stop, unable to achieve the desired `fireSize`.
 #' }
 #'
-#' @return A `data.table` with 4 columns
+#' @return A `data.table` with 4 columns (`initialPixels`, `pixels`, `state`, `order`).
 #'
 #' @export
 #' @importFrom data.table set
@@ -81,7 +81,6 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
                            spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L,
                            sizeCutoffs = c(8e3, 2e4), spreadProbRel = spreadProbRel,
                            spreadProb = 0.77) {
-
   stopifnot(is.integer(maxRetriesPerID))
 
   ## convert to pixels
@@ -90,7 +89,7 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
   a <- spread2(
     landscape,
     start = startCells,
-    spreadProb = 1,  ## initial step can have spreadProb 1 so guarantees something
+    spreadProb = 1, ## initial step can have spreadProb 1 so guarantees something
     asRaster = FALSE,
     exactSize = fireSizes,
     directions = 8,
@@ -111,7 +110,7 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
     set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
 
     b[numActive >= nActiveCells1[1] & numActive < nActiveCells1[2] &
-        size < sizeCutoffs[2], pSpawnNewActive := spawnNewActive[2]]
+      size < sizeCutoffs[2], pSpawnNewActive := spawnNewActive[2]]
     b[numActive > nActiveCells1[2] & size < sizeCutoffs[1], pSpawnNewActive := spawnNewActive[4]]
     b[numActive < nActiveCells1[2] & size > sizeCutoffs[2], pSpawnNewActive := spawnNewActive[3]]
     set(b, NULL, "pNoNewSpawn", 1 - b$pSpawnNewActive)
@@ -148,17 +147,19 @@ landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = 
                           sizeCutoffs = c(8e3, 2e4), spreadProbRel = 0.23) {
   .Deprecated("landmine_burn1", "LandWebUtils")
 
-  a <- spread(landscape, loci = startCells, spreadProbRel = spreadProbRel, persistence = 0,
-              neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1]), iterations = 1,
-              mask = NULL, maxSize = fireSizes, directions = 8, returnIndices = TRUE,
-              id = TRUE, plot.it = FALSE, exactSizes = TRUE)
+  a <- spread(landscape,
+    loci = startCells, spreadProbRel = spreadProbRel, persistence = 0,
+    neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1]), iterations = 1,
+    mask = NULL, maxSize = fireSizes, directions = 8, returnIndices = TRUE,
+    id = TRUE, plot.it = FALSE, exactSizes = TRUE
+  )
 
   while (sum(a$active) > 0) {
-    b <- a[ , list(numActive = sum(active), size = .N), by = id]
+    b <- a[, list(numActive = sum(active), size = .N), by = id]
     ## This is undescribed in Andison -- NF >36 & FS >8,000 ha --
     ## They look too circular, without this, so make this zero, no new spawn
     set(b, NULL, "pSpawnNewActive", 0)
-    #set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
+    # set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
     b[numActive < nActiveCells1[1], pSpawnNewActive := spawnNewActive[1]]
     b[numActive >= nActiveCells1[1] & numActive < nActiveCells1[2] & size < sizeCutoffs[2], pSpawnNewActive := spawnNewActive[2]]
     b[numActive > nActiveCells1[2] & size < sizeCutoffs[1], pSpawnNewActive := spawnNewActive[4]]
@@ -167,12 +168,14 @@ landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = 
 
     ## spawnNewActive must be joined sent in here as list...
     b <- b[a]
-    a <- spread(landscape, spreadProbRel = spreadProbRel, spreadProb = spreadProb,
-                spreadState = a, persistence = 0,
-                neighProbs = transpose(as.list(b[active == TRUE, c("pNoNewSpawn", "pSpawnNewActive")])),
-                iterations = 1, quick = TRUE,
-                mask = NULL, maxSize = fireSizes, directions = 8, returnIndices = TRUE,
-                id = TRUE, plot.it = FALSE, exactSizes = TRUE)
+    a <- spread(landscape,
+      spreadProbRel = spreadProbRel, spreadProb = spreadProb,
+      spreadState = a, persistence = 0,
+      neighProbs = transpose(as.list(b[active == TRUE, c("pNoNewSpawn", "pSpawnNewActive")])),
+      iterations = 1, quick = TRUE,
+      mask = NULL, maxSize = fireSizes, directions = 8, returnIndices = TRUE,
+      id = TRUE, plot.it = FALSE, exactSizes = TRUE
+    )
   }
   return(a)
 }

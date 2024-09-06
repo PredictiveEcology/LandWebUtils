@@ -47,10 +47,11 @@ polygonClean <- function(poly, fn = NULL, type = NULL, ...) {
     if (is.null(type)) {
       stop("Either fn or type must be specified")
     } else {
-      if (type == "LandWeb")
+      if (type == "LandWeb") {
         fn <- .cleanLandWebStudyArea
-      else
+      } else {
         stop("Unknown type")
+      }
     }
   }
   poly <- fn(poly, ...)

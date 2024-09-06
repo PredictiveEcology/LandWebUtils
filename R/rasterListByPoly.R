@@ -27,7 +27,7 @@ rasterListByPoly <- function(files, polys, names, col, filter) {
       rcm <- raster::mask(rc, subpoly)
       rcm
     })
-    names(byPoly) <- paste(tools::file_path_sans_ext(basename(f)), names , sep = "_") ## <filter>_yearXXXX_polyName
+    names(byPoly) <- paste(tools::file_path_sans_ext(basename(f)), names, sep = "_") ## <filter>_yearXXXX_polyName
 
     byPoly
   }, future.packages = c("raster", "sp", "sf"))

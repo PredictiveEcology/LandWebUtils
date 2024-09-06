@@ -35,29 +35,36 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
                          sppEquivCol, sppEquiv, crop2poly = FALSE) {
   vtm <- vtm[1]
 
-  if (basename(vtm) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) ## TODO: LandWeb workaround
+  ## TODO: LandWeb workaround
+  if (basename(vtm) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) {
     tsf <- file.path(dirname(vtm), "CurrentConditionTSF.tif")
+  }
 
+  ## prepare tsf rasters
   timeSinceFireFilesRast <- Cache(.rasterToMemory, tsf[1])
   if (isTRUE(crop2poly)) {
     timeSinceFireFilesRast <- Cache(postProcess, timeSinceFireFilesRast, studyArea = poly)
   }
 
-  tsf <- reclassify(timeSinceFireFilesRast,
-                    cbind(from = ageClassCutOffs - 0.1,
-                          to = c(ageClassCutOffs[-1], Inf),
-                          seq_along(ageClasses)))
+  tsf <- reclassify(
+    timeSinceFireFilesRast,
+    cbind(
+      from = ageClassCutOffs - 0.1,
+      to = c(ageClassCutOffs[-1], Inf),
+      seq_along(ageClasses)
+    )
+  )
   levels(tsf) <- data.frame(ID = seq_along(ageClasses), Factor = ageClasses)
 
   poly$tmp <- factor(poly[[labelColumn]])
   rasRepPoly <- Cache(
     fasterize2,
     poly,
-    emptyRaster = raster(timeSinceFireFilesRast), # doesn't need to the data -- makes Caching more effective
+    emptyRaster = raster(timeSinceFireFilesRast), # doesn't need the data; Caching more effective
     field = "tmp"
   )
 
-  # 3rd raster
+  ## 3rd raster
   rasVeg <- Cache(.rasterToMemory, vtm)
   if (isTRUE(crop2poly)) {
     rasVeg <- Cache(postProcess, rasVeg, studyArea = poly)
@@ -68,27 +75,28 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
   splitVal <- paste0("_", 75757575, "_") # unlikely to occur for any other reason
 
-  # Individual species
+  ## Individual species
   nas3 <- is.na(rasRepPoly[])
   nas2 <- is.na(rasVeg[]) | is.na(factorValues2(rasVeg, rasVeg[], att = 1))
   nas1 <- is.na(tsf[])
   nas <- nas3 | nas2 | nas1
 
   if (!isTRUE(all(nas))) {
-    #name1a <- as.character(raster::levels(tsf)[[1]]$Factor)[tsf[][!nas]]
+    # name1a <- as.character(raster::levels(tsf)[[1]]$Factor)[tsf[][!nas]]
     name1 <- as.character(factorValues2(tsf, tsf[], att = 2)[!nas])
 
     colID <- which(colnames(raster::levels(rasVeg)[[1]]) %in% c("category", "Factor", "VALUE"))
 
-    #name2a <- as.character(raster::levels(rasVeg)[[1]][[colID]])[rasVeg[][!nas]]
+    # name2a <- as.character(raster::levels(rasVeg)[[1]][[colID]])[rasVeg[][!nas]]
     name2 <- as.character(factorValues2(rasVeg, rasVeg[], att = colID)[!nas])
 
-    # rasRepPoly will have the numeric values of the *factor* in poly$tmp, NOT
-    #   the raster::levels(rasRepPoly)[[1]])
+    ## rasRepPoly will have the numeric values of the *factor* in poly$tmp, NOT
+    ##   the raster::levels(rasRepPoly)[[1]])
     name3 <- raster::levels(poly$tmp)[rasRepPoly[][!nas]] ## fixed 2021-05-05
 
-    if (!identical(length(name1), length(name2)) || !identical(length(name1), length(name3)))
+    if (!identical(length(name1), length(name2)) || !identical(length(name1), length(name3))) {
       stop("There is something wrong with tsf or rasVeg or rasRepPoly inside LargePatches")
+    }
 
     ff <- paste(name1, name2, name3, sep = splitVal) # 4 seconds
     ras <- raster(rasVeg)
@@ -101,14 +109,16 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     types <- do.call(rbind, types)
 
     facPolygonID <- factor(types[areaAndPolyOut$polyID, 3])
-    outBySpecies <- data.table(polygonID = as.numeric(facPolygonID),
-                               sizeInHa = areaAndPolyOut$sizeInHa,
-                               vegCover = types[areaAndPolyOut$polyID, 2],
-                               rep = id,
-                               ageClass = types[areaAndPolyOut$polyID, 1],
-                               polygonName = as.character(facPolygonID))
+    outBySpecies <- data.table(
+      polygonID = as.numeric(facPolygonID),
+      sizeInHa = areaAndPolyOut$sizeInHa,
+      vegCover = types[areaAndPolyOut$polyID, 2],
+      rep = id,
+      ageClass = types[areaAndPolyOut$polyID, 1],
+      polygonName = as.character(facPolygonID)
+    )
 
-    # All species combined # remove name2
+    ## All species combined # remove name2
     ff <- paste(name1, name3, sep = splitVal)
     ff[grepl("NA", ff)] <- NA
     ras <- raster(rasVeg)
@@ -124,21 +134,27 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
     facPolygonID <- factor(types[areaAndPolyOut2$polyID, 2])
 
-    outAllSpecies <- data.table(polygonID = as.numeric(facPolygonID),
-                                sizeInHa = areaAndPolyOut2$sizeInHa,
-                                vegCover = "All species",
-                                rep = id,
-                                ageClass = types[areaAndPolyOut2$polyID, 1],
-                                polygonName = as.character(facPolygonID))
+    outAllSpecies <- data.table(
+      polygonID = as.numeric(facPolygonID),
+      sizeInHa = areaAndPolyOut2$sizeInHa,
+      vegCover = "All species",
+      rep = id,
+      ageClass = types[areaAndPolyOut2$polyID, 1],
+      polygonName = as.character(facPolygonID)
+    )
 
     out <- rbindlist(list(outBySpecies, outAllSpecies))
     out <- out[sizeInHa >= 100] # never will need patches smaller than 100 ha
   } else {
-    out <- data.table(polygonID = character(0), sizeInHa = numeric(0), vegCover = character(0),
-                      rep = numeric(0), ageClass = numeric(0), polygonName = numeric(0))
+    out <- data.table(
+      polygonID = character(0), sizeInHa = numeric(0), vegCover = character(0),
+      rep = numeric(0), ageClass = numeric(0), polygonName = numeric(0)
+    )
   }
 
-  out[!is.na(equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
-      vegCover := equivalentName(vegCover, sppEquiv, sppEquivCol)]
+  out[
+    !is.na(equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
+    vegCover := equivalentName(vegCover, sppEquiv, sppEquivCol)
+  ]
   out
 }

@@ -9,7 +9,7 @@
 #'
 #' @export
 meanTruncPareto <- function(k, lower, upper, alpha) {
-  k * lower^k * (upper^(1 - k) - alpha^(1 - k)) / ((1 - k) * (1 - (alpha/upper)^k))
+  k * lower^k * (upper^(1 - k) - alpha^(1 - k)) / ((1 - k) * (1 - (alpha / upper)^k))
 }
 
 #' LandMine burn optimization function
@@ -173,7 +173,9 @@ landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
   sna <- c(10^(sna[1]), 10^(sna[2]), 10^(sna[3]), 10^(sna[4]))
   bfs1 <- lapply(fireSizes, function(fireSize) {
     landmine_optim_burnFun(ros, centreCell, fireSize,
-                           sna, sizeCutoffs, spreadProb = spreadProb)
+      sna, sizeCutoffs,
+      spreadProb = spreadProb
+    )
   })
   res <- lapply(seq(bfs1), function(bfCount) {
     abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +
@@ -195,13 +197,13 @@ landmine_optim_fitSN2 <- function(par, ros, centreCell, fireSizes = 10^(2:5),
   sizeCutoffs <- 10^c(par[4], par[5])
   bfs1 <- lapply(fireSizes, function(fireSize) {
     sna <- min(-0.15, par[1] + par[2] * log10(fireSize))
-    sna <- 10^c(sna*par[3], sna*2*par[3], sna*3*par[3], sna*4*par[3])
-    #sna <- -1
+    sna <- 10^c(sna * par[3], sna * 2 * par[3], sna * 3 * par[3], sna * 4 * par[3])
+    # sna <- -1
     landmine_optim_burnFun(ros, centreCell, fireSize, sna, sizeCutoffs, spreadProb)
   })
   res <- lapply(seq(bfs1), function(bfCount) {
     abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +
-      100*(sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
+      100 * (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
     ## it needs to get to above 90,000 HA for it to count
   })
   a <- sum(unlist(res))

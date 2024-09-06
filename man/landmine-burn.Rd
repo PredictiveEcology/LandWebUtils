@@ -84,10 +84,10 @@ Spawning probability was originally set at 13\%, but created problems with very
 large and very small fires, so over time has been adjusted to vary depending on:
 a) number of active "firelets" (NF); and b) fire size (FS), such that:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{  - If 10 <= NF < 36 and FS < 20,000 ha then P = 20\%
-  - If NF > 36 and FS < 8,000 ha, P = 11\%
-  - If NF < 36 and FS > 20,000 ha, P = 26\%
-  - If NF < 10 then P = 46\%
+\if{html}{\out{<div class="sourceCode">}}\preformatted{  - If 10 <= NF < 36 and FS < 20,000 ha then P = 20\%;
+  - If NF > 36 and FS < 8,000 ha, P = 11\%;
+  - If NF < 36 and FS > 20,000 ha, P = 26\%;
+  - If NF < 10 then P = 46\%;
 }\if{html}{\out{</div>}}
 
 These rule create more heterogeneity in the pattern of burning.

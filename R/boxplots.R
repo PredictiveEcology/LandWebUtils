@@ -31,21 +31,26 @@ utils::globalVariables(c(
     ) %>%
     `$`(quants)
 
-  boxplotData <- data.table(zone = rep(zone, 4),
-                            vegCover = rep(vegCover, 4),
-                            ageClass = ageClasses,
-                            proportionCC = data$proportionCC[c(4, 1:3)], ## order by age not alphabet
-                            MIN = a$stats[1, ],
-                            q12_5 = q12.5,
-                            q25_0 = a$stats[2, ],
-                            MED = a$stats[3, ],
-                            q75_0 = a$stats[4, ],
-                            q87_5 = q87.5,
-                            MAX = a$stats[5, ])
+  boxplotData <- data.table(
+    zone = rep(zone, 4),
+    vegCover = rep(vegCover, 4),
+    ageClass = ageClasses,
+    proportionCC = data$proportionCC[c(4, 1:3)], ## order by age not alphabet
+    MIN = a$stats[1, ],
+    q12_5 = q12.5,
+    q25_0 = a$stats[2, ],
+    MED = a$stats[3, ],
+    q75_0 = a$stats[4, ],
+    q87_5 = q87.5,
+    MAX = a$stats[5, ]
+  )
 
-  if (!is.null(fout))
-    try(write.table(boxplotData, file = fout, append = TRUE, col.names = FALSE,
-                    row.names = FALSE, sep = ","))
+  if (!is.null(fout)) {
+    try(write.table(boxplotData,
+      file = fout, append = TRUE, col.names = FALSE,
+      row.names = FALSE, sep = ","
+    ))
+  }
 
   if (isTRUE(authStatus)) {
     ids <- match(factor(data$ageClass[1:4]), data[1:4, ]$ageClass)
@@ -80,8 +85,9 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
 
   lapply(allRepPolys, function(poly) {
     allData <- map@analysesData[[functionName]][["LeadingVegTypeByAgeClass"]][[poly]]
-    if (is.null(allData))
-      allData <- map@analysesData[[functionName]][[poly]] ## TODO: fix upstream
+    if (is.null(allData)) {
+      allData <- map@analysesData[[functionName]][[poly]]
+    } ## TODO: fix upstream
     allData <- unique(allData) ## remove duplicates; with LandWeb#89
 
     # allData[vegCover == "Fir", vegCover := "Abie_sp"] ## so far, rep01 is the only one needing fixing
@@ -103,42 +109,55 @@ runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
     ## sum = all species + each indiv species = 2 * totalPixels
     ## NOTE: this is number of TREED pixels, which is likely smaller than the polygon area
     data2[, totalPixels := as.double(base::sum(NPixels, na.rm = TRUE)),
-          by = c("group", "vegCover", "zone")]
+      by = c("group", "vegCover", "zone")
+    ]
     data2[, totalPixels2 := as.double(base::mean(totalPixels, na.rm = TRUE)),
-          by = c("vegCover", "zone")] ## use mean for plot labels below
+      by = c("vegCover", "zone")
+    ] ## use mean for plot labels below
     try(write.csv(data2, file.path(dPath, paste0("leading_", gsub(" ", "_", poly), ".csv"))))
 
     ## output the box and whisker plot ranges (quartiles, etc.)
-    empty <- data.table(zone = character(0),  vegCover = character(0),
-                        ageClass = character(0), proportionCC = numeric(0),
-                        MIN = numeric(0), q12_5 = numeric(0), q25_0 = numeric(0),
-                        MED = numeric(0), q75_0 = numeric(0), q87_5 = numeric(0),
-                        MAX = numeric(0))
+    empty <- data.table(
+      zone = character(0), vegCover = character(0),
+      ageClass = character(0), proportionCC = numeric(0),
+      MIN = numeric(0), q12_5 = numeric(0), q25_0 = numeric(0),
+      MED = numeric(0), q75_0 = numeric(0), q87_5 = numeric(0),
+      MAX = numeric(0)
+    )
     fout <- file.path(dPath, paste0("leading_boxplots_", gsub(" ", "_", poly), ".csv"))
     try(write.csv(empty, fout, row.names = FALSE))
 
     saveDir <- checkPath(file.path(dPath, poly), create = TRUE)
     savePng <- quote(file.path(saveDir, paste0(unique(paste(zone, vegCover, collapse = " ")), ".png")))
     slices <- c("zone", "vegCover")
-    data2[, tryCatch(.doPlotBoxplot(data = .SD,
-                                    authStatus = TRUE,
-                                    col = "limegreen",
-                                    fname = eval(savePng),
-                                    ageClasses = .ageClasses,
-                                    fout = fout,
-                                    vegCover = vegCover,
-                                    zone = zone,
-                                    horizontal = TRUE,
-                                    main = unique(paste(zone, vegCover, collapse = "_")),
-                                    xlab = paste0("Proportion of forest area (total ",
-                                                  format(unique(totalPixels2) *
-                                                           prod(res(rasterToMatch(map))) / 1e4,
-                                                         big.mark = ","),
-                                                  " ha)"),
-                                    ylab = "Age class",
-                                    ylim = c(0, 1)),
-                     error = function(e) warning(e)),
-          .SDcols = c("ageClass", "proportion", "proportionCC", "NPixels"), by = slices]
+    data2[, tryCatch(
+      .doPlotBoxplot(
+        data = .SD,
+        authStatus = TRUE,
+        col = "limegreen",
+        fname = eval(savePng),
+        ageClasses = .ageClasses,
+        fout = fout,
+        vegCover = vegCover,
+        zone = zone,
+        horizontal = TRUE,
+        main = unique(paste(zone, vegCover, collapse = "_")),
+        xlab = paste0(
+          "Proportion of forest area (total ",
+          format(
+            unique(totalPixels2) *
+              prod(res(rasterToMatch(map))) / 1e4,
+            big.mark = ","
+          ),
+          " ha)"
+        ),
+        ylab = "Age class",
+        ylim = c(0, 1)
+      ),
+      error = function(e) warning(e)
+    ),
+    .SDcols = c("ageClass", "proportion", "proportionCC", "NPixels"), by = slices
+    ]
     data2[, list(filename = eval(savePng)), by = slices]
   })
 }
