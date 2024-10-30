@@ -1,5 +1,6 @@
 utils::globalVariables(c(
-  "active", "id", "initialPixels", "numActive", "pSpawnNewActive", "size", "spreadProb", "state"
+  "active", "id", "initialPixels", "numActive", "pixels", "pSpawnNewActive",
+  "size", "spreadProb", "state"
 ))
 
 #' Core Burn function for Andison's LandMine Fire Module
@@ -35,6 +36,13 @@ utils::globalVariables(c(
 #' @param spreadProbRel  A raster layer of of relative probabilities, with non-flammable pixels `NA`.
 #'
 #' @param spreadProb     A raster layer of spread probabilities, with non-flammable pixels `NA`.
+#'
+#' @param omitPixels     An optional vector of pixel IDs to omit from fire size calculations.
+#'                       Can be used if `spreadProb` or `spreadProbRel` do not designate
+#'                       non-flammable pixels as `NA`, to allow fires to move through these pixels,
+#'                       while excluding these pixels from burn area calculations.
+#'                       Useful in study areas with discontinuous fuels, which would otherwise
+#'                       result in fires getting 'stuck' too often, and not reach their target size.
 #'
 #' @details
 #' This algorithm is a modified contagious cellular automaton.
@@ -80,7 +88,7 @@ utils::globalVariables(c(
 landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
                            spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L,
                            sizeCutoffs = c(8e3, 2e4), spreadProbRel = spreadProbRel,
-                           spreadProb = 0.77) {
+                           spreadProb = 0.77, omitPixels = NULL) {
   stopifnot(is.integer(maxRetriesPerID))
 
   ## convert to pixels
@@ -99,6 +107,14 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
     neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1])
     # skipChecks = FALSE
   )
+
+  if (!is.null(omitPixels)) {
+    ## ensure non-flammable pixels omitted from fire size calculations
+    for (i in a[pixels %in% omitPixels, ]$initialPixels) {
+      attr(a, "spreadState")$clusterDT[initialPixels == i, size := size - 1L]
+    }
+  }
+
   whActive <- attr(a, "spreadState")$whActive
   while (any(whActive)) {
     set(a, NULL, "numActive", 0L)
@@ -132,6 +148,13 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
       neighProbs = data.table::transpose(as.list(b[state == "activeSource", c("pNoNewSpawn", "pSpawnNewActive")])),
       skipChecks = TRUE
     )
+
+    if (!is.null(omitPixels)) {
+      ## ensure non-flammable pixels omitted from fire size calculations
+      for (i in a[pixels %in% omitPixels, ]$initialPixels) {
+        attr(a, "spreadState")$clusterDT[initialPixels == i, size := size - 1L]
+      }
+    }
 
     set(a, NULL, "order", seq_len(NROW(a)))
     whActive <- attr(a, "spreadState")$whActive

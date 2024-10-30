@@ -14,7 +14,8 @@ landmine_burn1(
   maxRetriesPerID = 10L,
   sizeCutoffs = c(8000, 20000),
   spreadProbRel = spreadProbRel,
-  spreadProb = 0.77
+  spreadProb = 0.77,
+  omitPixels = NULL
 )
 
 landmine_burn(
@@ -55,9 +56,16 @@ These are 2 size (in hectares) thresholds that affect which
 \item{spreadProbRel}{A raster layer of of relative probabilities, with non-flammable pixels \code{NA}.}
 
 \item{spreadProb}{A raster layer of spread probabilities, with non-flammable pixels \code{NA}.}
+
+\item{omitPixels}{An optional vector of pixel IDs to omit from fire size calculations.
+Can be used if \code{spreadProb} or \code{spreadProbRel} do not designate
+non-flammable pixels as \code{NA}, to allow fires to move through these pixels,
+while excluding these pixels from burn area calculations.
+Useful in study areas with discontinuous fuels, which would otherwise
+result in fires getting 'stuck' too often, and not reach their target size.}
 }
 \value{
-A \code{data.table} with 4 columns
+A \code{data.table} with 4 columns (\code{initialPixels}, \code{pixels}, \code{state}, \code{order}).
 }
 \description{
 The main function for the Andison Fire Module. See details.
