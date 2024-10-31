@@ -13,7 +13,7 @@ landmine_burn1(
   spawnNewActive = c(0.46, 0.2, 0.26, 0.11),
   maxRetriesPerID = 10L,
   sizeCutoffs = c(8000, 20000),
-  spreadProbRel = spreadProbRel,
+  spreadProbRel = NA_real_,
   spreadProb = 0.77,
   omitPixels = NULL
 )

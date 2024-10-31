@@ -87,7 +87,7 @@ utils::globalVariables(c(
 #' @rdname landmine-burn
 landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
                            spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L,
-                           sizeCutoffs = c(8e3, 2e4), spreadProbRel = spreadProbRel,
+                           sizeCutoffs = c(8e3, 2e4), spreadProbRel = NA_real_,
                            spreadProb = 0.77, omitPixels = NULL) {
   stopifnot(is.integer(maxRetriesPerID))
 
@@ -110,8 +110,10 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
 
   if (!is.null(omitPixels)) {
     ## ensure non-flammable pixels omitted from fire size calculations
-    for (i in a[pixels %in% omitPixels, ]$initialPixels) {
-      attr(a, "spreadState")$clusterDT[initialPixels == i, size := size - 1L]
+    for (i in a[pixels %in% omitPixels & state == "activeSource", ]$initialPixels) {
+      if (length(i)) {
+        attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
+      }
     }
   }
 
@@ -151,8 +153,10 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
 
     if (!is.null(omitPixels)) {
       ## ensure non-flammable pixels omitted from fire size calculations
-      for (i in a[pixels %in% omitPixels, ]$initialPixels) {
-        attr(a, "spreadState")$clusterDT[initialPixels == i, size := size - 1L]
+      for (i in a[pixels %in% omitPixels & state == "activeSource", ]$initialPixels) {
+        if (length(i)) {
+          attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
+        }
       }
     }
 
