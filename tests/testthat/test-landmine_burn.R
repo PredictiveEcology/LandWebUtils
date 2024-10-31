@@ -101,7 +101,7 @@ test_that("landmine burns reasonably for 'burny' scenarios", {
 
   ## this time, allow spread on non-flammable pixels (don't set NAs)
   # lthfc[nonflam] <- NA_integer_
-  ROSmap[nonflam] <- 30L
+  ROSmap[nonflam] <- 6L
   # spreadProb[nonflam] <- NA_integer_
 
   initialPixels <- c(
