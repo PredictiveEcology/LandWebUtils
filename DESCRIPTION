@@ -5,8 +5,8 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2024-10-31
-Version: 1.0.2
+Date: 2025-02-11
+Version: 1.0.3
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@NRCan-RNCan.gc.ca",
     role = c("aut"), comment=c(ORCID = "0000-0002-6914-8316")),
@@ -23,6 +23,7 @@ Imports:
     graphics,
     grDevices,
     dplyr,
+    fs,
     future.apply,
     LandR (>= 0.0.5),
     magrittr,
@@ -67,6 +68,7 @@ Collate:
     'largePatches.R'
     'leading.R'
     'rasterListByPoly.R'
+    'simfiles.R'
     'zzz.R'
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3

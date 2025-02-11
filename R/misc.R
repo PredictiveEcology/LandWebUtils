@@ -27,31 +27,3 @@ cleanAreaName <- Vectorize(function(area) {
     grep("Dispersal|ROS", ., invert = TRUE, value = TRUE) %>%
     paste(., collapse = "_")
 })
-
-#' Find LandWeb simulation output file
-#'
-#' @param outputDir path to LandWeb output directory.
-#' @param rep integer giving the replicate id, or character string in the form of `"rep01"`.
-#'
-#' @return path to the file
-#' @export
-findSimFile <- function(outputDir, rep) {
-  if (is.numeric(rep)) {
-    rep <- sprintf("rep%02d", as.integer(rep))
-  }
-  ## TODO: check other file prefixes
-  fsim <- file.path(outputDir, rep, "mySimOut_1000.qs")
-
-  ## try alt/older names
-  if (!file.exists(fsim)) {
-    fsim <- file.path(outputDir, rep, "mySimOut_1000.rds")
-  }
-
-  if (!file.exists(fsim)) {
-    fsim <- file.path(outputDir, rep, "mySimOut_year1000.rds")
-  }
-
-  stopifnot(file.exists(fsim))
-
-  return(fsim)
-}
