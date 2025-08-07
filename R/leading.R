@@ -12,12 +12,16 @@ utils::globalVariables(c(
 #'
 #' @param tsf A single filename, relative or absolute, pointing to a Time Since Fire raster.
 #'            Can be any format that `raster` can use.
+#'
 #' @param vtm A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
 #'            Can be any format that `raster` can use.
+#'
 #' @param poly A single `SpatialPolygonsDataFrame` object or a factor `RasterLayer`.
-#'             This layer MUST have a column labelled `shinyLabel`
+#'             This layer MUST have a column labelled `shinyLabel`.
+#'
 #' @param ageClasses A character vector with labels for age classes to bin the `tsf` times,
 #'                   e.g., `c("Young", "Immature", "Mature", "Old")`. See `.ageClasses`.
+#'
 #' @param ageClassCutOffs A numeric vector with the endpoints for the `ageClasses`.
 #'                        Should be `length(ageClasses) + 1`. See `.ageClassCutOffs`.
 #'
@@ -29,10 +33,6 @@ utils::globalVariables(c(
 #'         for each given age class within each polygon.
 #'
 #' @export
-#' @importFrom data.table set setDT rbindlist
-#' @importFrom raster factorValues ncell
-#' @importFrom stats na.omit
-#' @importFrom utils tail
 LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses,
                                      sppEquivCol, sppEquiv) {
   ## main function code
@@ -90,7 +90,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
 
   ## ensure species names all consistent (TODO: ensure this propagates)
   whMixed <- which(types[, 2] == "Mixed")
-  types[, 2] <- equivalentName(types[, 2], sppEquiv, sppEquivCol)
+  types[, 2] <- LandR::equivalentName(types[, 2], sppEquiv, sppEquivCol)
   types[whMixed, 2] <- "Mixed"
 
   levels(ras) <- data.frame(eTable, ageClass = types[, 1], vegCover = types[, 2])
@@ -101,7 +101,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
       stop("poly must have a column 'shinyLabel'")
     }
 
-    poly <- Cache(fasterize2, rasTsf, poly, field = "polygonNum")
+    poly <- reproducible::Cache(fasterize2, rasTsf, poly, field = "polygonNum")
   }
   levs <- raster::levels(poly)[[1]]
 
@@ -155,7 +155,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   ## ensure species names all consistent (TODO: ensure this propagates)
   whAll <- which(coverClasses == "All species")
   whMixed <- which(coverClasses == "Mixed")
-  coverClasses <- equivalentName(coverClasses, sppEquiv, sppEquivCol)
+  coverClasses <- LandR::equivalentName(coverClasses, sppEquiv, sppEquivCol)
   coverClasses[c(whAll, whMixed)] <- c("All species", "Mixed")
 
   allCombos <- expand.grid(

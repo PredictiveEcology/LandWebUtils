@@ -16,8 +16,6 @@ utils::globalVariables(c(
 #' @return TODO: description needed
 #'
 #' @export
-#' @importFrom data.table data.table fread melt set setkey
-#' @importFrom reproducible asPath Cache
 loadCASFRI <- function(CASFRIRas, attrFile, headerFile, sppEquiv, sppEquivCol,
                        type = c("cover", "age")) {
   # The ones we want
@@ -109,10 +107,6 @@ loadCASFRI <- function(CASFRIRas, attrFile, headerFile, sppEquiv, sppEquivCol,
 #' @return TODO: description needed
 #'
 #' @export
-#' @importFrom data.table setkey
-#' @importFrom magrittr %>%
-#' @importFrom reproducible asPath Cache
-#' @importFrom raster crs crs<- NAvalue<- raster setValues stack writeRaster
 CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
                             sppEquiv, sppEquivCol, destinationPath) {
   # The ones we want
@@ -129,7 +123,7 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 
   ## create list and template raster
   spRasts <- list()
-  spRas <- raster(CASFRIRas) %>% setValues(., NA_integer_)
+  spRas <- raster(CASFRIRas) |> setValues(NA_integer_)
 
   ## NOT SURE IF THESE LINES ABOUT NA are relevant -- Eliot Dec 7
   ## selected spp absent from CASFRI data
@@ -170,7 +164,7 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
     }
     aa2 <- CASFRIattrLong[value %in% spCASFRI][, min(100L, sum(pct)), by = GID]
     setkey(aa2, GID)
-    cc <- aa2[CASFRIdt] %>% na.omit()
+    cc <- aa2[CASFRIdt] |> na.omit()
     rm(aa2)
     spRasts[[sp]][cc$rastInd] <- cc$V1
     message("  ", sp, " writing to disk")
@@ -208,7 +202,6 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 #' @inheritParams LandR::prepSpeciesLayers_KNN
 #'
 #' @export
-#' @importFrom reproducible asPath Cache prepInputs
 prepSpeciesLayers_CASFRI <- function(destinationPath, outputPath,
                                      url = NULL,
                                      studyArea, rasterToMatch,

@@ -55,12 +55,6 @@ utils::globalVariables(c(
 #' @param dPath Destination path for the resulting PNG files.
 #'
 #' @export
-#' @importFrom data.table setnames
-#' @importFrom magrittr %>%
-#' @importFrom raster res
-#' @importFrom reproducible checkPath
-#' @importFrom tools toTitleCase
-#' @importFrom utils write.csv
 runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
   dPath <- checkPath(dPath, create = TRUE)
 
@@ -153,20 +147,15 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
 
 #' Generate histograms for leading vegetation cover
 #'
-#' TODO: description needed
-#'
 #' @param map A `map` object.
-#' @param functionName TODO: description needed
-#' @param analysisGroups TODO: description needed
+#'
+#' @param functionName Character specifying the name of the function to apply.
+#'
+#' @param analysisGroups Character specifying the analysis groups to run.
+#'
 #' @param dPath Destination path for the resulting PNG files.
 #'
 #' @export
-#' @importFrom data.table setnames
-#' @importFrom magrittr %>%
-#' @importFrom raster res
-#' @importFrom reproducible checkPath
-#' @importFrom tools toTitleCase
-#' @importFrom utils write.csv
 #' @include misc.R
 runHistsVegCover <- function(map, functionName, analysisGroups, dPath) {
   allRepPolys <- na.omit(map@metadata[[analysisGroups]])
@@ -180,8 +169,8 @@ runHistsVegCover <- function(map, functionName, analysisGroups, dPath) {
     allData <- unique(allData) ## remove duplicates; with LandWeb#89
 
     ## WORKAROUND inconsistent species names
-    allData[["vegCover"]] <- gsub(" leading", "", allData[["vegCover"]]) %>% ## no longer needed?
-      tools::toTitleCase() %>%
+    allData[["vegCover"]] <- gsub(" leading", "", allData[["vegCover"]]) |> ## no longer needed?
+      tools::toTitleCase() |>
       as.factor() ## match CC raster names
     allData[vegCover == "Fir", vegCover := "Abie_sp"] ## so far, rep01 is the only one needing fixing
     allData[vegCover == "Wh Spruce", vegCover := "Pice_gla"]

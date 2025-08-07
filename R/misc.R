@@ -23,7 +23,7 @@ analysesOutputsTimes <- function(period, interval) {
 #'
 #' @export
 cleanAreaName <- Vectorize(function(area) {
-  strsplit(area, "_")[[1]] %>%
-    grep("Dispersal|ROS", ., invert = TRUE, value = TRUE) %>%
-    paste(., collapse = "_")
+  strsplit(area, "_")[[1]] |>
+    grep("Dispersal|ROS", x = _, invert = TRUE, value = TRUE) |>
+    paste(collapse = "_")
 })

@@ -26,11 +26,6 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #'                  rasters to `poly`. Default `FALSE` for backwards compatibility.
 #'
 #' @export
-#' @importFrom data.table data.table rbindlist
-#' @importFrom LandR equivalentName
-#' @importFrom map areaAndPolyValue fasterize2 .rasterToMemory
-#' @importFrom raster compareRaster extend levels raster reclassify
-#' @importFrom reproducible Cache postProcess
 LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageClasses,
                          sppEquivCol, sppEquiv, crop2poly = FALSE) {
   vtm <- vtm[1]

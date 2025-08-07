@@ -15,7 +15,7 @@ test_that("landmine burns reasonably", {
 
   rcl <- cbind(1L:5L, c(21L, 6L, 12L, 0L, 30L)) ## make interior poly (4) non-flammable
 
-  ROSmap <- SpaDES.tools::randomPolygons(r, 5) %>%
+  ROSmap <- SpaDES.tools::randomPolygons(r, 5) |>
     raster::reclassify(rcl)
 
   nonflam <- which(ROSmap[] == 0L)
@@ -88,7 +88,7 @@ test_that("landmine burns reasonably for 'burny' scenarios", {
 
   rcl <- cbind(1L:5L, c(21L, 6L, 12L, 0L, 30L)) ## make interior poly (4) non-flammable
 
-  ROSmap <- SpaDES.tools::randomPolygons(r, 5) %>%
+  ROSmap <- SpaDES.tools::randomPolygons(r, 5) |>
     raster::reclassify(rcl)
 
   nonflam <- which(ROSmap[] == 0L)

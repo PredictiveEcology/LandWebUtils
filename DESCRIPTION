@@ -6,7 +6,7 @@ URL:
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
 Date: 2025-02-11
-Version: 1.0.3
+Version: 1.0.3.9000
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@NRCan-RNCan.gc.ca",
     role = c("aut"), comment=c(ORCID = "0000-0002-6914-8316")),
@@ -18,15 +18,14 @@ Authors@R: c(
 Depends:
     R (>= 4.2)
 Imports:
-    data.table (>= 1.10.4),
+    data.table,
     ggplot2,
     graphics,
     grDevices,
     dplyr,
     fs,
     future.apply,
-    LandR (>= 0.0.5),
-    magrittr,
+    LandR,
     map,
     methods,
     pemisc,
@@ -34,9 +33,13 @@ Imports:
     raster,
     rasterVis,
     reproducible,
+    scales,
+    sf,
+    sp,
     SpaDES.tools,
     tools,
-    utils
+    utils,
+    stats
 Suggests:
     covr,
     parallel,
@@ -47,7 +50,7 @@ Remotes:
     PredictiveEcology/LandR@LandWeb,
     PredictiveEcology/map@development,
     PredictiveEcology/pemisc@development,
-    cran/SDMTools,
+    achubaty/SDMTools,
     PredictiveEcology/SpaDES.tools@development
 Additional_repositories: https://prodictiveecology.r-universe.dev
 License: GPL-3
@@ -67,6 +70,7 @@ Collate:
     'landmine.R'
     'largePatches.R'
     'leading.R'
+    'plotting.R'
     'rasterListByPoly.R'
     'simfiles.R'
     'zzz.R'

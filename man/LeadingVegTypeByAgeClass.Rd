@@ -22,7 +22,7 @@ Can be any format that \code{raster} can use.}
 Can be any format that \code{raster} can use.}
 
 \item{poly}{A single \code{SpatialPolygonsDataFrame} object or a factor \code{RasterLayer}.
-This layer MUST have a column labelled \code{shinyLabel}}
+This layer MUST have a column labelled \code{shinyLabel}.}
 
 \item{ageClassCutOffs}{A numeric vector with the endpoints for the \code{ageClasses}.
 Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.}

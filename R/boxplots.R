@@ -4,32 +4,25 @@ utils::globalVariables(c(
 ))
 
 #' @export
-#' @importFrom data.table data.table
-#' @importFrom dplyr group_by summarize
-#' @importFrom graphics boxplot points
-#' @importFrom grDevices dev.off png
-#' @importFrom magrittr %>%
-#' @importFrom stats quantile
-#' @importFrom utils write.table
 .doPlotBoxplot <- function(data, authStatus, fname = NULL, ageClasses,
                            fout = NULL, vegCover, zone, ...) {
   if (!is.null(fname)) png(fname, height = 600, width = 800, units = "px")
   a <- boxplot(proportion ~ as.factor(ageClass), data, ...)
 
   ## calculate the 12.5% and 87.5% quantiles in addition to the quartiles
-  q12.5 <- data %>%
-    dplyr::group_by(as.factor(ageClass)) %>%
+  q12.5 <- data |>
+    dplyr::group_by(as.factor(ageClass)) |>
     dplyr::summarize(
       quants = quantile(proportion, probs = 0.125)
-    ) %>%
-    `$`(quants)
+    ) |>
+    purrr::pluck("quants")
 
-  q87.5 <- data %>%
-    dplyr::group_by(as.factor(ageClass)) %>%
+  q87.5 <- data |>
+    dplyr::group_by(as.factor(ageClass)) |>
     dplyr::summarize(
       quants = quantile(proportion, probs = 0.875)
-    ) %>%
-    `$`(quants)
+    ) |>
+    purrr::pluck("quants")
 
   boxplotData <- data.table(
     zone = rep(zone, 4),
@@ -61,21 +54,12 @@ utils::globalVariables(c(
 
 #' Generate box and whisker plots for leading vegetation cover
 #'
-#' TODO: description needed
-#'
 #' @param map A `map` object.
 #' @param functionName TODO: description needed
 #' @param analysisGroups TODO: description needed
 #' @param dPath Destination path for the resulting PNG files.
 #'
 #' @export
-#' @importFrom data.table setnames
-#' @importFrom magrittr %>%
-#' @importFrom map rasterToMatch
-#' @importFrom raster res
-#' @importFrom reproducible checkPath
-#' @importFrom tools toTitleCase
-#' @importFrom utils write.csv
 #' @include misc.R
 runBoxPlotsVegCover <- function(map, functionName, analysisGroups, dPath) {
   dPath <- checkPath(dPath, create = TRUE)
