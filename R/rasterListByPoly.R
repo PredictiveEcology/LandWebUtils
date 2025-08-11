@@ -14,23 +14,27 @@
 #' @return list of `RasterLayer` objects with attributes `reps`, `times`, `polyNames`
 #'
 #' @export
-#' @importFrom future.apply future_lapply
-#' @importFrom purrr transpose
-#' @importFrom raster crop mask raster
-#' @importFrom tools file_path_sans_ext
 rasterListByPoly <- function(files, polys, names, col, filter) {
-  rlbp <- future.apply::future_lapply(files, function(f) {
-    byPoly <- lapply(names, function(polyName) {
-      subpoly <- polys[polys[[col]] == polyName, ]
-      r <- raster::raster(f)
-      rc <- raster::crop(r, subpoly)
-      rcm <- raster::mask(rc, subpoly)
-      rcm
-    })
-    names(byPoly) <- paste(tools::file_path_sans_ext(basename(f)), names, sep = "_") ## <filter>_yearXXXX_polyName
+  rlbp <- future.apply::future_lapply(
+    files,
+    function(f) {
+      byPoly <- lapply(names, function(polyName) {
+        subpoly <- polys[polys[[col]] == polyName, ]
+        r <- raster::raster(f)
+        rc <- raster::crop(r, subpoly)
+        rcm <- raster::mask(rc, subpoly)
+        rcm
+      })
+      names(byPoly) <- paste(
+        tools::file_path_sans_ext(basename(f)),
+        names,
+        sep = "_"
+      ) ## <filter>_yearXXXX_polyName
 
-    byPoly
-  }, future.packages = c("raster", "sp", "sf"))
+      byPoly
+    },
+    future.packages = c("raster", "sp", "sf")
+  )
   names(rlbp) <- basename(dirname(files)) ## repXX
   rlbp <- unlist(rlbp, recursive = FALSE, use.names = TRUE)
 

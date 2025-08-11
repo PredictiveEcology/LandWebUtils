@@ -12,7 +12,7 @@ to use on the current machine (\code{localhost}), or a character vector of
 hostnames on which to run worker copies.}
 }
 \value{
-a cluster objct
+a cluster object
 }
 \description{
 Setup a cluster for LandMine optimization

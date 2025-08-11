@@ -5,8 +5,6 @@
 #'               that will be part of the cleanup of polygon. Anything below
 #'               this will be `NA`.
 #' @export
-#' @importFrom pemisc createPrjFile
-#' @importFrom raster shapefile
 .cleanLandWebStudyArea <- function(poly, minFRI = 40) {
   if (is.character(poly)) {
     createPrjFile(poly)
@@ -41,7 +39,6 @@
 #' @param ...  Passed to `fn`
 #'
 #' @export
-#' @importFrom stats na.omit
 polygonClean <- function(poly, fn = NULL, type = NULL, ...) {
   if (is.null(fn)) {
     if (is.null(type)) {

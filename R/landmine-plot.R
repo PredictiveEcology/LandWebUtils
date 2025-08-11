@@ -1,5 +1,9 @@
 utils::globalVariables(c(
-  "FRI", "haBurned", "LTHFC", "studyArea", "time"
+  "FRI",
+  "haBurned",
+  "LTHFC",
+  "studyArea",
+  "time"
 ))
 
 #' LandMine diagnostic plots
@@ -21,10 +25,12 @@ NULL
 #'                           `FRI` (numeric) identifies the fire return interval polygon.
 #'
 #' @export
-#' @importFrom ggplot2 aes element_text geom_area ggplot theme
 #' @rdname landmine_plots
 landmine_plot_areaBurnedOverTime <- function(areaBurnedOverTime) {
-  ggplot(areaBurnedOverTime, aes(x = time, y = haBurned, fill = FRI, ymin = 0)) +
+  ggplot(
+    areaBurnedOverTime,
+    aes(x = time, y = haBurned, fill = FRI, ymin = 0)
+  ) +
     # geom_line(size = 1.5) +
     geom_area() +
     theme(legend.text = element_text(size = 6))
@@ -37,12 +43,14 @@ landmine_plot_areaBurnedOverTime <- function(areaBurnedOverTime) {
 #' @param ... additional arguments passed to [rasterVis::levelplot()].
 #'
 #' @export
-#' @importFrom rasterVis levelplot PuOrTheme
 #' @rdname landmine_plots
 landmine_plot_LTHFC <- function(lthfc, studyAreaName, ...) {
   rasterVis::levelplot(
     lthfc,
-    main = paste("Long-term historic fire cycle (LTHFC) map for", studyAreaName),
+    main = paste(
+      "Long-term historic fire cycle (LTHFC) map for",
+      studyAreaName
+    ),
     margin = FALSE,
     par.settings = PuOrTheme,
     ...
@@ -56,8 +64,6 @@ landmine_plot_LTHFC <- function(lthfc, studyAreaName, ...) {
 #'                   `FRI` (numeric) is the simulated FRI.
 #'
 #' @export
-#' @importFrom ggplot2 aes geom_abline geom_point ggplot ggtitle
-#' @importFrom ggplot2 scale_x_continuous scale_y_continuous theme_bw xlab ylab
 #' @rdname landmine_plots
 landmine_plot_FRI <- function(friSummary) {
   studyAreaName <- unique(friSummary$simArea)
@@ -65,7 +71,10 @@ landmine_plot_FRI <- function(friSummary) {
     geom_point() +
     xlab("Expected fire return interval (years)") +
     ylab("Simulated fire return interval (years)") +
-    ggtitle(paste("Expected vs. simulated fire return intervals in", studyAreaName)) +
+    ggtitle(paste(
+      "Expected vs. simulated fire return intervals in",
+      studyAreaName
+    )) +
     theme_bw() +
     scale_x_continuous(limits = c(0, NA)) +
     scale_y_continuous(limits = c(0, NA)) +
