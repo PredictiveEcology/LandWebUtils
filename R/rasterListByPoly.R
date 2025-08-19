@@ -11,7 +11,7 @@
 #'               (i.e., when extracting reps, times, etc. from filenames)
 #'               (e.g., `'rstTimeSinceFire_'`, `'vegTypeMap_'`)
 #'
-#' @return list of `RasterLayer` objects with attributes `reps`, `times`, `polyNames`
+#' @return list of `SpatRaster` objects with attributes `reps`, `times`, `polyNames`
 #'
 #' @export
 rasterListByPoly <- function(files, polys, names, col, filter) {
@@ -20,10 +20,8 @@ rasterListByPoly <- function(files, polys, names, col, filter) {
     function(f) {
       byPoly <- lapply(names, function(polyName) {
         subpoly <- polys[polys[[col]] == polyName, ]
-        r <- raster::raster(f)
-        rc <- raster::crop(r, subpoly)
-        rcm <- raster::mask(rc, subpoly)
-        rcm
+        terra::rast(f) |>
+          terra::crop(subpoly, mask = TRUE)
       })
       names(byPoly) <- paste(
         tools::file_path_sans_ext(basename(f)),
@@ -33,7 +31,7 @@ rasterListByPoly <- function(files, polys, names, col, filter) {
 
       byPoly
     },
-    future.packages = c("raster", "sp", "sf")
+    future.packages = c("terra", "sf")
   )
   names(rlbp) <- basename(dirname(files)) ## repXX
   rlbp <- unlist(rlbp, recursive = FALSE, use.names = TRUE)

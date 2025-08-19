@@ -17,7 +17,7 @@ meanTruncPareto <- function(k, lower, upper, alpha) {
 
 #' LandMine burn optimization function
 #'
-#' @param ros             `RasterLayer` of LandMine Raster Of Spread values
+#' @param ros             `SpatRaster` of LandMine Raster Of Spread values
 #' @param centreCell      TODO
 #' @param fireSize        TODO
 #' @param spawnNewActive  TODO
@@ -25,7 +25,7 @@ meanTruncPareto <- function(k, lower, upper, alpha) {
 #' @param spreadProb      TODO
 #'
 #' @return named list of length 2 containing:
-#'         `burnedMap`: `rasterLayer` of burned pixels;
+#'         `burnedMap`: `SpatRaster` of burned pixels;
 #'         `LM`: `data.frame` of patch statistics from `SDMTools::PatchStats()`.
 #'
 #' @export
@@ -46,13 +46,13 @@ landmine_optim_burnFun <- function(
     spawnNewActive = spawnNewActive,
     sizeCutoffs = sizeCutoffs
   )
-  burnedMap <- raster(ros)
+  burnedMap <- terra::rast(ros)
   burnedMap[] <- NA
 
   burnedMap[burned$pixels] <- burned$initialPixels
 
   ## TODO: SDMTools is orphaned and no longer maintained;
-  ## use landscapemetrics package instead to calculate the perimiter to area ratio of patches
+  ## use landscapemetrics package instead to calculate the perimeter to area ratio of patches
   LM <- SDMTools::PatchStat(burnedMap, cellsize = res(burnedMap)[1])
   list(burnedMap = burnedMap, LM = LM)
 }

@@ -11,13 +11,12 @@ utils::globalVariables(c(
 #' It is also recursive of passed a vector of filenames for `tsf` and `vtm`.
 #'
 #' @param tsf A single filename, relative or absolute, pointing to a Time Since Fire raster.
-#'            Can be any format that `raster` can use.
+#'            Can be any format that `terra` can use.
 #'
 #' @param vtm A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
-#'            Can be any format that `raster` can use.
+#'            Can be any format that `terra` can use.
 #'
-#' @param poly A single `SpatialPolygonsDataFrame` object or a factor `RasterLayer`.
-#'             This layer MUST have a column labelled `shinyLabel`.
+#' @param poly A single `sf` object or a factor `SpatRaster`.
 #'
 #' @param ageClasses A character vector with labels for age classes to bin the `tsf` times,
 #'                   e.g., `c("Young", "Immature", "Mature", "Old")`. See `.ageClasses`.
@@ -37,7 +36,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
                                      sppEquivCol, sppEquiv) {
   ## main function code
   startTime <- Sys.time()
-  if (tail(ageClassCutOffs, 1) != Inf) {
+  if (utils::tail(ageClassCutOffs, 1) != Inf) {
     ageClassCutOffs <- c(ageClassCutOffs, Inf)
   }
 
@@ -47,13 +46,13 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   }
 
   ## prepare tsf rasters
-  timeSinceFireFilesRast <- raster(tsf[1])
+  timeSinceFireFilesRast <- terra::rast(tsf[1])
   timeSinceFireFilesRast[] <- timeSinceFireFilesRast[]
 
   ## Use this when NOT in parallel
   # timeSinceFireFilesRast <- Cache(rasterToMemory, tsf[1])
 
-  rasTsf <- reclassify(
+  rasTsf <- terra::classify(
     timeSinceFireFilesRast,
     cbind(
       from = ageClassCutOffs[-length(ageClassCutOffs)] - 0.1,
@@ -65,7 +64,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   levels(rasTsf) <- data.frame(ID = seq_along(ageClasses), Factor = ageClasses)
 
   ## prepare vtm rasters
-  rasVeg <- raster(vtm[1])
+  rasVeg <- terra::rast(vtm[1])
   rasVeg[] <- rasVeg[] # 3 seconds
 
   splitVal <- paste0("_", 75757575, "_") # unlikely to occur for any other reason
@@ -74,13 +73,13 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   nas3 <- is.na(rasVeg[]) | rasVeg[] == 0
   nas1 <- is.na(rasTsf[]) | rasTsf[] == 0
   nas <- nas3 | nas1
-  name1 <- as.character(factorValues(rasTsf, rasTsf[][!nas])[, 1])
-  # as.character(raster::levels(rasTsf)[[1]]$Factor)[rasTsf[][!nas]]
-  name3 <- as.character(factorValues(rasVeg, rasVeg[][!nas])[, 1])
-  ## as.character(raster::levels(rasVeg)[[1]]$Factor)[rasVeg[][!nas]]
+  name1 <- as.character(pemisc::factorValues2(rasTsf, rasTsf[][!nas])[, 1]) ## TODO: test / verify use of terra w/ factorValues2
+  # as.character(terra::levels(rasTsf)[[1]]$Factor)[rasTsf[][!nas]]
+  name3 <- as.character(pemisc::factorValues2(rasVeg, rasVeg[][!nas])[, 1]) ## TODO: test / verify use of terra w/ factorValues2
+  ## as.character(terra::levels(rasVeg)[[1]]$Factor)[rasVeg[][!nas]]
   ff <- paste(name1, name3, sep = splitVal) # 4 seconds
 
-  ras <- raster(rasVeg)
+  ras <- terra::rast(rasVeg)
   ffFactor <- factor(ff)
   ras[!nas] <- ffFactor # 2 seconds
 
@@ -103,16 +102,12 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
 
     poly <- reproducible::Cache(fasterize2, rasTsf, poly, field = "polygonNum")
   }
-  levs <- raster::levels(poly)[[1]]
+  levs <- terra::levels(poly)[[1]]
 
   ## this is same, if all values present: e.g., 1, 2, 3, 4, 5 ...,
   ## but not if missing: e.g., 1, 2, 3, 5
-  levs <- factorValues(poly, levs$ID)
-  facVals <- factorValues(
-    poly,
-    poly[],
-    att = c("shinyLabel", "polygonNum")
-  )
+  levs <- pemisc::factorValues2(poly, levs$ID)  ## TODO: test / verify use factorValues2
+  facVals <- pemisc::factorValues2(poly, poly[], att = c("shinyLabel", "polygonNum"))
 
   bb <- data.table(
     zone = facVals$shinyLabel,
@@ -120,7 +115,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     cell = seq_len(ncell(ras))
   )
 
-  bb[, c("ageClass", "vegCover") := factorValues(ras, ras[][bb$cell], att = c("ageClass", "vegCover"))]
+  bb[, c("ageClass", "vegCover") := pemisc::factorValues2(ras, ras[][bb$cell], att = c("ageClass", "vegCover"))]
   bb <- na.omit(bb)
 
   ## One species at a time -- collapse polygons with same 'zone' name
@@ -135,8 +130,8 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   tabulated <- rbindlist(list(tabulated, tabulated2), use.names = TRUE, fill = TRUE)
 
   ## column containing the factor names varies, so we need to search for the right one
-  colID <- which(colnames(raster::levels(rasVeg)[[1]]) %in% c("category", "Factor", "VALUE"))
-  coverClasses <- raster::levels(rasVeg)[[1]][[colID]]
+  colID <- which(colnames(terra::levels(rasVeg)[[1]]) %in% c("category", "Factor", "VALUE"))
+  coverClasses <- terra::levels(rasVeg)[[1]][[colID]]
   if (is.factor(coverClasses)) {
     coverClasses <- levels(coverClasses)
   }

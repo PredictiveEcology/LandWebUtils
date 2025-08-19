@@ -17,7 +17,7 @@ utils::globalVariables(c(
 #' @note The original version (`landmine_burn()`) is deprecated and should not be used.
 #'       Use `landmine_burn1()` instead.
 #'
-#' @param landscape      A `RasterLayer`. This only provides the extent and
+#' @param landscape      A `SpatRaster`. This only provides the extent and
 #'                       resolution for the fire spread algorithm.
 #'
 #' @param startCells     A numeric vector indicating the indices on the `landscape`

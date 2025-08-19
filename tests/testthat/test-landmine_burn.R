@@ -9,14 +9,14 @@ test_that("landmine burns reasonably", {
 
   nx <- ny <- 100L
 
-  r <- raster::raster(nrows = ny, ncols = nx,
-                      xmn = -nx / 2, xmx = nx / 2,
-                      ymn = -ny / 2, ymx = ny / 2)
+  r <- terra::rast(nrows = ny, ncols = nx,
+                   xmin = -nx / 2, xmax = nx / 2,
+                   ymin = -ny / 2, ymax = ny / 2)
 
   rcl <- cbind(1L:5L, c(21L, 6L, 12L, 0L, 30L)) ## make interior poly (4) non-flammable
 
   ROSmap <- SpaDES.tools::randomPolygons(r, 5) |>
-    raster::reclassify(rcl)
+    terra::classify(rcl)
 
   nonflam <- which(ROSmap[] == 0L)
 
@@ -52,12 +52,12 @@ test_that("landmine burns reasonably", {
   )
 
   if (interactive()) {
-    raster::plot(ROSmap)
+    terra::plot(ROSmap)
 
     burned <- ROSmap
     burned[fires$pixels] <- 50L
     # burned[initialPixels] <- 50L
-    raster::plot(burned)
+    terra::plot(burned)
   }
 
   expect_false(any(fires$pixels %in% nonflam))
@@ -82,14 +82,14 @@ test_that("landmine burns reasonably for 'burny' scenarios", {
 
   nx <- ny <- 100L
 
-  r <- raster::raster(nrows = ny, ncols = nx,
-                      xmn = -nx / 2, xmx = nx / 2,
-                      ymn = -ny / 2, ymx = ny / 2)
+  r <- terra::rast(nrows = ny, ncols = nx,
+                   xmin = -nx / 2, xmax = nx / 2,
+                   ymin = -ny / 2, ymax = ny / 2)
 
   rcl <- cbind(1L:5L, c(21L, 6L, 12L, 0L, 30L)) ## make interior poly (4) non-flammable
 
   ROSmap <- SpaDES.tools::randomPolygons(r, 5) |>
-    raster::reclassify(rcl)
+    terra::classify(rcl)
 
   nonflam <- which(ROSmap[] == 0L)
 
@@ -126,13 +126,13 @@ test_that("landmine burns reasonably for 'burny' scenarios", {
   )
 
   if (interactive()) {
-    raster::plot(ROSmap)
+    terra::plot(ROSmap)
 
     burned <- ROSmap
     burned[nonflam] <- NA_integer_
     burned[fires$pixels] <- 50L
     # burned[initialPixels] <- 50L
-    raster::plot(burned)
+    terra::plot(burned)
   }
 
   expect_true(any(fires$pixels %in% nonflam)) ## fires can spread into NA

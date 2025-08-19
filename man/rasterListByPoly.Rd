@@ -20,7 +20,7 @@ rasterListByPoly(files, polys, names, col, filter)
 (e.g., \code{'rstTimeSinceFire_'}, \code{'vegTypeMap_'})}
 }
 \value{
-list of \code{RasterLayer} objects with attributes \code{reps}, \code{times}, \code{polyNames}
+list of \code{SpatRaster} objects with attributes \code{reps}, \code{times}, \code{polyNames}
 }
 \description{
 Create a list of rasters in each rep, at each timestep, for each polygon area

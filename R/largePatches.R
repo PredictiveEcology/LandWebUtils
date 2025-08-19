@@ -5,10 +5,10 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #' TODO: needs description
 #'
 #' @param tsf A single filename, relative or absolute, pointing to a Time Since Fire raster.
-#'            Can be any format that `raster` can use.
+#'            Can be any format that `terra` can use.
 #' @param vtm A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
-#'            Can be any format that `raster` can use.
-#' @param poly A single `SpatialPolygonsDataFrame` object or a factor `RasterLayer`.
+#'            Can be any format that `terra` can use.
+#' @param poly A single `sf` object or a factor `SpatRaster`.
 #'             This layer MUST have a column labelled `shinyLabel`
 #'
 #' @param labelColumn TODO: description needed
@@ -41,7 +41,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     timeSinceFireFilesRast <- Cache(postProcess, timeSinceFireFilesRast, studyArea = poly)
   }
 
-  tsf <- reclassify(
+  tsf <- terra::classify(
     timeSinceFireFilesRast,
     cbind(
       from = ageClassCutOffs - 0.1,
@@ -55,7 +55,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
   rasRepPoly <- Cache(
     fasterize2,
     poly,
-    emptyRaster = raster(timeSinceFireFilesRast), # doesn't need the data; Caching more effective
+    emptyRaster = terra::rast(timeSinceFireFilesRast), # doesn't need the data; Caching more effective
     field = "tmp"
   )
 
@@ -64,8 +64,8 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
   if (isTRUE(crop2poly)) {
     rasVeg <- Cache(postProcess, rasVeg, studyArea = poly)
   }
-  if (!compareRaster(rasVeg, timeSinceFireFilesRast, stopiffalse = FALSE)) {
-    rasVeg <- extend(rasVeg, timeSinceFireFilesRast)
+  if (!terra::compareGeom(rasVeg, timeSinceFireFilesRast, stopiffalse = FALSE)) {
+    rasVeg <- terra::extend(rasVeg, timeSinceFireFilesRast)
   }
 
   splitVal <- paste0("_", 75757575, "_") # unlikely to occur for any other reason
@@ -77,24 +77,24 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
   nas <- nas3 | nas2 | nas1
 
   if (!isTRUE(all(nas))) {
-    # name1a <- as.character(raster::levels(tsf)[[1]]$Factor)[tsf[][!nas]]
+    # name1a <- as.character(terra::levels(tsf)[[1]]$Factor)[tsf[][!nas]]
     name1 <- as.character(factorValues2(tsf, tsf[], att = 2)[!nas])
 
-    colID <- which(colnames(raster::levels(rasVeg)[[1]]) %in% c("category", "Factor", "VALUE"))
+    colID <- which(colnames(terra::levels(rasVeg)[[1]]) %in% c("category", "Factor", "VALUE"))
 
-    # name2a <- as.character(raster::levels(rasVeg)[[1]][[colID]])[rasVeg[][!nas]]
+    # name2a <- as.character(terra::levels(rasVeg)[[1]][[colID]])[rasVeg[][!nas]]
     name2 <- as.character(factorValues2(rasVeg, rasVeg[], att = colID)[!nas])
 
     ## rasRepPoly will have the numeric values of the *factor* in poly$tmp, NOT
-    ##   the raster::levels(rasRepPoly)[[1]])
-    name3 <- raster::levels(poly$tmp)[rasRepPoly[][!nas]] ## fixed 2021-05-05
+    ##   the terra::levels(rasRepPoly)[[1]])
+    name3 <- terra::levels(poly$tmp)[rasRepPoly[][!nas]] ## fixed 2021-05-05
 
     if (!identical(length(name1), length(name2)) || !identical(length(name1), length(name3))) {
       stop("There is something wrong with tsf or rasVeg or rasRepPoly inside LargePatches")
     }
 
     ff <- paste(name1, name2, name3, sep = splitVal) # 4 seconds
-    ras <- raster(rasVeg)
+    ras <- terra::rast(rasVeg)
     ffFactor <- factor(ff)
     ras[!nas] <- ffFactor # 2 seconds ## note: sum(!nas, na.rm = TRUE) should equal length(ffFactor)
 
@@ -116,7 +116,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     ## All species combined # remove name2
     ff <- paste(name1, name3, sep = splitVal)
     ff[grepl("NA", ff)] <- NA
-    ras <- raster(rasVeg)
+    ras <- terra::rast(rasVeg)
     ffFactor <- factor(ff)
     ras[!nas] <- ffFactor
 
@@ -148,8 +148,8 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
   }
 
   out[
-    !is.na(equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
-    vegCover := equivalentName(vegCover, sppEquiv, sppEquivCol)
+    !is.na(LandR::equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
+    vegCover := LandR::equivalentName(vegCover, sppEquiv, sppEquivCol)
   ]
   out
 }

@@ -19,12 +19,12 @@ LargePatches(
 }
 \arguments{
 \item{tsf}{A single filename, relative or absolute, pointing to a Time Since Fire raster.
-Can be any format that \code{raster} can use.}
+Can be any format that \code{terra} can use.}
 
 \item{vtm}{A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
-Can be any format that \code{raster} can use.}
+Can be any format that \code{terra} can use.}
 
-\item{poly}{A single \code{SpatialPolygonsDataFrame} object or a factor \code{RasterLayer}.
+\item{poly}{A single \code{sf} object or a factor \code{SpatRaster}.
 This layer MUST have a column labelled \code{shinyLabel}}
 
 \item{labelColumn}{TODO: description needed}

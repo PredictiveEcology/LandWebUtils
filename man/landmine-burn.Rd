@@ -29,7 +29,7 @@ landmine_burn(
 )
 }
 \arguments{
-\item{landscape}{A \code{RasterLayer}. This only provides the extent and
+\item{landscape}{A \code{SpatRaster}. This only provides the extent and
 resolution for the fire spread algorithm.}
 
 \item{startCells}{A numeric vector indicating the indices on the \code{landscape}

@@ -5,8 +5,8 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2025-02-11
-Version: 1.0.3.9000
+Date: 2025-08-15
+Version: 1.0.3.9001
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@NRCan-RNCan.gc.ca",
     role = c("aut"), comment=c(ORCID = "0000-0002-6914-8316")),
@@ -30,13 +30,13 @@ Imports:
     methods,
     pemisc,
     purrr,
-    raster,
     rasterVis,
     reproducible,
     scales,
     sf,
-    sp,
     SpaDES.tools,
+    terra,
+    tibble,
     tools,
     utils,
     stats
@@ -63,7 +63,6 @@ Collate:
     'LandWebUtils-package.R'
     'misc.R'
     'boxplots.R'
-    'cleanLandWebStudyArea.R'
     'histograms.R'
     'landmine-helpers.R'
     'landmine-plot.R'
@@ -71,8 +70,11 @@ Collate:
     'largePatches.R'
     'leading.R'
     'plotting.R'
+    'polygon-clean.R'
     'rasterListByPoly.R'
+    'reportingPolygons.R'
     'simfiles.R'
+    'studyAreas.R'
     'zzz.R'
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3

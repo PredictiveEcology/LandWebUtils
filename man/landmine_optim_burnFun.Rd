@@ -14,7 +14,7 @@ landmine_optim_burnFun(
 )
 }
 \arguments{
-\item{ros}{\code{RasterLayer} of LandMine Raster Of Spread values}
+\item{ros}{\code{SpatRaster} of LandMine Raster Of Spread values}
 
 \item{centreCell}{TODO}
 
@@ -28,7 +28,7 @@ landmine_optim_burnFun(
 }
 \value{
 named list of length 2 containing:
-\code{burnedMap}: \code{rasterLayer} of burned pixels;
+\code{burnedMap}: \code{SpatRaster} of burned pixels;
 \code{LM}: \code{data.frame} of patch statistics from \code{SDMTools::PatchStats()}.
 }
 \description{

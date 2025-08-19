@@ -1,6 +1,7 @@
 # LandWebUtils (development version)
 
-* add package dependencies: `purrr`, `scales`, `sf`, `sp`, `stats`;
+* add package dependencies: `purrr`, `scales`, `sf`, `stats`, `terra`;
+* remove package dependencies `sp`, `raster`;
 * use native R pipe and remove `magrittr` dependency;
 * use `achubaty/SDMTools`, a fork of the orphaned `SDMTools` package which allows installation on R 4.5;
 * add plot functions from `LandWeb_preamble` module;

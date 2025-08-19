@@ -118,12 +118,12 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 
   # This
   sppListMergesCASFRI <- lapply(sppNameVector, function(x) {
-    equivalentName(x, sppEquiv, column = "CASFRI", multi = TRUE)
+    LandR::equivalentName(x, sppEquiv, column = "CASFRI", multi = TRUE)
   })
 
   ## create list and template raster
   spRasts <- list()
-  spRas <- raster(CASFRIRas) |> setValues(NA_integer_)
+  spRas <- terra::rast(CASFRIRas) |> terra::setValues(NA_integer_)
 
   ## NOT SURE IF THESE LINES ABOUT NA are relevant -- Eliot Dec 7
   ## selected spp absent from CASFRI data
@@ -150,7 +150,7 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
       overwrite = TRUE, datatype = "INT2U", NAflag = NAval
     )
     ## NAvals need to be converted back to NAs
-    NAvalue(spRasts[[sp]]) <- NAval
+    NAflag(spRasts[[sp]]) <- NAval
   }
 
   sppTODO <- unique(names(sppListMergesCASFRI))
@@ -171,7 +171,7 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 
     startCRS <- crs(spRasts[[sp]])
     NAval <- 255L
-    spRasts[[sp]] <- writeRaster(spRasts[[sp]],
+    spRasts[[sp]] <- terra::writeRaster(spRasts[[sp]],
       filename = asPath(file.path(
         destinationPath,
         paste0("CASFRI_", sp, ".tif")
@@ -179,14 +179,13 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
       datatype = "INT1U", overwrite = TRUE, NAflag = NAval
     )
     ## NAvals need to be converted back to NAs
-    NAvalue(spRasts[[sp]]) <- NAval
+    NAflag(spRasts[[sp]]) <- NAval
 
-    if (is(spRasts[[sp]], "Raster")) {
-      # Rasters need to have their disk-backed value assigned, but not shapefiles
-      # This is a bug in writeRaster was spotted with crs of rastTmp became
-      # +proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
-      # should have stayed at
-      # +proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0
+    if (is(spRasts[[sp]], "SpatRaster")) {
+      ## This was a bug in raster::writeRaster was spotted with crs of rastTmp became
+      ## +proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+      ## should have stayed at
+      ## +proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0
       if (!identical(startCRS, crs(spRasts[[sp]]))) {
         crs(spRasts[[sp]]) <- startCRS
       }
@@ -194,7 +193,7 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
     message("  ", sp, " done")
   }
 
-  raster::stack(spRasts)
+  terra::rast(spRasts)
 }
 
 #' Prepare species layers from CASFRI v4
@@ -223,7 +222,7 @@ prepSpeciesLayers_CASFRI <- function(destinationPath, outputPath,
     url = url,
     alsoExtract = c(CASFRItiffFile, CASFRIattrFile, CASFRIheaderFile),
     destinationPath = destinationPath,
-    fun = "raster::raster",
+    fun = "terra::rast",
     studyArea = studyArea,
     rasterToMatch = rasterToMatch,
     method = "bilinear", ## ignore warning re: ngb (#5)

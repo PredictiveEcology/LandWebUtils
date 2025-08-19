@@ -15,14 +15,14 @@
 #' @export
 #' @rdname plotFMA
 plotFMA <- function(x, provs, caribou = NULL, xsr = NULL, title = NULL, png = NULL) {
-  provs <- spTransform(provs, crs(x))
+  provs <- sf::st_transform(provs, x)
 
   ## regular boring old plot
   if (!is.null(png)) png(filename = png, width = 1200, height = 800)
-  sp::plot(provs)
-  sp::plot(x[, "Name"], main = title, col = "lightblue", add = TRUE)
-  if (!is.null(caribou)) sp::plot(caribou, col = "magenta", add = TRUE)
-  if (!is.null(xsr)) sp::plot(xsr, add = TRUE)
+  plot(provs)
+  plot(x[, "Name"], main = title, col = "lightblue", add = TRUE)
+  if (!is.null(caribou)) plot(caribou, col = "magenta", add = TRUE)
+  if (!is.null(xsr)) plot(xsr, add = TRUE)
   if (!is.null(png)) dev.off()
 
   ## sexy ggplot version
@@ -37,14 +37,14 @@ plotFMA <- function(x, provs, caribou = NULL, xsr = NULL, title = NULL, png = NU
 #' @export
 #' @rdname plotFMA
 plotLandWeb <- function(x, provs, caribou = NULL, xsr = NULL, title = NULL, png = NULL) {
-  provs <- spTransform(provs, crs(x))
+  provs <- sf::st_transform(provs, x)
 
   ## regular boring old plot
   if (!is.null(png)) png(filename = png, width = 1800, height = 1200)
-  sp::plot(provs)
-  sp::plot(x, main = title, col = "lightblue", add = TRUE)
-  if (!is.null(caribou)) sp::plot(caribou, col = "magenta", add = TRUE)
-  if (!is.null(xsr)) sp::plot(xsr, add = TRUE)
+  plot(provs)
+  plot(x, main = title, col = "lightblue", add = TRUE)
+  if (!is.null(caribou)) plot(caribou, col = "magenta", add = TRUE)
+  if (!is.null(xsr)) plot(xsr, add = TRUE)
   if (!is.null(png)) dev.off()
 
   ## sexy ggplot version
