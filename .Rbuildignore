@@ -3,6 +3,9 @@
 ^_pkgdown\.yml$
 ^LICENSE$
 ^\.httr-oauth$
+^\.git$
 ^\.github$
 ^codecov\.yml$
 ^man-roxygen$
+^[.]?air[.]toml$
+^\.vscode$
