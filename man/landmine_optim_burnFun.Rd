@@ -16,15 +16,20 @@ landmine_optim_burnFun(
 \arguments{
 \item{ros}{\code{SpatRaster} of LandMine Raster Of Spread values}
 
-\item{centreCell}{TODO}
+\item{centreCell}{see \code{startCells} in \code{\link[=landmine_burn1]{landmine_burn1()}}}
 
-\item{fireSize}{TODO}
+\item{fireSize}{see \code{fireSizes} in \code{\link[=landmine_burn1]{landmine_burn1()}}}
 
-\item{spawnNewActive}{TODO}
+\item{spawnNewActive}{A numeric vector of length 4. These are the probabilities
+of creating spreading to 2 neighbours instead of the 1
+default neighbour, each time step.
+The 4 values are for 4 different fire size conditions. See details.}
 
-\item{sizeCutoffs}{TODO}
+\item{sizeCutoffs}{A numeric vector of length 2.
+These are 2 size (in hectares) thresholds that affect which
+\code{spawnNewActive} probabilities are used. See details.}
 
-\item{spreadProb}{TODO}
+\item{spreadProb}{A raster layer of spread probabilities, with non-flammable pixels \code{NA}.}
 }
 \value{
 named list of length 2 containing:

@@ -18,11 +18,9 @@ meanTruncPareto <- function(k, lower, upper, alpha) {
 #' LandMine burn optimization function
 #'
 #' @param ros             `SpatRaster` of LandMine Raster Of Spread values
-#' @param centreCell      TODO
-#' @param fireSize        TODO
-#' @param spawnNewActive  TODO
-#' @param sizeCutoffs     TODO
-#' @param spreadProb      TODO
+#' @param centreCell      see `startCells` in [landmine_burn1()]
+#' @param fireSize        see `fireSizes` in [landmine_burn1()]
+#' @inheritParams landmine_burn1
 #'
 #' @return named list of length 2 containing:
 #'         `burnedMap`: `SpatRaster` of burned pixels;
