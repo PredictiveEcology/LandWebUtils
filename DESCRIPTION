@@ -5,8 +5,8 @@ Description: Additional utilities for LandWeb analyses.
 URL: 
     http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
-Date: 2025-08-15
-Version: 1.0.3.9001
+Date: 2025-09-15
+Version: 1.0.3.9002
 Authors@R: c(
     person("Eliot J B", "McIntire", email = "eliot.mcintire@NRCan-RNCan.gc.ca",
     role = c("aut"), comment=c(ORCID = "0000-0002-6914-8316")),
@@ -39,7 +39,8 @@ Imports:
     tibble,
     tools,
     utils,
-    stats
+    stats,
+    withr
 Suggests:
     covr,
     parallel,
@@ -57,7 +58,7 @@ License: GPL-3
 Encoding: UTF-8
 Language: en-CA
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Collate: 
     'CASFRIv4.R'
     'LandWebUtils-package.R'

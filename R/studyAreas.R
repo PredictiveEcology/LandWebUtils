@@ -103,3 +103,40 @@ extractFMA <- function(fmas, name) {
 extractFMU <- function(fmus, name) {
   dplyr::filter(fmus, FMU_NAME == name)
 }
+
+#' Extract boundary polygon(s) for LandWeb study areas
+#'
+#' @param name  A character (regex) string to match.
+#'
+#' @inheritParams prepFMAs
+#'
+#' @return `sf` polygons object
+#'
+#' @export
+prepStudyArea <- function(name, destinationPath, targetCRS = LandWebCRS) {
+  if (!grepl(paste(LandWebStudyAreas$Name, collapse = "|"), name)) {
+    stop("name ", name, ", does not contain valid study area name.\n",
+         "Study area name must be one of:\n", paste(LandWebStudyAreas$Name, collapse = ", "), ".")
+  }
+
+  if (grepl("random", name)) {
+    studyArea <- prepRandomStudyArea(destinationPath, targetCRS, .seed = 867)
+  } else if (grepl("FMU", name)) {
+    studyArea <- prepFMUs(destinationPath, targetCRS) |> extractFMU(name)
+  } else {
+    studyArea <- prepFMAs(destinationPath, targetCRS) |> extractFMA(name)
+  }
+}
+
+#' @export
+#' @rdname prepStudyArea
+prepRandomStudyArea <- function(destinationPath, targetCRS = LandWebCRS, .seed = 867) {
+  message(crayon::red("Using random study area."))
+
+  ansrs <- prepANSRs(destinationPath, targetCRS) ## TODO: why is this needed/used?
+
+  withr::with_seed(.seed, {
+    ## random area in Central-East AB
+    SpaDES.tools::randomPolygon(ansrs, area = 4e5)
+  })
+}

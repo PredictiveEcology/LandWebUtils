@@ -1,10 +1,11 @@
 # LandWebUtils (development version)
 
-* add package dependencies: `purrr`, `scales`, `sf`, `stats`, `terra`;
+* add package dependencies: `purrr`, `scales`, `sf`, `stats`, `terra`, `withr`;
 * remove package dependencies `sp`, `raster`;
 * use native R pipe and remove `magrittr` dependency;
 * use `achubaty/SDMTools`, a fork of the orphaned `SDMTools` package which allows installation on R 4.5;
 * add plot functions from `LandWeb_preamble` module;
+* add study area creation / extraction functions from `LandWeb_preamble` module;
 * use `usethis` approach to managing package imports;
 * improve documentation;
 
@@ -52,7 +53,7 @@
 
 # LandWebUtils 0.1.4 (2021-05-06)
 
-* fix `LargePatches()` for LBstatus;
+* fix `LargePatches()` for `LBstatus`;
 
 # LandWebUtils 0.1.3 (2021-03-10)
 

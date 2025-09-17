@@ -74,6 +74,7 @@ NULL
 #' @importFrom sf st_as_sf
 #' @importFrom sf st_join
 #' @importFrom sf st_transform
+#' @importFrom SpaDES.tools randomPolygon
 #' @importFrom SpaDES.tools spread
 #' @importFrom SpaDES.tools spread2
 #' @importFrom stats na.omit
@@ -99,5 +100,6 @@ NULL
 #' @importFrom utils tail
 #' @importFrom utils write.csv
 #' @importFrom utils write.table
+#' @importFrom withr with_seed
 ## usethis namespace: end
 NULL

@@ -1,3 +1,50 @@
+#' Target CRS (projection) to use with LandWeb
+#'
+#' @note needs to be character, not `CRS` class, for downstream use with `data.table`
+#'
+#' @export
+LandWebCRS <- paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95",
+                    "+x_0=0 +y_0=0 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0") ## TODO: use SCANFI
+
+#' Prepare reporting polygons
+#'
+#' - LandWeb FMA boundaries (FMAs);
+#' - Alberta FMU boundaries (FMUs);
+#' - Alberta Natural Subregions (ANSRs);
+#'
+#' @param destinationPath character specifying path to destination directory
+#' @param targetCRS character specifying the CRS to reproject polygons to
+#'
+#' @export
+#' @rdname prepReportingPolygons
+prepFMAs <- function(destinationPath, targetCRS = LandWebCRS) {
+  reproducible::prepInputs(
+    url = "https://drive.google.com/file/d/1yCbq8rcRXCfUKHJGg-Fzlnrjl48LJfCO", ## 2020
+    destinationPath = destinationPath,
+    projectTo = targetCRS
+  )
+}
+
+#' @export
+#' @rdname prepReportingPolygons
+prepFMUs <- function(destinationPath, targetCRS = LandWebCRS) {
+  reproducible::prepInputs(
+    url = "https://drive.google.com/open?id=1OH3b5pwjumm1ToytDBDI6jthVe2pp0tS", ## 2024-08 added C5
+    destinationPath = destinationPath,
+    projectTo = targetCRS
+  )
+}
+
+#' @export
+#' @rdname prepReportingPolygons
+prepANSRs <- function(destinationPath, targetCRS = LandWebCRS) {
+  reproducible::prepInputs(
+    url = "https://drive.google.com/file/d/1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ",
+    destinationPath = destinationPath,
+    projectTo = targetCRS
+  )
+}
+
 #' Join reporting polygons and intersect their features
 #'
 #' Join two reporting polygons, preserving their features;
