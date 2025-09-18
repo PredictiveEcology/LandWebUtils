@@ -137,6 +137,6 @@ prepRandomStudyArea <- function(destinationPath, targetCRS = LandWebCRS, .seed =
 
   withr::with_seed(.seed, {
     ## random area in Central-East AB
-    SpaDES.tools::randomPolygon(ansrs, area = 4e5)
+    SpaDES.tools::randomPolygon(ansrs, area = 4e10)
   })
 }
