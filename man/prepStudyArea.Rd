@@ -2,12 +2,12 @@
 % Please edit documentation in R/studyAreas.R
 \name{prepStudyArea}
 \alias{prepStudyArea}
-\alias{prepRandomStudyArea}
+\alias{prepTestStudyArea}
 \title{Extract boundary polygon(s) for LandWeb study areas}
 \usage{
 prepStudyArea(name, destinationPath, targetCRS = LandWebCRS)
 
-prepRandomStudyArea(destinationPath, targetCRS = LandWebCRS, .seed = 867)
+prepTestStudyArea(destinationPath, targetCRS = LandWebCRS, .seed = 867)
 }
 \arguments{
 \item{name}{A character (regex) string to match.}
@@ -15,6 +15,8 @@ prepRandomStudyArea(destinationPath, targetCRS = LandWebCRS, .seed = 867)
 \item{destinationPath}{character specifying path to destination directory}
 
 \item{targetCRS}{character specifying the CRS to reproject polygons to}
+
+\item{.seed}{integer specifying the random seed to use to generate study area boundary}
 }
 \value{
 \code{sf} polygons object

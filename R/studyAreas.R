@@ -128,11 +128,11 @@ prepStudyArea <- function(name, destinationPath, targetCRS = LandWebCRS) {
   }
 }
 
+#' @param .seed integer specifying the random seed to use to generate study area boundary
+#'
 #' @export
 #' @rdname prepStudyArea
-prepRandomStudyArea <- function(destinationPath, targetCRS = LandWebCRS, .seed = 867) {
-  message(crayon::red("Using random study area."))
-
+prepTestStudyArea <- function(destinationPath, targetCRS = LandWebCRS, .seed = 867) {
   ansrs <- prepANSRs(destinationPath, targetCRS) ## TODO: why is this needed/used?
 
   withr::with_seed(.seed, {

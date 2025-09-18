@@ -11,7 +11,7 @@ An object of class \code{character} of length 1.
 LandWebCRS
 }
 \description{
-Target CRS (projection) to use with LandWeb
+As of September 2025, this corresponds to the SCANFI's \code{NAD_1983_Canada_Lambert} projection.
 }
 \note{
 needs to be character, not \code{CRS} class, for downstream use with \code{data.table}
