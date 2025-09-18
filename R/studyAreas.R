@@ -120,7 +120,7 @@ prepStudyArea <- function(name, destinationPath, targetCRS = LandWebCRS) {
   }
 
   if (grepl("random", name)) {
-    studyArea <- prepRandomStudyArea(destinationPath, targetCRS, .seed = 867)
+    studyArea <- prepTestStudyArea(destinationPath, targetCRS, .seed = 867)
   } else if (grepl("FMU", name)) {
     studyArea <- prepFMUs(destinationPath, targetCRS) |> extractFMU(name)
   } else {
