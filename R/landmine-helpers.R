@@ -27,14 +27,8 @@ meanTruncPareto <- function(k, lower, upper, alpha) {
 #'         `LM`: `data.frame` of patch statistics from `SDMTools::PatchStats()`.
 #'
 #' @export
-landmine_optim_burnFun <- function(
-  ros,
-  centreCell,
-  fireSize,
-  spawnNewActive,
-  sizeCutoffs,
-  spreadProb
-) {
+landmine_optim_burnFun <- function(ros, centreCell, fireSize, spawnNewActive,
+                                   sizeCutoffs, spreadProb) {
   burned <- landmine_burn1(
     landscape = ros,
     startCells = centreCell,
@@ -175,13 +169,8 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
 #'
 #' @export
 #' @rdname landmine_fitSN
-landmine_optim_fitSN <- function(
-  sna,
-  ros,
-  centreCell,
-  fireSizes = 10^(2:5),
-  desiredPerimeterArea = 0.004
-) {
+landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
+                                 desiredPerimeterArea = 0.004) {
   sizeCutoffs <- 10^sna[5:6]
   spreadProb <- sna[7]
   sna <- c(10^(sna[1]), 10^(sna[2]), 10^(sna[3]), 10^(sna[4]))
@@ -213,14 +202,8 @@ landmine_optim_fitSN <- function(
 #'
 #' @export
 #' @rdname landmine_fitSN
-landmine_optim_fitSN2 <- function(
-  par,
-  ros,
-  centreCell,
-  fireSizes = 10^(2:5),
-  desiredPerimeterArea = 0.003,
-  spreadProb = 0.9
-) {
+landmine_optim_fitSN2 <- function(par, ros, centreCell, fireSizes = 10^(2:5),
+                                  desiredPerimeterArea = 0.003, spreadProb = 0.9) {
   sizeCutoffs <- 10^c(par[4], par[5])
   bfs1 <- lapply(fireSizes, function(fireSize) {
     sna <- min(-0.15, par[1] + par[2] * log10(fireSize))
@@ -241,11 +224,8 @@ landmine_optim_fitSN2 <- function(
     )
   })
   res <- lapply(seq(bfs1), function(bfCount) {
-    abs(
-      log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)
-    ) +
-      100 *
-        (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
+    abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +
+      100 * (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
     ## it needs to get to above 90,000 HA for it to count
   })
   a <- sum(unlist(res))

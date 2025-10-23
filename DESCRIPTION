@@ -1,30 +1,29 @@
-Package: LandWebUtils
 Type: Package
+Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Description: Additional utilities for LandWeb analyses.
-URL: 
-    http://LandWebUtils.predictiveecology.org,
-    https://github.com/PredictiveEcology/LandWebUtils
-Date: 2025-09-15
-Version: 1.0.3.9002
+Version: 1.0.3.9003
+Date: 2025-10-22
 Authors@R: c(
-    person("Eliot J B", "McIntire", email = "eliot.mcintire@NRCan-RNCan.gc.ca",
-    role = c("aut"), comment=c(ORCID = "0000-0002-6914-8316")),
-    person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
-    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
-    person("His Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada",
-    role = "cph")
-    )
+    person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
+           comment = c(ORCID = "0000-0002-6914-8316")),
+    person("Alex M", "Chubaty", , "achubaty@for-cast.ca", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-7146-8135")),
+    person("His Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada", role = "cph")
+  )
+Description: Additional utilities for LandWeb analyses.
+License: GPL-3
+URL: http://LandWebUtils.predictiveecology.org,
+    https://github.com/PredictiveEcology/LandWebUtils
 Depends:
     R (>= 4.2)
 Imports:
     data.table,
-    ggplot2,
-    graphics,
-    grDevices,
     dplyr,
     fs,
     future.apply,
+    ggplot2,
+    graphics,
+    grDevices,
     LandR,
     map,
     methods,
@@ -35,11 +34,11 @@ Imports:
     scales,
     sf,
     SpaDES.tools,
+    stats,
     terra,
     tibble,
     tools,
     utils,
-    stats,
     withr
 Suggests:
     covr,
@@ -48,16 +47,18 @@ Suggests:
     SDMTools,
     testthat (>= 3.0.0)
 Remotes:
-    PredictiveEcology/LandR@LandWeb,
+    achubaty/SDMTools,
+    PredictiveEcology/LandR@development,
     PredictiveEcology/map@development,
     PredictiveEcology/pemisc@development,
-    achubaty/SDMTools,
+    PredictiveEcology/reproducible@development,
     PredictiveEcology/SpaDES.tools@development
 Additional_repositories: https://prodictiveecology.r-universe.dev
-License: GPL-3
+Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-CA
 LazyData: true
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Collate: 
     'CASFRIv4.R'
@@ -77,5 +78,3 @@ Collate:
     'simfiles.R'
     'studyAreas.R'
     'zzz.R'
-Roxygen: list(markdown = TRUE)
-Config/testthat/edition: 3

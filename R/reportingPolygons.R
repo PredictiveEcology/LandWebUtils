@@ -65,7 +65,6 @@ joinReportingPolygons <- function(x, y) {
 
     z[["Name"]] <- paste(z[["Name.2"]], z[["Name.1"]])
     z[["Name.1"]] <- z[["Name.2"]] <- NULL
-
   } else {
     if (!is(x, "sf")) {
       x <- sf::st_as_sf(x)

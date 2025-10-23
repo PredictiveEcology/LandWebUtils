@@ -1,13 +1,6 @@
 utils::globalVariables(c(
-  "active",
-  "id",
-  "initialPixels",
-  "numActive",
-  "pixels",
-  "pSpawnNewActive",
-  "size",
-  "spreadProb",
-  "state"
+  "active", "id", "initialPixels", "numActive", "pixels", "pSpawnNewActive",
+  "size", "spreadProb", "state"
 ))
 
 #' Core Burn function for Andison's LandMine Fire Module
@@ -88,24 +81,16 @@ utils::globalVariables(c(
 #'
 #' @export
 #' @rdname landmine-burn
-landmine_burn1 <- function(
-  landscape,
-  startCells,
-  fireSizes = 5,
-  nActiveCells1 = c(10, 36),
-  spawnNewActive = c(0.46, 0.2, 0.26, 0.11),
-  maxRetriesPerID = 10L,
-  sizeCutoffs = c(8e3, 2e4),
-  spreadProbRel = NA_real_,
-  spreadProb = 0.77,
-  omitPixels = NULL
+landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
+                           spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L, sizeCutoffs = c(8e3, 2e4),
+                           spreadProbRel = NA_real_, spreadProb = 0.77, omitPixels = NULL
 ) {
   stopifnot(is.integer(maxRetriesPerID))
 
   ## convert to pixels
   sizeCutoffs <- sizeCutoffs / (prod(res(landscape)) / 1e4)
 
-  a <- spread2(
+  a <- SpaDES.tools::spread2(
     landscape,
     start = startCells,
     spreadProb = 1, ## initial step can have spreadProb 1 so guarantees something
@@ -125,10 +110,7 @@ landmine_burn1 <- function(
       pixels %in% omitPixels & state == "activeSource",
     ]$initialPixels) {
       if (length(i)) {
-        attr(a, "spreadState")$clusterDT[
-          initialPixels == i,
-          size := max(0L, size - 1L)
-        ]
+        attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
       }
     }
   }
@@ -167,7 +149,7 @@ landmine_burn1 <- function(
 
     ## spawnNewActive must be joined sent in here as list...
     b <- b[a]
-    a <- spread2(
+    a <- SpaDES.tools::spread2(
       landscape,
       start = a,
       spreadProb = spreadProb,
@@ -187,14 +169,9 @@ landmine_burn1 <- function(
 
     if (!is.null(omitPixels)) {
       ## ensure non-flammable pixels omitted from fire size calculations
-      for (i in a[
-        pixels %in% omitPixels & state == "activeSource",
-      ]$initialPixels) {
+      for (i in a[pixels %in% omitPixels & state == "activeSource", ]$initialPixels) {
         if (length(i)) {
-          attr(a, "spreadState")$clusterDT[
-            initialPixels == i,
-            size := max(0L, size - 1L)
-          ]
+          attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
         }
       }
     }
@@ -208,18 +185,11 @@ landmine_burn1 <- function(
 
 ## the original burn function below is no longer used:
 #' @rdname landmine-burn
-landmine_burn <- function(
-  landscape,
-  startCells,
-  fireSizes = 5,
-  nActiveCells1 = c(10, 36),
-  spawnNewActive = c(0.46, 0.2, 0.26, 0.11),
-  sizeCutoffs = c(8e3, 2e4),
-  spreadProbRel = 0.23
-) {
+landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
+    spawnNewActive = c(0.46, 0.2, 0.26, 0.11), sizeCutoffs = c(8e3, 2e4), spreadProbRel = 0.23) {
   .Deprecated("landmine_burn1", "LandWebUtils")
 
-  a <- spread(
+  a <- SpaDES.tools::spread(
     landscape,
     loci = startCells,
     spreadProbRel = spreadProbRel,
@@ -260,7 +230,7 @@ landmine_burn <- function(
 
     ## spawnNewActive must be joined sent in here as list...
     b <- b[a]
-    a <- spread(
+    a <- SpaDES.tools::spread(
       landscape,
       spreadProbRel = spreadProbRel,
       spreadProb = spreadProb,

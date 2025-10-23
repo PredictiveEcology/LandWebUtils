@@ -4,7 +4,7 @@ utils::globalVariables(c(
 
 #' Load CASFRI data for LandWeb
 #'
-#' TODO: description needed
+#' Using CASFRI v4 data prepared for LandWeb.
 #'
 #' @param CASFRIRas TODO: description needed
 #' @param attrFile TODO: description needed
@@ -201,11 +201,8 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 #' @inheritParams LandR::prepSpeciesLayers_KNN
 #'
 #' @export
-prepSpeciesLayers_CASFRI <- function(destinationPath, outputPath,
-                                     url = NULL,
-                                     studyArea, rasterToMatch,
-                                     sppEquiv,
-                                     sppEquivCol, ...) {
+prepSpeciesLayers_CASFRI <- function(destinationPath, outputPath, url = NULL,
+                                     studyArea, rasterToMatch, sppEquiv, sppEquivCol, ...) {
   if (is.null(url)) {
     url <- "https://drive.google.com/file/d/1y0ofr2H0c_IEMIpx19xf3_VTBheY0C9h"
   }

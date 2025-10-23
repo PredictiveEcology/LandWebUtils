@@ -1,25 +1,11 @@
 utils::globalVariables(c(
-  ":=",
-  ".N",
-  ".SD",
-  "ageClass",
-  "group",
-  "N",
-  "NCC",
-  "polygonName",
-  "vegCover"
+  ":=", ".N", ".SD",
+  "ageClass", "group", "N", "NCC", "polygonName", "vegCover"
 ))
 
 #' @keywords internal
-.doPlotHistogram <- function(
-  data,
-  colName,
-  colNameCC,
-  xlim,
-  force.min.n = FALSE,
-  fname = NULL,
-  ...
-) {
+.doPlotHistogram <- function(data, colName, colNameCC, xlim,
+                             force.min.n = FALSE, fname = NULL, ...) {
   minNumBars <- 6
   maxNumBars <- 30
   rangeNClusters <- if (isTRUE(force.min.n)) {
@@ -165,36 +151,36 @@ runHistsLargePatches <- function(map, functionName, analysisGroups, dPath) {
 
       xlim <- c(0, max(nClustersDT[["N"]], nClustersDT[["NCC"]]))
       nClustersDT[,
-        tryCatch(
-          .doPlotHistogram(
-            data = .SD,
-            colName = "N",
-            colNameCC = "NCC",
-            fname = eval(savePng),
-            # ccLine = NCC,
-            border = "grey",
-            col = "darkgrey",
-            main = paste(
-              unique(polygonName),
-              unique(vegCover),
-              unique(ageClass),
-              collapse = " "
-            ),
-            space = 0,
-            xlab = paste0(
-              "Number of patches greater than ",
-              minPatchSize,
-              " ha"
-            ),
-            ylab = "Proportion in NRV",
-            xlim = xlim,
-            ylim = c(0, 1),
-            force.min.n = TRUE
-          ),
-          error = function(e) warning(e)
-        ),
-        .SDcols = c(slices, "N", "NCC"),
-        by = slicesNoRep
+                  tryCatch(
+                    .doPlotHistogram(
+                      data = .SD,
+                      colName = "N",
+                      colNameCC = "NCC",
+                      fname = eval(savePng),
+                      # ccLine = NCC,
+                      border = "grey",
+                      col = "darkgrey",
+                      main = paste(
+                        unique(polygonName),
+                        unique(vegCover),
+                        unique(ageClass),
+                        collapse = " "
+                      ),
+                      space = 0,
+                      xlab = paste0(
+                        "Number of patches greater than ",
+                        minPatchSize,
+                        " ha"
+                      ),
+                      ylab = "Proportion in NRV",
+                      xlim = xlim,
+                      ylim = c(0, 1),
+                      force.min.n = TRUE
+                    ),
+                    error = function(e) warning(e)
+                  ),
+                  .SDcols = c(slices, "N", "NCC"),
+                  by = slicesNoRep
       ]
 
       nClustersDT[, list(filename = eval(savePng)), by = slicesNoRep]
@@ -253,12 +239,12 @@ runHistsVegCover <- function(map, functionName, analysisGroups, dPath) {
     ## sum = all species + each indiv species = 2 * totalPixels
     ## NOTE: this is number of TREED pixels, which is likely smaller than the polygon area
     data2[,
-      totalPixels := as.double(base::sum(NPixels, na.rm = TRUE)),
-      by = c("group", "vegCover", "zone")
+          totalPixels := as.double(base::sum(NPixels, na.rm = TRUE)),
+          by = c("group", "vegCover", "zone")
     ]
     data2[,
-      totalPixels2 := as.double(base::mean(totalPixels, na.rm = TRUE)),
-      by = c("vegCover", "zone")
+          totalPixels2 := as.double(base::mean(totalPixels, na.rm = TRUE)),
+          by = c("vegCover", "zone")
     ] ## use mean for plot labels below
     # try(write.csv(data2, file.path(dPath, paste0("leading_", gsub(" ", "_", poly), ".csv"))))
 
@@ -273,40 +259,40 @@ runHistsVegCover <- function(map, functionName, analysisGroups, dPath) {
     slices <- c("zone", "vegCover", "ageClass")
 
     data2[,
-      tryCatch(
-        .doPlotHistogram(
-          data = .SD,
-          colName = "proportion",
-          colNameCC = "proportionCC",
-          fname = eval(savePng),
-          border = "grey",
-          col = "darkgrey",
-          main = paste(
-            unique(zone),
-            unique(vegCover),
-            unique(ageClass),
-            collapse = "_"
-          ),
-          space = 0,
-          xlab = paste0(
-            "Proportion of forest area (total ",
-            format(
-              unique(totalPixels2) *
-                prod(res(rasterToMatch(map))) /
-                1e4,
-              big.mark = ","
+          tryCatch(
+            .doPlotHistogram(
+              data = .SD,
+              colName = "proportion",
+              colNameCC = "proportionCC",
+              fname = eval(savePng),
+              border = "grey",
+              col = "darkgrey",
+              main = paste(
+                unique(zone),
+                unique(vegCover),
+                unique(ageClass),
+                collapse = "_"
+              ),
+              space = 0,
+              xlab = paste0(
+                "Proportion of forest area (total ",
+                format(
+                  unique(totalPixels2) *
+                    prod(res(rasterToMatch(map))) /
+                    1e4,
+                  big.mark = ","
+                ),
+                " ha)"
+              ),
+              ylab = "Proportion in NRV",
+              xlim = c(0, 1),
+              ylim = c(0, 1),
+              force.min.n = FALSE
             ),
-            " ha)"
+            error = function(e) warning(e)
           ),
-          ylab = "Proportion in NRV",
-          xlim = c(0, 1),
-          ylim = c(0, 1),
-          force.min.n = FALSE
-        ),
-        error = function(e) warning(e)
-      ),
-      .SDcols = c(slices, "rep", "proportion", "proportionCC"),
-      by = slices
+          .SDcols = c(slices, "rep", "proportion", "proportionCC"),
+          by = slices
     ]
     data2[, list(filename = eval(savePng)), by = slices]
   })

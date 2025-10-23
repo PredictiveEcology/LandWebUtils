@@ -1,9 +1,5 @@
 utils::globalVariables(c(
-  "FRI",
-  "haBurned",
-  "LTHFC",
-  "studyArea",
-  "time"
+  "FRI", "haBurned", "LTHFC", "studyArea", "time"
 ))
 
 #' LandMine diagnostic plots
