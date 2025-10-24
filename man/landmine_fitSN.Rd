@@ -29,7 +29,7 @@ instead of the 1 default neighbour, each time step.
 The 4 values are for 4 different fire size conditions.
 See details in \code{\link[=landmine_optim_burnFun]{landmine_optim_burnFun()}}.}
 
-\item{ros}{\code{SpatRaster} of LandMine Rate Of Spread values.}
+\item{ros}{Character, specifying the file path to raster of LandMine Rate Of Spread values.}
 
 \item{centreCell}{Integer id of the centre (start) cell of \code{ros} raster.
 See \code{startCells} in \code{\link[=landmine_burn1]{landmine_burn1()}}.}

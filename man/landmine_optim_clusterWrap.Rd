@@ -21,8 +21,8 @@ hostnames on which to run worker copies.}
 }
 \value{
 named list of length 2 containing:
-\code{cl} - a cluster object;
-\code{out} - a list of burn maps (aka \code{burnMapList})
+\code{cl}, a cluster object;
+\code{out}, a list of burn maps (aka \code{burnMapList}).
 }
 \description{
 Wrapper function to setup cluster, export objects and load packages

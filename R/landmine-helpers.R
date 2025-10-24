@@ -143,16 +143,14 @@ landmine_optim_clusterExport <- function(cl = NULL, objs = NULL, pkgs = NULL) {
 
   if (!is.null(cl)) {
     objs <- c(objs)
-    parallel::clusterExport(cl, objs)
-    # env <- environment()
+    parallel::clusterExport(cl, objs, envir = parent.frame())
     parallel::clusterExport(cl, "pkgs", envir = parent.frame())
     parallel::clusterEvalQ(cl, {
       lapply(pkgs, library, character.only = TRUE)
-      data.table::setDTthreads(1L)
     })
-  } else {
-    data.table::setDTthreads(1L)
   }
+
+  data.table::setDTthreads(1L)
 
   return(NULL)
 }
@@ -164,8 +162,8 @@ landmine_optim_clusterExport <- function(cl = NULL, objs = NULL, pkgs = NULL) {
 #' @param reps integer. number of replicates to run.
 #'
 #' @return named list of length 2 containing:
-#'   `cl` - a cluster object;
-#'   `out` - a list of burn maps (aka `burnMapList`)
+#'  `cl`, a cluster object;
+#'   `out`, a list of burn maps (aka `burnMapList`).
 #' @export
 landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
   stopifnot(requireNamespace("parallel", quietly = TRUE))
@@ -177,6 +175,7 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
   objs <- mget(objs, envir = parent.frame())
 
   burnMapList <- parallel::clusterApplyLB(cl, reps, function(r) {
+    ros <- terra::rast(ros)
     do.call("landmine_optim_burnFun", objs)
   })
 
@@ -199,7 +198,7 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
 #'  The 4 values are for 4 different fire size conditions.
 #'  See details in [landmine_optim_burnFun()].
 #'
-#' @param ros `SpatRaster` of LandMine Rate Of Spread values.
+#' @param ros Character, specifying the file path to raster of LandMine Rate Of Spread values.
 #'
 #' @param centreCell Integer id of the centre (start) cell of `ros` raster.
 #'  See `startCells` in [landmine_burn1()].
@@ -215,6 +214,10 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
 #' @rdname landmine_fitSN
 landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
                                  desiredPerimeterArea = 0.004) {
+  stopifnot(is.character(ros))
+
+  ros <- terra::rast(ros)
+
   sizeCutoffs <- 10^sna[5:6]
   spreadProb <- sna[7]
   sna <- c(10^(sna[1]), 10^(sna[2]), 10^(sna[3]), 10^(sna[4]))
