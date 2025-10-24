@@ -4,6 +4,7 @@
 * remove package dependencies `sp`, `raster`;
 * use native R pipe and remove `magrittr` dependency;
 * replace use of orphaned `SDMTools` package with `landscapemetrics`;
+* use `parallelly` to setup cluster in `landmine_optim_clusterSetup()`;
 * add plot functions from `LandWeb_preamble` module;
 * add study area creation / extraction functions from `LandWeb_preamble` module;
 * use `usethis` approach to managing package imports;

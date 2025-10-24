@@ -120,7 +120,7 @@ landmine_optim_clusterSetup <- function(nodes = NULL) {
   if (Sys.info()["sysname"] == "Windows") {
     cl <- parallel::makeCluster(nnodes)
   } else if (nnodes > 1) {
-    cl <- parallel::makeCluster(nodes, homogeneous = FALSE, verbose = TRUE)
+    cl <- parallelly::makeClusterPSOCK(nodes, autostop = TRUE)
   } else {
     cl <- parallel::makeCluster(nnodes, type = "FORK")
   }
