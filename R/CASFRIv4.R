@@ -200,6 +200,8 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 #'
 #' @inheritParams LandR::prepSpeciesLayers_KNN
 #'
+#' @param outputPath character, specifying the output directory to use
+#'
 #' @export
 prepSpeciesLayers_CASFRI <- function(destinationPath, outputPath, url = NULL,
                                      studyArea, rasterToMatch, sppEquiv, sppEquivCol, ...) {
