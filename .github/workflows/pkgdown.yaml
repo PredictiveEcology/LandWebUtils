@@ -35,7 +35,6 @@ jobs:
         with:
           extra-packages: |
             any::pkgdown
-          extra-packages: |
             any::rcmdcheck
             any::sf
             any::terra
