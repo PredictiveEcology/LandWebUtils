@@ -1,5 +1,6 @@
 # LandWebUtils (development version)
 
+* drop support for R 4.2 and 4.3 due to changes in dependency packages;
 * add package dependencies: `purrr`, `scales`, `sf`, `stats`, `terra`, `withr`;
 * remove package dependencies `sp`, `raster`;
 * use native R pipe and remove `magrittr` dependency;

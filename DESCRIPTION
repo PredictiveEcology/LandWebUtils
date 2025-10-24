@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9005
+Version: 1.0.3.9006
 Date: 2025-10-24
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
@@ -15,7 +15,7 @@ License: GPL-3
 URL: http://LandWebUtils.predictiveecology.org,
     https://github.com/PredictiveEcology/LandWebUtils
 Depends:
-    R (>= 4.2)
+    R (>= 4.4)
 Imports:
     data.table,
     dplyr,
