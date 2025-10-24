@@ -23,22 +23,28 @@ landmine_optim_fitSN2(
 )
 }
 \arguments{
-\item{sna}{TODO}
+\item{sna}{(i.e., \code{spawnNewActive}) A numeric vector of length 4.
+These are the probabilities of creating spreading to 2 neighbours
+instead of the 1 default neighbour, each time step.
+The 4 values are for 4 different fire size conditions.
+See details in \code{\link[=landmine_optim_burnFun]{landmine_optim_burnFun()}}.}
 
-\item{ros}{TODO}
+\item{ros}{\code{SpatRaster} of LandMine Rate Of Spread values.}
 
-\item{centreCell}{TODO}
+\item{centreCell}{Integer id of the centre (start) cell of \code{ros} raster.
+See \code{startCells} in \code{\link[=landmine_burn1]{landmine_burn1()}}.}
 
-\item{fireSizes}{TODO}
+\item{fireSizes}{A numeric vector indicating the final size of each of the fires.
+See \code{\link[=landmine_burn1]{landmine_burn1()}}.}
 
-\item{desiredPerimeterArea}{TODO}
+\item{desiredPerimeterArea}{Numeric target perimeter-area ratio.}
 
 \item{par}{parameter vector of length 5}
 
 \item{spreadProb}{spread probability}
 }
 \value{
-\code{data.table} (TODO)
+Summary \code{data.table} of fit results.
 }
 \description{
 \code{landmine_fitSN()} is used for the module.
@@ -47,4 +53,7 @@ landmine_optim_fitSN2(
 \code{landmine_fitSN2()} is an alternative version tries the optimization using fewer parameters,
 to test whether a simpler version gets better/different results.
 Although this version was not used for the final module, we preserve it here for posterity.
+}
+\seealso{
+\code{\link[=landmine_burn1]{landmine_burn1()}}, \code{\link[=landmine_optim_burnFun]{landmine_optim_burnFun()}}
 }

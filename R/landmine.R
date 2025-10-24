@@ -83,8 +83,7 @@ utils::globalVariables(c(
 #' @rdname landmine-burn
 landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
                            spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L, sizeCutoffs = c(8e3, 2e4),
-                           spreadProbRel = NA_real_, spreadProb = 0.77, omitPixels = NULL
-) {
+                           spreadProbRel = NA_real_, spreadProb = 0.77, omitPixels = NULL) {
   stopifnot(is.integer(maxRetriesPerID))
 
   ## convert to pixels

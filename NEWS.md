@@ -3,7 +3,7 @@
 * add package dependencies: `purrr`, `scales`, `sf`, `stats`, `terra`, `withr`;
 * remove package dependencies `sp`, `raster`;
 * use native R pipe and remove `magrittr` dependency;
-* use `achubaty/SDMTools`, a fork of the orphaned `SDMTools` package which allows installation on R 4.5;
+* replace use of orphaned `SDMTools` package with `landscapemetrics`;
 * add plot functions from `LandWeb_preamble` module;
 * add study area creation / extraction functions from `LandWeb_preamble` module;
 * use `usethis` approach to managing package imports;

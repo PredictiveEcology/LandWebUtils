@@ -1,8 +1,8 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9003
-Date: 2025-10-22
+Version: 1.0.3.9004
+Date: 2025-10-24
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
            comment = c(ORCID = "0000-0002-6914-8316")),
@@ -42,12 +42,11 @@ Imports:
     withr
 Suggests:
     covr,
+    landscapemetrics,
     parallel,
     parallelly,
-    SDMTools,
     testthat (>= 3.0.0)
 Remotes:
-    achubaty/SDMTools,
     PredictiveEcology/LandR@development,
     PredictiveEcology/map@development,
     PredictiveEcology/pemisc@development,

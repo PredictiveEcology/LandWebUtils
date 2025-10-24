@@ -14,11 +14,11 @@ landmine_optim_burnFun(
 )
 }
 \arguments{
-\item{ros}{\code{SpatRaster} of LandMine Raster Of Spread values}
+\item{ros}{\code{SpatRaster} of LandMine Rate Of Spread values.}
 
-\item{centreCell}{see \code{startCells} in \code{\link[=landmine_burn1]{landmine_burn1()}}}
+\item{centreCell}{See \code{startCells} in \code{\link[=landmine_burn1]{landmine_burn1()}}.}
 
-\item{fireSize}{see \code{fireSizes} in \code{\link[=landmine_burn1]{landmine_burn1()}}}
+\item{fireSize}{See \code{fireSizes} in \code{\link[=landmine_burn1]{landmine_burn1()}}.}
 
 \item{spawnNewActive}{A numeric vector of length 4. These are the probabilities
 of creating spreading to 2 neighbours instead of the 1
@@ -33,8 +33,10 @@ These are 2 size (in hectares) thresholds that affect which
 }
 \value{
 named list of length 2 containing:
-\code{burnedMap}: \code{SpatRaster} of burned pixels;
-\code{LM}: \code{data.frame} of patch statistics from \code{SDMTools::PatchStats()}.
+\itemize{
+\item \code{burnedMap}: \code{SpatRaster} of burned pixels;
+\item \code{LM}: \code{data.frame} of patch statistics from \code{landscapemetrics}.
+}
 }
 \description{
 LandMine burn optimization function

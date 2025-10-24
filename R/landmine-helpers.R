@@ -1,3 +1,5 @@
+utils::globalVariables(c("area", "perimeter"))
+
 #' Calculate the mean of a truncated Pareto distribution
 #'
 #' @param k TODO: description needed
@@ -17,18 +19,20 @@ meanTruncPareto <- function(k, lower, upper, alpha) {
 
 #' LandMine burn optimization function
 #'
-#' @param ros             `SpatRaster` of LandMine Raster Of Spread values
-#' @param centreCell      see `startCells` in [landmine_burn1()]
-#' @param fireSize        see `fireSizes` in [landmine_burn1()]
+#' @param ros             `SpatRaster` of LandMine Rate Of Spread values.
+#' @param centreCell      See `startCells` in [landmine_burn1()].
+#' @param fireSize        See `fireSizes` in [landmine_burn1()].
 #' @inheritParams landmine_burn1
 #'
 #' @return named list of length 2 containing:
-#'         `burnedMap`: `SpatRaster` of burned pixels;
-#'         `LM`: `data.frame` of patch statistics from `SDMTools::PatchStats()`.
+#'  - `burnedMap`: `SpatRaster` of burned pixels;
+#'  - `LM`: `data.frame` of patch statistics from `landscapemetrics`.
 #'
 #' @export
 landmine_optim_burnFun <- function(ros, centreCell, fireSize, spawnNewActive,
                                    sizeCutoffs, spreadProb) {
+  stopifnot(requireNamespace("landscapemetrics", quietly = TRUE))
+
   burned <- landmine_burn1(
     landscape = ros,
     startCells = centreCell,
@@ -38,14 +42,42 @@ landmine_optim_burnFun <- function(ros, centreCell, fireSize, spawnNewActive,
     spawnNewActive = spawnNewActive,
     sizeCutoffs = sizeCutoffs
   )
-  burnedMap <- terra::rast(ros)
+  burnedMap <- terra::rast(ros) |> terra::as.int()
   burnedMap[] <- NA
-
   burnedMap[burned$pixels] <- burned$initialPixels
 
-  ## TODO: SDMTools is orphaned and no longer maintained;
-  ## use landscapemetrics package instead to calculate the perimeter to area ratio of patches
-  LM <- SDMTools::PatchStat(burnedMap, cellsize = res(burnedMap)[1])
+  ## NOTE: SDMTools is orphaned and no longer maintained;
+  ## now using `landscapemetrics` instead to calculate the perimeter to area ratio of patches.
+  ## Note too, that SDMTools calculations were sometimes incorrect:
+  ## - double-counts internal edges (though not used here);
+  ## - over-counts perimeter edges in some cases (inflating perim and perim:area).
+  ##
+  ## LM.orig <- SDMTools::PatchStat(burnedMap, cellsize = res(burnedMap)[1])
+
+  ## ensure crs set, units in metres;
+  if (terra::crs(burnedMap) == "") {
+    terra::crs(burnedMap) <- "+proj=cea" ## cylindrical equal area projection
+
+    # terra::crs(burnedMap, describe = TRUE)
+    # terra::cellSize(burnedMap)
+    # prod(res(burnedMap)) ## should be same as cellSize
+    # landscapemetrics::check_landscape(burnedMap) ## verify it's ok
+  }
+
+  ## NOTE: to emulate SDMTools::PatchStat, need total perim and total area;
+  ## not all fires are necessarily contiguous/connected and may result in >1 cluster ("patch");
+  ## but note that perim and area are same whether clusters touch on diagonal or are
+  ## separated by arbitrary number of pixels.
+
+  # terra::trim(burnedMap) |> terra::plot()
+
+  LM <- data.frame(
+    patchID = landscapemetrics::lsm_p_para(burnedMap)$class |> unique(),
+    perimeter = landscapemetrics::lsm_p_perim(burnedMap)$value |> sum(), ## m,
+    area = (landscapemetrics::lsm_p_area(burnedMap)$value * 1e4) |> sum() ## ha * 1e4 = m^2
+  ) |>
+    dplyr::mutate(perim.area.ratio = perimeter / area) ## need m/m^2
+
   list(burnedMap = burnedMap, LM = LM)
 }
 
@@ -159,13 +191,25 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
 #' to test whether a simpler version gets better/different results.
 #' Although this version was not used for the final module, we preserve it here for posterity.
 #'
-#' @param sna                   TODO
-#' @param ros                   TODO
-#' @param centreCell            TODO
-#' @param fireSizes             TODO
-#' @param desiredPerimeterArea  TODO
+#' @seealso [landmine_burn1()], [landmine_optim_burnFun()]
 #'
-#' @return `data.table` (TODO)
+#' @param sna (i.e., `spawnNewActive`) A numeric vector of length 4.
+#'  These are the probabilities of creating spreading to 2 neighbours
+#'  instead of the 1 default neighbour, each time step.
+#'  The 4 values are for 4 different fire size conditions.
+#'  See details in [landmine_optim_burnFun()].
+#'
+#' @param ros `SpatRaster` of LandMine Rate Of Spread values.
+#'
+#' @param centreCell Integer id of the centre (start) cell of `ros` raster.
+#'  See `startCells` in [landmine_burn1()].
+#'
+#' @param fireSizes A numeric vector indicating the final size of each of the fires.
+#'  See [landmine_burn1()].
+#'
+#' @param desiredPerimeterArea Numeric target perimeter-area ratio.
+#'
+#' @return Summary `data.table` of fit results.
 #'
 #' @export
 #' @rdname landmine_fitSN
@@ -176,11 +220,11 @@ landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
   sna <- c(10^(sna[1]), 10^(sna[2]), 10^(sna[3]), 10^(sna[4]))
   bfs1 <- lapply(fireSizes, function(fireSize) {
     landmine_optim_burnFun(
-      ros,
-      centreCell,
-      fireSize,
-      sna,
-      sizeCutoffs,
+      ros = ros,
+      centreCell = centreCell,
+      fireSize = fireSize,
+      spawnNewActive = sna,
+      sizeCutoffs = sizeCutoffs,
       spreadProb = spreadProb
     )
   })
@@ -188,8 +232,7 @@ landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
     abs(
       log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)
     ) +
-      100 *
-        (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
+      100 * (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
     ## it needs to get to above 90,000 HA for it to count
   })
   a <- sum(unlist(res)) # * log10(fireSizes)) # weigh larger ones more
