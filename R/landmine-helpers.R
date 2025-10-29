@@ -176,7 +176,17 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
 
   burnMapList <- parallel::clusterApplyLB(cl, reps, function(r) {
     ros <- terra::rast(ros)
-    do.call("landmine_optim_burnFun", objs)
+    out <- LandWebUtils::landmine_optim_burnFun(
+      ros = ros,
+      centreCell = centreCell,
+      fireSize = fireSize,
+      spawnNewActive = spawnNewActive,
+      sizeCutoffs = sizeCutoffs,
+      spreadProb = spreadProb
+    )
+    out$burnedMap <- terra::wrap(out$burnedMap)
+
+    return(out)
   })
 
   return(list(cl = cl, out = burnMapList))
