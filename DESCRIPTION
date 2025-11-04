@@ -1,8 +1,8 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9009
-Date: 2025-10-29
+Version: 1.0.3.9010
+Date: 2025-11-04
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
            comment = c(ORCID = "0000-0002-6914-8316")),
@@ -52,7 +52,7 @@ Remotes:
     PredictiveEcology/pemisc@development,
     PredictiveEcology/reproducible@development,
     PredictiveEcology/SpaDES.tools@development
-Additional_repositories: https://prodictiveecology.r-universe.dev
+Additional_repositories: https://predictiveecology.r-universe.dev
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-CA
