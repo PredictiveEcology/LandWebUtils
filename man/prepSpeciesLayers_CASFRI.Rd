@@ -16,28 +16,21 @@ prepSpeciesLayers_CASFRI(
 )
 }
 \arguments{
-\item{destinationPath}{path to data directory where objects will be downloaded or saved to}
+\item{destinationPath}{character, directory for downloaded/extracted inputs.}
 
 \item{outputPath}{character, specifying the output directory to use}
 
-\item{url}{if \code{NULL}, the default, use the default source url}
+\item{url}{optional character, source URL for the CASFRI data.}
 
-\item{studyArea}{A \verb{SpatialPolygons*} object used as the principle study region,
-passed to \code{\link[reproducible:prepInputs]{reproducible::prepInputs()}}.}
+\item{studyArea}{study-area polygon used to crop/mask the inputs.}
 
-\item{rasterToMatch}{A \code{RasterLayer} objects to use as the template for all subsequent
-raster operations (i.e., the one used throughout the simulation).}
+\item{rasterToMatch}{template raster defining CRS, extent, and resolution.}
 
-\item{sppEquiv}{table with species name equivalencies between the kNN and final naming formats.
-See \code{data("sppEquivalencies_CA", "LandR")}.
-For functions that have \code{mixedType}, this only necessary if \code{mixedType == 2}.
-If not provided and \code{mixedType == 2}, will attempt to use \code{data("sppEquivalencies_CA", "LandR")}.}
+\item{sppEquiv}{species-equivalency table (e.g. \code{LandR::sppEquivalencies_CA}).}
 
-\item{sppEquivCol}{the column name to use from \code{sppEquiv}.
-For functions that have \code{mixedType}, only necessary if \code{mixedType == 2}.
-If not provided and \code{mixedType == 2}, will attempt to use "Boreal".}
+\item{sppEquivCol}{character, column of \code{sppEquiv} naming the species set.}
 
-\item{...}{other arguments, used for compatibility with other \code{prepSpeciesLayers} functions.}
+\item{...}{additional arguments passed to lower-level functions.}
 }
 \description{
 Prepare species layers from CASFRI v4

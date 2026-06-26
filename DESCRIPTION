@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9010
+Version: 1.0.3.9011
 Date: 2025-11-04
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
@@ -22,9 +22,9 @@ Imports:
     fs,
     future.apply,
     ggplot2,
+    googledrive,
     graphics,
     grDevices,
-    LandR,
     map,
     methods,
     pemisc,
@@ -34,12 +34,14 @@ Imports:
     scales,
     sf,
     SpaDES.tools,
+    spatialutils,
     stats,
     terra,
     tibble,
     tools,
     utils,
-    withr
+    withr,
+    workflowtools
 Suggests:
     covr,
     landscapemetrics,
@@ -47,7 +49,8 @@ Suggests:
     parallelly,
     testthat (>= 3.0.0)
 Remotes:
-    PredictiveEcology/LandR@development,
+    FOR-CAST/spatialutils,
+    FOR-CAST/workflowtools@development,
     PredictiveEcology/map@development,
     PredictiveEcology/pemisc@development,
     PredictiveEcology/reproducible@development,
@@ -58,12 +61,12 @@ Encoding: UTF-8
 Language: en-CA
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Collate: 
     'CASFRIv4.R'
     'LandWebUtils-package.R'
     'misc.R'
     'boxplots.R'
+    'equivalentName.R'
     'histograms.R'
     'landmine-helpers.R'
     'landmine-plot.R'
@@ -77,3 +80,4 @@ Collate:
     'simfiles.R'
     'studyAreas.R'
     'zzz.R'
+Config/roxygen2/version: 8.0.0

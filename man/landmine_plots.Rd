@@ -24,7 +24,7 @@ the following columns:
 
 \item{studyAreaName}{study area name (character).}
 
-\item{...}{additional arguments passed to \code{\link[rasterVis:levelplot-methods]{rasterVis::levelplot()}}.}
+\item{...}{additional arguments passed to \code{\link[rasterVis:levelplot]{rasterVis::levelplot()}}.}
 
 \item{friSummary}{Summary \code{data.frame} of simulated fire return intervals (FRI) vs.
 the long-term historic fire cycles (LTHFC), containing the following columns:
@@ -38,7 +38,7 @@ a \code{ggplot2} or \code{rasterVis} object; invoked for side effect of creating
 \description{
 \itemize{
 \item \code{landmine_plot_areaBurnedOverTime()} plots the area burned over time by LTHFC polygon;
-\item \code{landmine_plot_LTHFC()} produces a \code{\link[rasterVis:levelplot-methods]{rasterVis::levelplot()}} a map of the LTHFC polygons;
+\item \code{landmine_plot_LTHFC()} produces a \code{\link[rasterVis:levelplot]{rasterVis::levelplot()}} a map of the LTHFC polygons;
 \item \code{landmine_plot_FRI()} plots
 }
 }

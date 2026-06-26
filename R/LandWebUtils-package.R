@@ -53,7 +53,6 @@ NULL
 #' @importFrom graphics points
 #' @importFrom grDevices dev.off
 #' @importFrom grDevices png
-#' @importFrom LandR equivalentName
 #' @importFrom map .rasterToMemory
 #' @importFrom map areaAndPolyValue
 #' @importFrom map fasterize2

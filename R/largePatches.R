@@ -148,8 +148,8 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
   }
 
   out[
-    !is.na(LandR::equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
-    vegCover := LandR::equivalentName(vegCover, sppEquiv, sppEquivCol)
+    !is.na(equivalentName(out$vegCover, sppEquiv, sppEquivCol)),
+    vegCover := equivalentName(vegCover, sppEquiv, sppEquivCol)
   ]
   out
 }

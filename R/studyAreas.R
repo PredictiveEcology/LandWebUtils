@@ -88,7 +88,19 @@ studyAreaIn <- function(name, prov) {
 #'
 #' @export
 extractFMA <- function(fmas, name) {
-  fmas[grepl(name, fmas[["Name"]]), ]
+  sel <- grepl(name, fmas[["Name"]])
+  if (!any(sel) && "FMA_NAME" %in% names(fmas)) {
+    ## The v10 FMA shapefile lacks canonical short names in `Name`; fall back to matching the
+    ## study area's full name (`LandWebStudyAreas$Description`) against `FMA_NAME`.
+    ## TODO: many study areas' Description still differs from the v10 `FMA_NAME` values
+    ## (e.g. "ALPAC Forest Products ..." vs "Alberta-Pacific Forest Industries Inc."); the v10
+    ## file also uses a different ID scheme (FMA_NUM) -- needs a curated Name crosswalk.
+    desc <- LandWebStudyAreas[["Description"]][startsWith(name, LandWebStudyAreas[["Name"]])]
+    if (length(desc) == 1L) {
+      sel <- !is.na(fmas[["FMA_NAME"]]) & fmas[["FMA_NAME"]] == desc
+    }
+  }
+  fmas[sel, ]
 }
 
 #' Extract boundary polygon(s) for Alberta forest management unit(s)

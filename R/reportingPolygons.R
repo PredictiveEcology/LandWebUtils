@@ -20,31 +20,33 @@ LandWebCRS <- paste("+proj=lcc +lat_0=0 +lon_0=-95 +lat_1=49 +lat_2=77",
 #' @export
 #' @rdname prepReportingPolygons
 prepFMAs <- function(destinationPath, targetCRS = LandWebCRS) {
-  reproducible::prepInputs(
-    url = "https://drive.google.com/file/d/1yCbq8rcRXCfUKHJGg-Fzlnrjl48LJfCO", ## 2020
-    destinationPath = destinationPath,
-    projectTo = targetCRS
-  )
+  ## v10: FMAs_LandWebltfc_map_v10_LCC1 (supersedes FMA_Boundary_Updated_2024)
+  .prepDriveVector("1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL", destinationPath, targetCRS)
 }
 
 #' @export
 #' @rdname prepReportingPolygons
 prepFMUs <- function(destinationPath, targetCRS = LandWebCRS) {
-  reproducible::prepInputs(
-    url = "https://drive.google.com/open?id=1OH3b5pwjumm1ToytDBDI6jthVe2pp0tS", ## 2024-08 added C5
-    destinationPath = destinationPath,
-    projectTo = targetCRS
-  )
+  .prepDriveVector("1OH3b5pwjumm1ToytDBDI6jthVe2pp0tS", destinationPath, targetCRS)
 }
 
 #' @export
 #' @rdname prepReportingPolygons
 prepANSRs <- function(destinationPath, targetCRS = LandWebCRS) {
-  reproducible::prepInputs(
-    url = "https://drive.google.com/file/d/1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ",
-    destinationPath = destinationPath,
-    projectTo = targetCRS
-  )
+  .prepDriveVector("1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ", destinationPath, targetCRS)
+}
+
+## Download (googledrive direct, bypassing reproducible's broken Drive path /
+## reproducible #447), extract, load, and reproject a Drive-hosted vector. Returns
+## `sf` to match the legacy map/postProcess/joinReportingPolygons machinery.
+.prepDriveVector <- function(id, destinationPath, targetCRS) {
+  dir <- reproducible::checkPath(file.path(destinationPath, id), create = TRUE)
+  zip <- file.path(dir, paste0(id, ".zip"))
+  workflowtools::drive_download_once(googledrive::as_id(id), zip)
+  workflowtools::archive_extract_once(zip, dir = dir)
+  shp <- list.files(dir, "\\.shp$", full.names = TRUE)[[1]]
+  v <- terra::project(terra::makeValid(terra::vect(shp)), targetCRS)
+  sf::st_as_sf(v)
 }
 
 #' Join reporting polygons and intersect their features
@@ -92,4 +94,90 @@ joinReportingPolygons <- function(x, y) {
   }
 
   return(z)
+}
+
+#' Candidate reporting-polygon source layers
+#'
+#' The reporting-polygon layers considered for LandWeb/NRV summaries. Each is
+#' fetched, clipped to the study area with [spatialutils::prep_vector()], and
+#' kept only if it intersects (see [buildReportingPolygons()]). `source` is
+#' either `"drive"` (a Google Drive file id) or `"url"` (a direct URL);
+#' `labelCol` is the attribute used for sub-region labels.
+#'
+#' @return A `tibble` with columns `key`, `source`, `id`, and `labelCol`.
+#' @export
+reportingPolygonLayers <- function() {
+  tibble::tribble(
+    ~key, ~source, ~id, ~labelCol,
+    "FMA Boundaries Updated", "drive", "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL", "Name",
+    "Caribou Ranges", "drive", "1gwqq3TO-vKfTR3Za7bf7GWW7BobbAusQ", "RANGE_NAME",
+    "Parks", "drive", "10-TpJaEOUCN6MNISWhpU-CRLpadyHDS2", "Name",
+    "Alberta Natural Subregions", "drive", "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ", "Name",
+    "BC Biogeoclimatic zones", "drive", "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS", "ZONE_NAME",
+    "Northwest Territories Ecoregions", "drive", "1iRAQfARkmS6-XVHFnTkB-iltzMNPAczC", "ECO4_NAM_1",
+    "National Ecozones", "url", "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip", "ZONE_NAME",
+    "National Ecoregions", "url", "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip", "REGION_NAM"
+  )
+}
+
+#' Build the reporting-polygons named list
+#'
+#' Fetch each candidate reporting layer ([reportingPolygonLayers()]), clip it to
+#' `studyArea` with [spatialutils::prep_vector()], and keep only those that
+#' intersect -- a layer that does not overlap the study area is dropped
+#' (`nrow == 0`), which replaces the former per-study-area hardcoding. Downloads
+#' use the idempotent `workflowtools` `*_once` helpers (bypassing
+#' `reproducible::prepInputs`). The result is a named list keyed by layer name,
+#' suitable as the `reportingPolygons` input to `NRV_summary`; each layer's
+#' `labelCol` is copied to a common `Name` column. The `"CC SAM"`/`"CC TSF"`
+#' (current condition) and `"ecoregionLayer"` entries that `NRV_summary` also
+#' expects come from the simulation, not from here, and are merged in separately.
+#'
+#' @param studyArea A `SpatVector` (or source readable by [terra::vect()]).
+#' @param destinationPath Directory for downloads/extraction.
+#' @param targetCRS Target CRS (default [LandWebCRS]).
+#' @param layers Candidate-layer table (default [reportingPolygonLayers()]).
+#'
+#' @return A named `list` of `SpatVector`s, one per intersecting layer.
+#' @export
+buildReportingPolygons <- function(
+    studyArea,
+    destinationPath,
+    targetCRS = LandWebCRS,
+    layers = reportingPolygonLayers()) {
+  if (!inherits(studyArea, "SpatVector")) {
+    studyArea <- terra::vect(studyArea)
+  }
+
+  out <- lapply(seq_len(nrow(layers)), function(i) {
+    lyr <- layers[i, ]
+    dir <- reproducible::checkPath(
+      file.path(destinationPath, make.names(lyr$key)),
+      create = TRUE
+    )
+    if (identical(lyr$source, "drive")) {
+      dest <- file.path(dir, paste0(make.names(lyr$key), ".zip"))
+      workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
+    } else {
+      dest <- file.path(dir, basename(lyr$id))
+      workflowtools::download_once(lyr$id, dest)
+    }
+    workflowtools::archive_extract_once(dest, dir = dir)
+
+    shp <- list.files(dir, "\\.(shp|gpkg)$", full.names = TRUE)
+    if (length(shp) == 0L) {
+      return(NULL)
+    }
+    v <- spatialutils::prep_vector(terra::vect(shp[[1]]), studyArea, crs = targetCRS)
+    if (nrow(v) == 0L) {
+      return(NULL)
+    }
+    if (!is.null(lyr$labelCol) && lyr$labelCol %in% names(v)) {
+      v$Name <- as.character(v[[lyr$labelCol]])
+    }
+    v
+  })
+
+  names(out) <- layers$key
+  out[!vapply(out, is.null, logical(1))]
 }

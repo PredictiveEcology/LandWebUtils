@@ -89,7 +89,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
 
   ## ensure species names all consistent (TODO: ensure this propagates)
   whMixed <- which(types[, 2] == "Mixed")
-  types[, 2] <- LandR::equivalentName(types[, 2], sppEquiv, sppEquivCol)
+  types[, 2] <- equivalentName(types[, 2], sppEquiv, sppEquivCol)
   types[whMixed, 2] <- "Mixed"
 
   levels(ras) <- data.frame(eTable, ageClass = types[, 1], vegCover = types[, 2])
@@ -150,7 +150,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
   ## ensure species names all consistent (TODO: ensure this propagates)
   whAll <- which(coverClasses == "All species")
   whMixed <- which(coverClasses == "Mixed")
-  coverClasses <- LandR::equivalentName(coverClasses, sppEquiv, sppEquivCol)
+  coverClasses <- equivalentName(coverClasses, sppEquiv, sppEquivCol)
   coverClasses[c(whAll, whMixed)] <- c("All species", "Mixed")
 
   allCombos <- expand.grid(

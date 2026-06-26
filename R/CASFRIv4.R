@@ -118,7 +118,7 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 
   # This
   sppListMergesCASFRI <- lapply(sppNameVector, function(x) {
-    LandR::equivalentName(x, sppEquiv, column = "CASFRI", multi = TRUE)
+    equivalentName(x, sppEquiv, column = "CASFRI", multi = TRUE)
   })
 
   ## create list and template raster
@@ -198,9 +198,14 @@ CASFRItoSpRasts <- function(CASFRIRas, CASFRIattrLong, CASFRIdt,
 
 #' Prepare species layers from CASFRI v4
 #'
-#' @inheritParams LandR::prepSpeciesLayers_KNN
-#'
+#' @param destinationPath character, directory for downloaded/extracted inputs.
 #' @param outputPath character, specifying the output directory to use
+#' @param url optional character, source URL for the CASFRI data.
+#' @param studyArea study-area polygon used to crop/mask the inputs.
+#' @param rasterToMatch template raster defining CRS, extent, and resolution.
+#' @param sppEquiv species-equivalency table (e.g. `LandR::sppEquivalencies_CA`).
+#' @param sppEquivCol character, column of `sppEquiv` naming the species set.
+#' @param ... additional arguments passed to lower-level functions.
 #'
 #' @export
 prepSpeciesLayers_CASFRI <- function(destinationPath, outputPath, url = NULL,
