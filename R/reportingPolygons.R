@@ -5,8 +5,10 @@
 #' @note needs to be character, not `CRS` class, for downstream use with `data.table`
 #'
 #' @export
-LandWebCRS <- paste("+proj=lcc +lat_0=0 +lon_0=-95 +lat_1=49 +lat_2=77",
-                    "+x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
+LandWebCRS <- paste(
+  "+proj=lcc +lat_0=0 +lon_0=-95 +lat_1=49 +lat_2=77",
+  "+x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+)
 
 #' Prepare reporting polygons
 #'
@@ -108,15 +110,15 @@ joinReportingPolygons <- function(x, y) {
 #' @export
 reportingPolygonLayers <- function() {
   tibble::tribble(
-    ~key, ~source, ~id, ~labelCol,
-    "FMA Boundaries Updated", "drive", "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL", "Name",
-    "Caribou Ranges", "drive", "1gwqq3TO-vKfTR3Za7bf7GWW7BobbAusQ", "RANGE_NAME",
-    "Parks", "drive", "10-TpJaEOUCN6MNISWhpU-CRLpadyHDS2", "Name",
-    "Alberta Natural Subregions", "drive", "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ", "Name",
-    "BC Biogeoclimatic zones", "drive", "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS", "ZONE_NAME",
-    "Northwest Territories Ecoregions", "drive", "1iRAQfARkmS6-XVHFnTkB-iltzMNPAczC", "ECO4_NAM_1",
-    "National Ecozones", "url", "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip", "ZONE_NAME",
-    "National Ecoregions", "url", "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip", "REGION_NAM"
+    ~key                               , ~source , ~id                                                                   , ~labelCol    ,
+    "FMA Boundaries Updated"           , "drive" , "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"                                   , "Name"       ,
+    "Caribou Ranges"                   , "drive" , "1gwqq3TO-vKfTR3Za7bf7GWW7BobbAusQ"                                   , "RANGE_NAME" ,
+    "Parks"                            , "drive" , "10-TpJaEOUCN6MNISWhpU-CRLpadyHDS2"                                   , "Name"       ,
+    "Alberta Natural Subregions"       , "drive" , "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ"                                   , "Name"       ,
+    "BC Biogeoclimatic zones"          , "drive" , "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS"                                   , "ZONE_NAME"  ,
+    "Northwest Territories Ecoregions" , "drive" , "1iRAQfARkmS6-XVHFnTkB-iltzMNPAczC"                                   , "ECO4_NAM_1" ,
+    "National Ecozones"                , "url"   , "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"     , "ZONE_NAME"  ,
+    "National Ecoregions"              , "url"   , "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip" , "REGION_NAM"
   )
 }
 
@@ -141,20 +143,18 @@ reportingPolygonLayers <- function() {
 #' @return A named `list` of `SpatVector`s, one per intersecting layer.
 #' @export
 buildReportingPolygons <- function(
-    studyArea,
-    destinationPath,
-    targetCRS = LandWebCRS,
-    layers = reportingPolygonLayers()) {
+  studyArea,
+  destinationPath,
+  targetCRS = LandWebCRS,
+  layers = reportingPolygonLayers()
+) {
   if (!inherits(studyArea, "SpatVector")) {
     studyArea <- terra::vect(studyArea)
   }
 
   out <- lapply(seq_len(nrow(layers)), function(i) {
     lyr <- layers[i, ]
-    dir <- reproducible::checkPath(
-      file.path(destinationPath, make.names(lyr$key)),
-      create = TRUE
-    )
+    dir <- reproducible::checkPath(file.path(destinationPath, make.names(lyr$key)), create = TRUE)
     if (identical(lyr$source, "drive")) {
       dest <- file.path(dir, paste0(make.names(lyr$key), ".zip"))
       workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)

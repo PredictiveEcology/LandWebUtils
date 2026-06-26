@@ -1,4 +1,6 @@
-utils::globalVariables(c("area", "perimeter"))
+utils::globalVariables(c(
+  "area", "centreCell", "fireSize", "perimeter", "sizeCutoffs", "spawnNewActive"
+))
 
 #' Calculate the mean of a truncated Pareto distribution
 #'
@@ -11,10 +13,7 @@ utils::globalVariables(c("area", "perimeter"))
 #'
 #' @export
 meanTruncPareto <- function(k, lower, upper, alpha) {
-  k *
-    lower^k *
-    (upper^(1 - k) - alpha^(1 - k)) /
-    ((1 - k) * (1 - (alpha / upper)^k))
+  k * lower^k * (upper^(1 - k) - alpha^(1 - k)) / ((1 - k) * (1 - (alpha / upper)^k))
 }
 
 #' LandMine burn optimization function
@@ -29,8 +28,14 @@ meanTruncPareto <- function(k, lower, upper, alpha) {
 #'  - `LM`: `data.frame` of patch statistics from `landscapemetrics`.
 #'
 #' @export
-landmine_optim_burnFun <- function(ros, centreCell, fireSize, spawnNewActive,
-                                   sizeCutoffs, spreadProb) {
+landmine_optim_burnFun <- function(
+  ros,
+  centreCell,
+  fireSize,
+  spawnNewActive,
+  sizeCutoffs,
+  spreadProb
+) {
   stopifnot(requireNamespace("landscapemetrics", quietly = TRUE))
 
   burned <- landmine_burn1(
@@ -102,9 +107,7 @@ landmine_optim_clusterSetup <- function(nodes = NULL) {
   } else if (is.character(nodes)) {
     length(nodes)
   } else {
-    stop(
-      "nodes must be an integer of length 1 or a character vector of nodenames"
-    )
+    stop("nodes must be an integer of length 1 or a character vector of nodenames")
   }
 
   ## check the number of nodes used for the cluster:
@@ -222,8 +225,13 @@ landmine_optim_clusterWrap <- function(cl = NULL, nodes, reps, objs, pkgs) {
 #'
 #' @export
 #' @rdname landmine_fitSN
-landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
-                                 desiredPerimeterArea = 0.004) {
+landmine_optim_fitSN <- function(
+  sna,
+  ros,
+  centreCell,
+  fireSizes = 10^(2:5),
+  desiredPerimeterArea = 0.004
+) {
   stopifnot(is.character(ros))
 
   ros <- terra::rast(ros)
@@ -242,9 +250,7 @@ landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
     )
   })
   res <- lapply(seq(bfs1), function(bfCount) {
-    abs(
-      log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)
-    ) +
+    abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +
       100 * (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
     ## it needs to get to above 90,000 HA for it to count
   })
@@ -258,26 +264,20 @@ landmine_optim_fitSN <- function(sna, ros, centreCell, fireSizes = 10^(2:5),
 #'
 #' @export
 #' @rdname landmine_fitSN
-landmine_optim_fitSN2 <- function(par, ros, centreCell, fireSizes = 10^(2:5),
-                                  desiredPerimeterArea = 0.003, spreadProb = 0.9) {
+landmine_optim_fitSN2 <- function(
+  par,
+  ros,
+  centreCell,
+  fireSizes = 10^(2:5),
+  desiredPerimeterArea = 0.003,
+  spreadProb = 0.9
+) {
   sizeCutoffs <- 10^c(par[4], par[5])
   bfs1 <- lapply(fireSizes, function(fireSize) {
     sna <- min(-0.15, par[1] + par[2] * log10(fireSize))
-    sna <- 10^c(
-      sna * par[3],
-      sna * 2 * par[3],
-      sna * 3 * par[3],
-      sna * 4 * par[3]
-    )
+    sna <- 10^c(sna * par[3], sna * 2 * par[3], sna * 3 * par[3], sna * 4 * par[3])
     # sna <- -1
-    landmine_optim_burnFun(
-      ros,
-      centreCell,
-      fireSize,
-      sna,
-      sizeCutoffs,
-      spreadProb
-    )
+    landmine_optim_burnFun(ros, centreCell, fireSize, sna, sizeCutoffs, spreadProb)
   })
   res <- lapply(seq(bfs1), function(bfCount) {
     abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +

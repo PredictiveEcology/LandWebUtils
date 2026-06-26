@@ -23,9 +23,6 @@ equivalentNameColumn <- function(value, df, column, multi = FALSE, searchColumn 
 
 equivalentName <- function(value, df, column, multi = FALSE, searchColumn = NULL) {
   out <- equivalentNameAsList(value, df, multi)
-  likelyMatch <- equivalentNameColumn(
-    value, df, column,
-    multi = multi, searchColumn = searchColumn
-  )
+  likelyMatch <- equivalentNameColumn(value, df, column, multi = multi, searchColumn = searchColumn)
   df[[column]][out[[likelyMatch]]]
 }

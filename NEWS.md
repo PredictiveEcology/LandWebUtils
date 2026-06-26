@@ -10,6 +10,10 @@
 * add study area creation / extraction functions from `LandWeb_preamble` module;
 * use `usethis` approach to managing package imports;
 * improve documentation;
+* `buildReportingPolygons()` and `reportingPolygonLayers()` assemble the reporting-polygon list using `spatialutils::prep_vector()` and the `workflowtools` `*_once` download helpers, replacing the per-study-area hardcoding;
+* `extractFMA()` falls back to matching `LandWebStudyAreas$Description` against an `FMA_NAME` column when the canonical short names are absent (the updated FMA boundaries layer);
+* drop the `LandR` dependency by vendoring the `equivalentName()` name-lookup helpers;
+* add package dependencies: `googledrive`, `spatialutils`, `workflowtools`;
 
 # LandWebUtils 1.0.3 (2025-02-11)
 

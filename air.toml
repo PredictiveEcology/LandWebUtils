@@ -6,6 +6,6 @@ line-ending = "auto"
 persistent-line-breaks = false
 exclude = []
 default-exclude = true
-skip = ["globalVariables" "use"]
+skip = ["globalVariables", "use"]
 table = []
 default-table = true

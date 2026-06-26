@@ -10,49 +10,49 @@ utils::globalVariables(c("FMU_NAME", "Name"))
 #'
 #' @export
 LandWebStudyAreas <- tibble::tribble(
-  ~Name,              ~Province,  ~ID,                 ~Description,
+  ~Name           , ~Province     , ~ID              , ~Description                                    ,
 
   ## by company / FMA
-  "AlPac",            "AB",       "38",                "ALPAC Forest Products Incorporated",
-  "ANC",              "AB",       "39",                "ANC Timber Ltd.",
-  "BlueRidge",        "AB",       "40",                "Blueridge Lumber Inc.",
-  "DMI",              "AB",       "42, 43",            "Mercer Peace River Pulp Ltd. (formerly DMI)",
-  "Edson",            "AB",       "53",                "West Fraser Mills Ltd. (Edson)",
-  "FMANWT",           "NWT",      "59",                "Fort Resolution",
-  "FMANWT2",          "NWT",      "58",                "Fort Providence",
-  "LP_BC",            "BC",       "5, 6",              "Lousiana Pacific (British Columbia)",
-  "LP_MB",            "MB",       "32",                "Lousiana Pacific (Manitoba)",
-  "Manning",          "AB",       "45",                "Manning Diversified Forest Products Ltd.",
-  "MillarWestern",    "AB",       "46",                "Millar Western Forest Products Ltd.",
-  "Mistik",           "SK",       "15",                "Mistik",
-  "MPR",              "AB",       "42, 43",            "Mercer Peace River Pulp Ltd. (formerly DMI)",
-  "SprayLake",        "AB",       "47",                "Spray Lake Sawmills (1980) Ltd.",
-  "Sundre",           "AB",       "48",                "Sundre Forest Products Inc.",
-  "Tolko_AB_N",       "AB",       "50",                "Tolko Industries Ltd. (Alberta North)",
-  "Tolko_AB_S",       "AB",       "44, 49, 51",        "Tolko Industries Ltd. (Alberta South)",
-  "Tolko_SK",         "SK",       "22",                "Tolko (Saskatchewan)",
-  "Vanderwell",       "AB",       "51, 52",            "Vanderwell Contractors (1971) Ltd.",
-  "WestFraser_N",     "AB",       "44, 51, 55",        "West Fraser Mills Ltd. (Slave Lake)",
-  "WestFraser_S",     "AB",       "53, 54",            "West Fraser Mills Ltd. (Edson + Hinton)",
-  "WeyCo_GP",         "AB",       "56",                "Weyerhauser Company Ltd. (Grand Prairie)",
-  "WeyCo_PT",         "AB",       "57",                "Weyerhauser Company Ltd. (Pembina Timberland)",
-  "WeyCo_SK",         "SK",       "21",                "Weyerhauser Company Ltd. (Pasquia-Porcupine)",
+  "AlPac"         , "AB"          , "38"             , "ALPAC Forest Products Incorporated"            ,
+  "ANC"           , "AB"          , "39"             , "ANC Timber Ltd."                               ,
+  "BlueRidge"     , "AB"          , "40"             , "Blueridge Lumber Inc."                         ,
+  "DMI"           , "AB"          , "42, 43"         , "Mercer Peace River Pulp Ltd. (formerly DMI)"   ,
+  "Edson"         , "AB"          , "53"             , "West Fraser Mills Ltd. (Edson)"                ,
+  "FMANWT"        , "NWT"         , "59"             , "Fort Resolution"                               ,
+  "FMANWT2"       , "NWT"         , "58"             , "Fort Providence"                               ,
+  "LP_BC"         , "BC"          , "5, 6"           , "Lousiana Pacific (British Columbia)"           ,
+  "LP_MB"         , "MB"          , "32"             , "Lousiana Pacific (Manitoba)"                   ,
+  "Manning"       , "AB"          , "45"             , "Manning Diversified Forest Products Ltd."      ,
+  "MillarWestern" , "AB"          , "46"             , "Millar Western Forest Products Ltd."           ,
+  "Mistik"        , "SK"          , "15"             , "Mistik"                                        ,
+  "MPR"           , "AB"          , "42, 43"         , "Mercer Peace River Pulp Ltd. (formerly DMI)"   ,
+  "SprayLake"     , "AB"          , "47"             , "Spray Lake Sawmills (1980) Ltd."               ,
+  "Sundre"        , "AB"          , "48"             , "Sundre Forest Products Inc."                   ,
+  "Tolko_AB_N"    , "AB"          , "50"             , "Tolko Industries Ltd. (Alberta North)"         ,
+  "Tolko_AB_S"    , "AB"          , "44, 49, 51"     , "Tolko Industries Ltd. (Alberta South)"         ,
+  "Tolko_SK"      , "SK"          , "22"             , "Tolko (Saskatchewan)"                          ,
+  "Vanderwell"    , "AB"          , "51, 52"         , "Vanderwell Contractors (1971) Ltd."            ,
+  "WestFraser_N"  , "AB"          , "44, 51, 55"     , "West Fraser Mills Ltd. (Slave Lake)"           ,
+  "WestFraser_S"  , "AB"          , "53, 54"         , "West Fraser Mills Ltd. (Edson + Hinton)"       ,
+  "WeyCo_GP"      , "AB"          , "56"             , "Weyerhauser Company Ltd. (Grand Prairie)"      ,
+  "WeyCo_PT"      , "AB"          , "57"             , "Weyerhauser Company Ltd. (Pembina Timberland)" ,
+  "WeyCo_SK"      , "SK"          , "21"             , "Weyerhauser Company Ltd. (Pasquia-Porcupine)"  ,
 
   ## Alberta subregions / by FMU
-  "FMU",              "AB",       NA_character_,       "Alberta Forest Management Units",
-  "NWAB",             "AB",       "42, 43, 45, 50",    "Northwestern Alberta",
+  "FMU"           , "AB"          , NA_character_    , "Alberta Forest Management Units"               ,
+  "NWAB"          , "AB"          , "42, 43, 45, 50" , "Northwestern Alberta"                          ,
 
   ## Full LandWeb study area
-  "LandWeb",          NA_character_,  NA_character_,   "full LandWeb study area",
+  "LandWeb"       , NA_character_ , NA_character_    , "full LandWeb study area"                       ,
 
   ## by province
-  "provAB",           "AB",       "38--57",            "Alberta",
-  "provMB",           "MB",       "31, 32, 33",        "Manitoba",
-  "provNWT",          "NWT",      "58, 59",            "Northwest Territories",
-  "provSK",           "SK",       "7--30",             "Saskatchewan",
+  "provAB"        , "AB"          , "38--57"         , "Alberta"                                       ,
+  "provMB"        , "MB"          , "31, 32, 33"     , "Manitoba"                                      ,
+  "provNWT"       , "NWT"         , "58, 59"         , "Northwest Territories"                         ,
+  "provSK"        , "SK"          , "7--30"          , "Saskatchewan"                                  ,
 
   ## small test area
-  "random",           "AB",       NA_character_,  "Small random study area used for testing"
+  "random"        , "AB"          , NA_character_    , "Small random study area used for testing"
 ) |>
   data.frame()
 
@@ -127,8 +127,14 @@ extractFMU <- function(fmus, name) {
 #' @export
 prepStudyArea <- function(name, destinationPath, targetCRS = LandWebCRS) {
   if (!grepl(paste(LandWebStudyAreas$Name, collapse = "|"), name)) {
-    stop("name ", name, ", does not contain valid study area name.\n",
-         "Study area name must be one of:\n", paste(LandWebStudyAreas$Name, collapse = ", "), ".")
+    stop(
+      "name ",
+      name,
+      ", does not contain valid study area name.\n",
+      "Study area name must be one of:\n",
+      paste(LandWebStudyAreas$Name, collapse = ", "),
+      "."
+    )
   }
 
   if (grepl("random", name)) {
