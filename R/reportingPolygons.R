@@ -111,7 +111,11 @@ joinReportingPolygons <- function(x, y) {
 reportingPolygonLayers <- function() {
   tibble::tribble(
     ~key                               , ~source , ~id                                                                   , ~labelCol    ,
-    "FMA Boundaries Updated"           , "drive" , "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"                                   , "Name"       ,
+    ## NB: the source FMA shapefile's `Name` column is CORRUPT -- every row holds the
+    ## deparsed whole-column vector as a literal string ("c(NA, NA, ..., \"Fort Providence\",
+    ## ...)"), a bug in whatever built FMAs_LandWebltfc_map_v10. Use the clean per-row
+    ## `FMA_NAME` (FMA holder) instead.
+    "FMA Boundaries Updated"           , "drive" , "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"                                   , "FMA_NAME"   ,
     "Caribou Ranges"                   , "drive" , "1gwqq3TO-vKfTR3Za7bf7GWW7BobbAusQ"                                   , "RANGE_NAME" ,
     "Parks"                            , "drive" , "10-TpJaEOUCN6MNISWhpU-CRLpadyHDS2"                                   , "Name"       ,
     "Alberta Natural Subregions"       , "drive" , "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ"                                   , "Name"       ,
