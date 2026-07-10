@@ -177,7 +177,10 @@ buildReportingPolygons <- function(
       return(NULL)
     }
     if (!is.null(lyr$labelCol) && lyr$labelCol %in% names(v)) {
-      v$Name <- as.character(v[[lyr$labelCol]])
+      ## NB: v[[col]] returns a 1-column data.frame; as.character() on that deparses
+      ## the whole column into one string recycled to every row. Use `[[1]]` to pull
+      ## the vector so each feature keeps its own label.
+      v$Name <- as.character(v[[lyr$labelCol]][[1]])
     }
     v
   })
@@ -308,7 +311,7 @@ buildLandbasePolygons <- function(
     if (nrow(v) == 0L) {
       return(NULL)
     }
-    v$Name <- as.character(v[["lbstatus"]])
+    v$Name <- as.character(v$lbstatus) ## $ gives the vector; [["lbstatus"]] would deparse (see above)
     v
   })
 
