@@ -4,6 +4,8 @@
 \alias{prepFMAs}
 \alias{prepFMUs}
 \alias{prepANSRs}
+\alias{prepEcoregions}
+\alias{prepEcoprovinces}
 \title{Prepare reporting polygons}
 \usage{
 prepFMAs(destinationPath, targetCRS = LandWebCRS)
@@ -11,6 +13,10 @@ prepFMAs(destinationPath, targetCRS = LandWebCRS)
 prepFMUs(destinationPath, targetCRS = LandWebCRS)
 
 prepANSRs(destinationPath, targetCRS = LandWebCRS)
+
+prepEcoregions(destinationPath, targetCRS = LandWebCRS)
+
+prepEcoprovinces(destinationPath, targetCRS = LandWebCRS)
 }
 \arguments{
 \item{destinationPath}{character specifying path to destination directory}

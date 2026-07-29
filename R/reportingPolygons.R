@@ -38,6 +38,26 @@ prepANSRs <- function(destinationPath, targetCRS = LandWebCRS) {
   .prepDriveVector("1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ", destinationPath, targetCRS)
 }
 
+#' @export
+#' @rdname prepReportingPolygons
+prepEcoregions <- function(destinationPath, targetCRS = LandWebCRS) {
+  .prepUrlVector(
+    "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip",
+    destinationPath, targetCRS,
+    subdir = "Ecoregions"
+  )
+}
+
+#' @export
+#' @rdname prepReportingPolygons
+prepEcoprovinces <- function(destinationPath, targetCRS = LandWebCRS) {
+  .prepUrlVector(
+    "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/province/ecoprovince_shp.zip",
+    destinationPath, targetCRS,
+    subdir = "Ecoprovinces"
+  )
+}
+
 ## Download (googledrive direct, bypassing reproducible's broken Drive path /
 ## reproducible #447), extract, load, and reproject a Drive-hosted vector. Returns
 ## `sf` to match the legacy map/postProcess/joinReportingPolygons machinery.
@@ -47,6 +67,19 @@ prepANSRs <- function(destinationPath, targetCRS = LandWebCRS) {
   workflowtools::drive_download_once(googledrive::as_id(id), zip)
   workflowtools::archive_extract_once(zip, dir = dir)
   shp <- list.files(dir, "\\.shp$", full.names = TRUE)[[1]]
+  v <- terra::project(terra::makeValid(terra::vect(shp)), targetCRS)
+  sf::st_as_sf(v)
+}
+
+## URL analog of `.prepDriveVector()`: download (once), extract (once), load, and
+## reproject a zipped shapefile from a plain URL (e.g. the AAFC ecostrat
+## ecoregion/ecoprovince layers), composing the idempotent `workflowtools` helpers.
+.prepUrlVector <- function(url, destinationPath, targetCRS, subdir) {
+  dir <- reproducible::checkPath(file.path(destinationPath, subdir), create = TRUE)
+  zip <- file.path(dir, basename(url))
+  workflowtools::download_once(url, zip)
+  workflowtools::archive_extract_once(zip, dir = dir)
+  shp <- list.files(dir, "\\.shp$", full.names = TRUE)[[1L]]
   v <- terra::project(terra::makeValid(terra::vect(shp)), targetCRS)
   sf::st_as_sf(v)
 }

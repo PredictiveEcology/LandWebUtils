@@ -116,34 +116,47 @@ extractFMU <- function(fmus, name) {
   dplyr::filter(fmus, FMU_NAME == name)
 }
 
-#' Extract boundary polygon(s) for LandWeb study areas
+#' Extract boundary polygon(s) for a LandWeb study area
 #'
-#' @param name  A character (regex) string to match.
+#' Resolves a study-area `name` to an `sf` boundary. The primary case is an
+#' **ecoregion study-area group** (see [build_studyarea_crosswalk()]): its member
+#' FMA/TSA/FML polygons are looked up in `crosswalk` and unioned into one boundary.
+#' Alberta FMU names and the `"random"` test area are handled specially, and legacy
+#' single-FMA registry names ([LandWebStudyAreas]) still resolve for back-compatibility.
+#'
+#' @param name A study-area group token (e.g. `"WesternAlbertaUpland"`), an Alberta
+#'   FMU name, `"random"`, or a legacy [LandWebStudyAreas] name.
+#' @param crosswalk the study-area grouping crosswalk (see [studyAreaCrosswalk()]).
+#'   If `NULL` (default) it is built/loaded via [studyAreaCrosswalk()]; pass a
+#'   precomputed one (e.g. a cached pipeline target) to avoid rebuilding it.
 #'
 #' @inheritParams prepFMAs
 #'
-#' @return `sf` polygons object
+#' @return `sf` polygons object.
 #'
 #' @export
-prepStudyArea <- function(name, destinationPath, targetCRS = LandWebCRS) {
-  if (!grepl(paste(LandWebStudyAreas$Name, collapse = "|"), name)) {
-    stop(
-      "name ",
-      name,
-      ", does not contain valid study area name.\n",
-      "Study area name must be one of:\n",
-      paste(LandWebStudyAreas$Name, collapse = ", "),
-      "."
-    )
-  }
-
+prepStudyArea <- function(name, destinationPath, targetCRS = LandWebCRS, crosswalk = NULL) {
   if (grepl("random", name)) {
-    studyArea <- prepTestStudyArea(destinationPath, targetCRS, .seed = 867)
-  } else if (grepl("FMU", name)) {
-    studyArea <- prepFMUs(destinationPath, targetCRS) |> extractFMU(name)
-  } else {
-    studyArea <- prepFMAs(destinationPath, targetCRS) |> extractFMA(name)
+    return(prepTestStudyArea(destinationPath, targetCRS, .seed = 867))
   }
+  if (grepl("FMU", name)) {
+    return(prepFMUs(destinationPath, targetCRS) |> extractFMU(name))
+  }
+  ## ecoregion study-area GROUP (the current design): union the group's member FMAs.
+  if (is.null(crosswalk)) {
+    crosswalk <- studyAreaCrosswalk(destinationPath, targetCRS)
+  }
+  if (name %in% crosswalk[["group"]]) {
+    return(.extractStudyAreaGroup(prepFMAs(destinationPath, targetCRS), name, crosswalk))
+  }
+  ## legacy single-FMA / registry name (backward compatible).
+  if (grepl(paste(LandWebStudyAreas$Name, collapse = "|"), name)) {
+    return(prepFMAs(destinationPath, targetCRS) |> extractFMA(name))
+  }
+  stop(
+    "study area '", name, "' is not a grouping (see `studyAreaCrosswalk()$group`), ",
+    "an Alberta FMU, or a legacy study area (`LandWebStudyAreas$Name`)."
+  )
 }
 
 #' @param .seed integer specifying the random seed to use to generate study area boundary

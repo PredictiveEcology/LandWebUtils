@@ -3,24 +3,33 @@
 \name{prepStudyArea}
 \alias{prepStudyArea}
 \alias{prepTestStudyArea}
-\title{Extract boundary polygon(s) for LandWeb study areas}
+\title{Extract boundary polygon(s) for a LandWeb study area}
 \usage{
-prepStudyArea(name, destinationPath, targetCRS = LandWebCRS)
+prepStudyArea(name, destinationPath, targetCRS = LandWebCRS, crosswalk = NULL)
 
 prepTestStudyArea(destinationPath, targetCRS = LandWebCRS, .seed = 867)
 }
 \arguments{
-\item{name}{A character (regex) string to match.}
+\item{name}{A study-area group token (e.g. \code{"WesternAlbertaUpland"}), an Alberta
+FMU name, \code{"random"}, or a legacy \link{LandWebStudyAreas} name.}
 
 \item{destinationPath}{character specifying path to destination directory}
 
 \item{targetCRS}{character specifying the CRS to reproject polygons to}
 
+\item{crosswalk}{the study-area grouping crosswalk (see \code{\link[=studyAreaCrosswalk]{studyAreaCrosswalk()}}).
+If \code{NULL} (default) it is built/loaded via \code{\link[=studyAreaCrosswalk]{studyAreaCrosswalk()}}; pass a
+precomputed one (e.g. a cached pipeline target) to avoid rebuilding it.}
+
 \item{.seed}{integer specifying the random seed to use to generate study area boundary}
 }
 \value{
-\code{sf} polygons object
+\code{sf} polygons object.
 }
 \description{
-Extract boundary polygon(s) for LandWeb study areas
+Resolves a study-area \code{name} to an \code{sf} boundary. The primary case is an
+\strong{ecoregion study-area group} (see \code{\link[=build_studyarea_crosswalk]{build_studyarea_crosswalk()}}): its member
+FMA/TSA/FML polygons are looked up in \code{crosswalk} and unioned into one boundary.
+Alberta FMU names and the \code{"random"} test area are handled specially, and legacy
+single-FMA registry names (\link{LandWebStudyAreas}) still resolve for back-compatibility.
 }

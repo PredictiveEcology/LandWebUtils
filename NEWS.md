@@ -11,7 +11,10 @@
 * use `usethis` approach to managing package imports;
 * improve documentation;
 * `buildReportingPolygons()` and `reportingPolygonLayers()` assemble the reporting-polygon list using `spatialutils::prep_vector()` and the `workflowtools` `*_once` download helpers, replacing the per-study-area hardcoding;
+* `build_studyarea_crosswalk()` (with `studyAreaCrosswalk()`) groups the LandWeb FMA/TSA/FML boundary polygons into ecologically-coherent study areas by assigning each tenure to its dominant ecological unit (an ecoregion by default; supply any eco\* layer for a different granularity) via verified spatial overlap, emitting a crosswalk with `company` and `province` columns so licensee-driven reruns still map cleanly; reversed-winding polygons are repaired via `spatialutils::repair_geoms()` rather than `sf::st_make_valid()` (which collapses them);
 * `extractFMA()` falls back to matching `LandWebStudyAreas$Description` against an `FMA_NAME` column when the canonical short names are absent (the updated FMA boundaries layer);
+* `prepEcoregions()` and `prepEcoprovinces()` download and prepare the AAFC ecostrat ecoregion/ecoprovince layers for use as the study-area grouping layer;
+* `prepStudyArea()` now resolves an ecoregion study-area group to the union of its member FMAs via the grouping crosswalk, while still handling Alberta FMU names, the `random` test area, and legacy `LandWebStudyAreas` names;
 * drop the `LandR` dependency by vendoring the `equivalentName()` name-lookup helpers;
 * add package dependencies: `googledrive`, `spatialutils`, `workflowtools`;
 
