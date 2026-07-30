@@ -40,7 +40,7 @@ prepANSRs <- function(destinationPath, targetCRS = LandWebCRS) {
 
 #' @export
 #' @rdname prepReportingPolygons
-prepEcoregions <- function(destinationPath, targetCRS = LandWebCRS) {
+prepEcoregionLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   .prepUrlVector(
     "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip",
     destinationPath, targetCRS,
@@ -50,7 +50,7 @@ prepEcoregions <- function(destinationPath, targetCRS = LandWebCRS) {
 
 #' @export
 #' @rdname prepReportingPolygons
-prepEcoprovinces <- function(destinationPath, targetCRS = LandWebCRS) {
+prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   .prepUrlVector(
     "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/province/ecoprovince_shp.zip",
     destinationPath, targetCRS,

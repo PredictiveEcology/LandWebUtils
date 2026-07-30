@@ -7,7 +7,7 @@
 studyAreaCrosswalk(
   destinationPath,
   targetCRS = LandWebCRS,
-  eco = prepEcoregions,
+  eco = prepEcoregionLayer,
   eco_field = "REGION_NAM",
   cache = TRUE
 )
@@ -18,8 +18,8 @@ studyAreaCrosswalk(
 \item{targetCRS}{character specifying the CRS to reproject polygons to}
 
 \item{eco}{a function of \verb{(destinationPath, targetCRS)} returning the ecological
-grouping layer as \code{sf} (default \link{prepEcoregions}); pass \link{prepEcoprovinces} for
-coarser groups or a custom prep for a different eco\* layer.}
+grouping layer as \code{sf} (default \link{prepEcoregionLayer}); pass \link{prepEcoprovinceLayer}
+for coarser groups or a custom prep for a different eco\* layer.}
 
 \item{eco_field}{character naming the grouping-unit column in that layer
 (default \code{"REGION_NAM"}, the ecoregion name).}
@@ -32,7 +32,7 @@ the crosswalk \code{data.frame} (see \code{\link[=build_studyarea_crosswalk]{bui
 \description{
 Convenience wrapper that assembles \code{\link[=build_studyarea_crosswalk]{build_studyarea_crosswalk()}}'s inputs from
 the packaged prep helpers --- \code{\link[=prepFMAs]{prepFMAs()}} for the FMA boundaries and, by
-default, \code{\link[=prepEcoregions]{prepEcoregions()}} for the grouping layer --- and caches the result
+default, \code{\link[=prepEcoregionLayer]{prepEcoregionLayer()}} for the grouping layer --- and caches the result
 under \code{destinationPath} so repeated study-area setups within a run do not rebuild
 it (the overlay is the expensive part).
 }

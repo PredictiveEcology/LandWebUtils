@@ -148,14 +148,14 @@ build_studyarea_crosswalk <- function(fmas, eco, eco_field = "REGION_NAM", res_m
 #'
 #' Convenience wrapper that assembles [build_studyarea_crosswalk()]'s inputs from
 #' the packaged prep helpers --- [prepFMAs()] for the FMA boundaries and, by
-#' default, [prepEcoregions()] for the grouping layer --- and caches the result
+#' default, [prepEcoregionLayer()] for the grouping layer --- and caches the result
 #' under `destinationPath` so repeated study-area setups within a run do not rebuild
 #' it (the overlay is the expensive part).
 #'
 #' @inheritParams prepStudyArea
 #' @param eco a function of `(destinationPath, targetCRS)` returning the ecological
-#'   grouping layer as `sf` (default [prepEcoregions]); pass [prepEcoprovinces] for
-#'   coarser groups or a custom prep for a different eco\* layer.
+#'   grouping layer as `sf` (default [prepEcoregionLayer]); pass [prepEcoprovinceLayer]
+#'   for coarser groups or a custom prep for a different eco\* layer.
 #' @param eco_field character naming the grouping-unit column in that layer
 #'   (default `"REGION_NAM"`, the ecoregion name).
 #' @param cache logical; reuse/save `file.path(destinationPath, "studyAreaCrosswalk.rds")`.
@@ -163,7 +163,7 @@ build_studyarea_crosswalk <- function(fmas, eco, eco_field = "REGION_NAM", res_m
 #' @return the crosswalk `data.frame` (see [build_studyarea_crosswalk()]).
 #' @export
 studyAreaCrosswalk <- function(destinationPath, targetCRS = LandWebCRS,
-                               eco = prepEcoregions, eco_field = "REGION_NAM",
+                               eco = prepEcoregionLayer, eco_field = "REGION_NAM",
                                cache = TRUE) {
   cachePath <- file.path(destinationPath, "studyAreaCrosswalk.rds")
   if (cache && file.exists(cachePath)) {
