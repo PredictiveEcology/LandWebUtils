@@ -12,6 +12,29 @@ test_that("landbaseLayers returns the expected schema", {
   expect_false(any(is.na(lyrs$status_col)))
 })
 
+test_that(".slug uses underscores, not the dots make.names() would produce", {
+  expect_identical(LandWebUtils:::.slug("National Ecozones"), "National_Ecozones")
+  expect_identical(LandWebUtils:::.slug("BC Biogeoclimatic zones"), "BC_Biogeoclimatic_zones")
+  expect_identical(LandWebUtils:::.slug("Parks"), "Parks")
+  expect_no_match(LandWebUtils:::.slug(reportingPolygonLayers()$key), "[.]", all = TRUE)
+})
+
+test_that(".slug collapses runs of non-alphanumerics and trims them", {
+  expect_identical(LandWebUtils:::.slug("a  b--c"), "a_b_c")
+  expect_identical(LandWebUtils:::.slug(" leading/trailing "), "leading_trailing")
+})
+
+test_that(".findVectorFile searches recursively (archives that unpack to a subdir)", {
+  dir <- withr::local_tempdir()
+  nested <- file.path(dir, "Ecoregions")
+  dir.create(nested)
+  file.create(file.path(nested, "ecoregions.shp"))
+
+  ## a non-recursive list.files() found nothing here, so the layer was dropped silently
+  expect_match(LandWebUtils:::.findVectorFile(dir), "ecoregions\\.shp$")
+  expect_length(LandWebUtils:::.findVectorFile(withr::local_tempdir()), 0L)
+})
+
 test_that(".findLandbaseSource prefers a File Geodatabase, then a shapefile", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "coverage.gdb"))
@@ -50,5 +73,5 @@ test_that("buildLandbasePolygons gates to the applicable landbase by study-area 
     silent = TRUE
   ))
   expect_length(fetched, 1L)
-  expect_match(fetched, "Spray.Lake.C5")
+  expect_match(fetched, "Spray_Lake_C5", fixed = TRUE)
 })

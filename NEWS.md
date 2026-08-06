@@ -1,5 +1,8 @@
 # LandWebUtils (development version)
 
+* generated download directory and file names now use underscores instead of dots (e.g. `National_Ecozones`, not `National.Ecozones`), which is friendlier on Windows; previously cached downloads under the old dotted names will be re-fetched once, or can be renamed in place;
+* `buildReportingPolygons()` now locates extracted vector files recursively, fixing layers whose shapefile unpacks into a subdirectory (the national ecoregion and ecozone archives) being dropped as though they did not intersect the study area; a layer whose file cannot be found now warns instead of being dropped silently;
+* `prepEcoregionLayer()` and `prepEcoprovinceLayer()` likewise search recursively, and now fail with an informative error rather than a subscript-out-of-bounds when no shapefile is found;
 * drop support for R 4.2 and 4.3 due to changes in dependency packages;
 * add package dependencies: `purrr`, `scales`, `sf`, `stats`, `terra`, `withr`;
 * remove package dependencies `sp`, `raster`;

@@ -58,6 +58,23 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   )
 }
 
+## Filesystem-safe slug for generated directory/file names. NB: deliberately NOT
+## `make.names()`, which maps spaces to DOTS ("National Ecozones" ->
+## "National.Ecozones"); dot-laden names are awkward on Windows (and for Windows
+## users), so collapse any run of non-alphanumerics to a single underscore.
+.slug <- function(x) {
+  gsub("^_+|_+$", "", gsub("[^A-Za-z0-9]+", "_", x))
+}
+
+## Locate an extracted vector file. Searches RECURSIVELY: several source archives
+## unpack into a subdirectory (e.g. the AAFC national ecoregion/ecozone zips extract
+## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
+## found nothing there -- which callers could not distinguish from a layer that
+## legitimately does not intersect the study area.
+.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg)$") {
+  list.files(dir, pattern, full.names = TRUE, recursive = TRUE)
+}
+
 ## Download (googledrive direct, bypassing reproducible's broken Drive path /
 ## reproducible #447), extract, load, and reproject a Drive-hosted vector. Returns
 ## `sf` to match the legacy map/postProcess/joinReportingPolygons machinery.
@@ -66,8 +83,11 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   zip <- file.path(dir, paste0(id, ".zip"))
   workflowtools::drive_download_once(googledrive::as_id(id), zip)
   workflowtools::archive_extract_once(zip, dir = dir)
-  shp <- list.files(dir, "\\.shp$", full.names = TRUE)[[1]]
-  v <- terra::project(terra::makeValid(terra::vect(shp)), targetCRS)
+  shp <- .findVectorFile(dir, "\\.shp$")
+  if (length(shp) == 0L) {
+    stop("no shapefile found under '", dir, "' (Drive id '", id, "').", call. = FALSE)
+  }
+  v <- terra::project(terra::makeValid(terra::vect(shp[[1L]])), targetCRS)
   sf::st_as_sf(v)
 }
 
@@ -79,8 +99,11 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   zip <- file.path(dir, basename(url))
   workflowtools::download_once(url, zip)
   workflowtools::archive_extract_once(zip, dir = dir)
-  shp <- list.files(dir, "\\.shp$", full.names = TRUE)[[1L]]
-  v <- terra::project(terra::makeValid(terra::vect(shp)), targetCRS)
+  shp <- .findVectorFile(dir, "\\.shp$")
+  if (length(shp) == 0L) {
+    stop("no shapefile found under '", dir, "' (from '", url, "').", call. = FALSE)
+  }
+  v <- terra::project(terra::makeValid(terra::vect(shp[[1L]])), targetCRS)
   sf::st_as_sf(v)
 }
 
@@ -191,9 +214,9 @@ buildReportingPolygons <- function(
 
   out <- lapply(seq_len(nrow(layers)), function(i) {
     lyr <- layers[i, ]
-    dir <- reproducible::checkPath(file.path(destinationPath, make.names(lyr$key)), create = TRUE)
+    dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
     if (identical(lyr$source, "drive")) {
-      dest <- file.path(dir, paste0(make.names(lyr$key), ".zip"))
+      dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
       workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
     } else {
       dest <- file.path(dir, basename(lyr$id))
@@ -201,8 +224,16 @@ buildReportingPolygons <- function(
     }
     workflowtools::archive_extract_once(dest, dir = dir)
 
-    shp <- list.files(dir, "\\.(shp|gpkg)$", full.names = TRUE)
+    shp <- .findVectorFile(dir)
     if (length(shp) == 0L) {
+      ## NB: warn rather than drop silently -- a missing file and a layer that
+      ## legitimately does not intersect the study area both returned NULL, making
+      ## genuine data loss indistinguishable from expected behaviour.
+      warning(
+        "no vector file found under '", dir, "' for reporting layer '", lyr$key,
+        "'; the layer will be MISSING from the reporting polygons.",
+        call. = FALSE
+      )
       return(NULL)
     }
     v <- spatialutils::prep_vector(terra::vect(shp[[1]]), studyArea, crs = targetCRS)
@@ -319,8 +350,8 @@ buildLandbasePolygons <- function(
 
   out <- lapply(seq_len(nrow(layers)), function(i) {
     lyr <- layers[i, ]
-    dir <- reproducible::checkPath(file.path(destinationPath, make.names(lyr$key)), create = TRUE)
-    dest <- file.path(dir, paste0(make.names(lyr$key), ".zip"))
+    dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
+    dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
     if (identical(lyr$source, "drive")) {
       workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
     } else {
