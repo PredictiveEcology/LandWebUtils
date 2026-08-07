@@ -7,10 +7,11 @@
 joinReportingPolygons(x, y)
 }
 \arguments{
-\item{x, y}{a \code{sf}}
+\item{x, y}{an \code{sf} or \code{SpatVector} (anything \code{\link[terra:vect]{terra::vect()}} accepts).}
 }
 \value{
-an \code{sf} polygons object
+a polygons object of the same class as \code{x} (\code{sf} unless \code{x} was a
+\code{SpatVector}).
 }
 \description{
 Join two reporting polygons, preserving their features;
@@ -18,3 +19,25 @@ concatenate the \verb{Name.*} fields into a single \code{Name} field.
 E.g., if \code{x} and \code{y} each contain 2 features, the resulting object will contain 4
 features (corresponding to \code{x1.y1}, \code{x1.y2}, \code{x2.y1}, and \code{x2.y2}).
 }
+\details{
+The concatenated \code{Name} is what makes the crossings work downstream: both
+\code{nrvtools::calculateLandWebMetrics()} and \code{nrvtools::subregion_forested_area()}
+group by \strong{name}, not by feature, so a sub-region split into several disjoint
+parts inside a tenure is tallied as one unit for free.
+}
+\section{Geometry repair and the intersection engine}{
+
+Repair goes through \code{\link[spatialutils:repair_geoms]{spatialutils::repair_geoms()}} (\code{terra::makeValid()} on just
+the invalid subset), \strong{not} \code{\link[sf:st_make_valid]{sf::st_make_valid()}}: the latter collapses the
+reversed ring-winding-order polygons present in the v10 FMA layer (e.g. Prince
+Albert, -31,600 km^2 -> a 4 km^2 sliver) that terra correctly re-orients.
+
+The intersection itself uses \code{\link[terra:intersect]{terra::intersect()}} rather than v2's
+\code{\link[sf:st_intersection]{sf::st_intersection()}}. On the real v10 layers \code{st_intersection()} throws GEOS
+\verb{TopologyException: side location conflict} on some already-repaired tenure x
+Caribou pairs (e.g. Dawson Creek TSA), which silently cost those units their
+reporting polygons; \code{terra::intersect()} handles the same geometries. Using one
+engine (the same one the repair already runs through) also keeps the result
+deterministic, rather than depending on which pairs happen to trip GEOS.
+}
+

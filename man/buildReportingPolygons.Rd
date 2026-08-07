@@ -29,9 +29,18 @@ Fetch each candidate reporting layer (\code{\link[=reportingPolygonLayers]{repor
 intersect -- a layer that does not overlap the study area is dropped
 (\code{nrow == 0}), which replaces the former per-study-area hardcoding. Downloads
 use the idempotent \code{workflowtools} \verb{*_once} helpers (bypassing
-\code{reproducible::prepInputs}). The result is a named list keyed by layer name,
-suitable as the \code{reportingPolygons} input to \code{NRV_summary}; each layer's
-\code{labelCol} is copied to a common \code{Name} column. The \code{"CC SAM"}/\code{"CC TSF"}
-(current condition) and \code{"ecoregionLayer"} entries that \code{NRV_summary} also
-expects come from the simulation, not from here, and are merged in separately.
+\code{reproducible::prepInputs}). The result is a named list keyed by each layer's
+curated \code{NAME_SHORT} (which is what \code{refCode} is slugged from, so the on-disk
+key matches the label in the figures), suitable as the \code{reportingPolygons}
+input to \code{NRV_summary}; each layer's \code{labelCols} label is copied to a common \code{Name}
+column. The \code{"CC SAM"}/\code{"CC TSF"} (current condition) and \code{"ecoregionLayer"}
+entries that \code{NRV_summary} also expects come from the simulation, not from
+here, and are merged in separately.
+}
+\details{
+The \strong{tenure} layer (\code{isTenure}) is labelled differently: its \code{Name} is the
+curated tenure short name (\code{\link[=tenureShortNames]{tenureShortNames()}}) resolved from the coalesced
+v10 member identity, not the raw \code{labelCols}. That both keeps the long (up to
+97-character) \code{FMA_NAME}s out of the output keys and gives the non-Alberta
+members --- whose \code{FMA_NAME} is \code{NA} --- a label at all.
 }

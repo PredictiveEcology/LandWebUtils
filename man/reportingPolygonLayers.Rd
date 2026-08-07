@@ -7,12 +7,44 @@
 reportingPolygonLayers()
 }
 \value{
-A \code{tibble} with columns \code{key}, \code{source}, \code{id}, and \code{labelCol}.
+A \code{tibble} with columns \code{key}, \code{NAME_SHORT}, \code{isTenure}, \code{cross},
+\code{source}, \code{id}, \code{labelCols}, and \code{where}.
 }
 \description{
 The reporting-polygon layers considered for LandWeb/NRV summaries. Each is
 fetched, clipped to the study area with \code{\link[spatialutils:prep_vector]{spatialutils::prep_vector()}}, and
 kept only if it intersects (see \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}). \code{source} is
 either \code{"drive"} (a Google Drive file id) or \code{"url"} (a direct URL);
-\code{labelCol} is the attribute used for sub-region labels.
+\code{labelCols} names the attribute(s) holding the sub-region label.
+}
+\details{
+\code{labelCols} is a \strong{comma-separated priority list}, coalesced left to right, because the
+v10 layers were assembled by merging per-jurisdiction sources and several name their
+features in different columns depending on the province. The Caribou ranges are the sharp
+case: \code{RANGE_NAME} is populated for only 21 of the 74 ranges (Ontario and Manitoba) ---
+British Columbia uses \code{HERD_NAME}, Alberta \code{LOCALRANGE}, Saskatchewan \code{CONUNIT}/\code{RNGEUNIT}
+--- so labelling on \code{RANGE_NAME} alone left 53 ranges unnamed. Unnamed features are dropped
+downstream, which silently removed every tenure x Caribou reporting unit outside ON/MB.
+
+\code{NAME_SHORT} is the curated short token that names the layer everywhere it is
+keyed: it is the name of the layer's entry in the \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}
+list, the second half of a crossed unit's name
+(\code{"<tenure NAME_SHORT> <layer NAME_SHORT>"}, see
+\code{\link[=buildCrossedReportingPolygons]{buildCrossedReportingPolygons()}}), and --- via \code{.slug()} --- the \code{refCode} that
+keys the parquet aggregates and figure files. \code{key} is retained as the human
+title for reports. See \code{\link[=validateShortNames]{validateShortNames()}} for the invariants enforced.
+
+\code{isTenure} marks the \strong{tenure} layer --- the forest-management boundaries every
+other layer is crossed against (\code{\link[=buildCrossedReportingPolygons]{buildCrossedReportingPolygons()}}). Exactly one
+layer may carry it.
+
+\code{cross} marks the layers crossed with each tenure by
+\code{\link[=buildCrossedReportingPolygons]{buildCrossedReportingPolygons()}}, reproducing the v2 per-tenure reporting units.
+\code{Parks} is \code{FALSE}: v2 reported parks as a stand-alone layer, never per tenure.
+
+A reporting layer may be assembled from \strong{several sources}: rows sharing a
+\code{NAME_SHORT} are built independently and then merged into one layer (reduced to the
+common \code{Name} column). \code{where} optionally keeps only the features whose label matches
+a regular expression, so a supplementary source can contribute just the part the
+primary source is missing. Removing a supplement later is a one-row deletion.
 }

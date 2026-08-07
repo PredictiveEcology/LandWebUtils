@@ -1,8 +1,8 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9015
-Date: 2026-07-29
+Version: 1.0.3.9016
+Date: 2026-08-06
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
            comment = c(ORCID = "0000-0002-6914-8316")),
@@ -76,9 +76,11 @@ Collate:
     'plotting.R'
     'polygon-clean.R'
     'rasterListByPoly.R'
+    'reportingPolygonCrossings.R'
     'reportingPolygons.R'
+    'shortNames.R'
     'simfiles.R'
     'studyAreaGroups.R'
     'studyAreas.R'
     'zzz.R'
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0

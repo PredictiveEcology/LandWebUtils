@@ -7,8 +7,8 @@
 landbaseLayers()
 }
 \value{
-A \code{tibble} with columns \code{key}, \code{source}, \code{id}, \code{layer}, \code{status_col},
-and \code{applies_to}.
+A \code{tibble} with columns \code{key}, \code{NAME_SHORT}, \code{tenure}, \code{source}, \code{id},
+\code{layer}, and \code{status_col}.
 }
 \description{
 The per-FMA landbase-status ("active/passive", a.k.a.
@@ -19,11 +19,20 @@ the per-study-area landbase processing formerly hard-coded across the
 \code{Tolko.R}, \code{SundreFP.R}, \code{Manning.R}).
 }
 \details{
-Each landbase applies to only a subset of study areas (not every FMA has a
-landbase coverage), so \code{applies_to} is a regular expression matched against
-the study-area name: \code{\link[=buildLandbasePolygons]{buildLandbasePolygons()}} fetches a source \strong{only} when
-its \code{applies_to} matches, avoiding the download of large (multi-GB) coverages
-that could not intersect the study area anyway. \code{status_col} is the source
-attribute holding the landbase status; \code{layer} names the layer for
-multi-layer File Geodatabases (\code{NA} = the source's only/first layer).
+A landbase coverage belongs to \strong{one tenure} (not every tenure has one), so
+\code{tenure} holds that tenure's curated short name (\code{\link[=tenureShortNames]{tenureShortNames()}}):
+\code{\link[=buildLandbasePolygons]{buildLandbasePolygons()}} fetches a source \strong{only} when its tenure is present
+in the study area, avoiding the download of large (multi-GB) coverages that
+could not intersect it anyway. \code{status_col} is the source attribute holding the
+landbase status; \code{layer} names the layer for multi-layer File Geodatabases
+(\code{NA} = the source's only/first layer). \code{NAME_SHORT} discriminates a tenure's
+several coverages (West Fraser's three CLS supply blocks); it need only be
+unique \strong{within} a tenure, since the reporting-unit name is
+\code{"<tenure> <NAME_SHORT>"}.
+}
+\note{
+Gating was formerly a regex (\code{applies_to}) matched against the
+\emph{study-area name}, which silently stopped matching anything once study areas
+became ecoregion groups (\code{"WesternAlbertaUpland"} matches no company name), so
+no landbase was ever fetched. Gating on the tenures actually present restores it.
 }

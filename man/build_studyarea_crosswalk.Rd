@@ -9,7 +9,8 @@ build_studyarea_crosswalk(
   eco,
   eco_field = "REGION_NAM",
   res_m = 240,
-  min_area_km2 = 100
+  min_area_km2 = 100,
+  shortNames = tenureShortNames()
 )
 }
 \arguments{
@@ -27,11 +28,17 @@ an ecoprovince or ecodistrict layer to change the grouping granularity.}
 \item{min_area_km2}{numeric; member tenures smaller than this are dropped as
 sliver artifacts (with a message listing them), since they cannot form a
 meaningful study area. Default \code{100}. Set to \code{0} to keep everything.}
+
+\item{shortNames}{the curated tenure short-name table (default \code{\link[=tenureShortNames]{tenureShortNames()}}).
+Every retained member must appear in it; an uncurated member is an \strong{error}, since
+falling back to the long name is exactly the output-key collision the curated codes
+exist to prevent.}
 }
 \value{
 A \code{data.frame} crosswalk, one row per member tenure, with columns:
 \code{group} (study-area group token), \code{fma_name} (the member's coalesced
-FMA/TSA/FML identity --- the join key back to \code{fmas}), \code{company} (licensee, for
+FMA/TSA/FML identity --- the join key back to \code{fmas}), \code{name_short} (the curated
+partner-facing tenure code, see \code{\link[=tenureShortNames]{tenureShortNames()}}), \code{company} (licensee, for
 company-driven reruns), \code{province}, \code{eco_unit} (the dominant ecological unit),
 \code{area_km2}, and \code{mpix} (approx. pixels at \code{res_m}). Sort/split by \code{group} to get
 each study area's member set.

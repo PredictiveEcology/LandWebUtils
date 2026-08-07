@@ -24,9 +24,17 @@ test_that("build_studyarea_crosswalk groups tenures by dominant ecoregion", {
       crs = crs
     )
   )
-  cw <- suppressMessages(build_studyarea_crosswalk(fmas, eco, min_area_km2 = 100))
+  codes <- tibble::tibble(
+    fma_name = c("FMA One", "FMA Two", "Forest Three", "Tiny Sliver"),
+    NAME_SHORT = c("FMA_One", "FMA_Two", "Forest_Three", "Tiny_Sliver")
+  )
+  cw <- suppressMessages(
+    build_studyarea_crosswalk(fmas, eco, min_area_km2 = 100, shortNames = codes)
+  )
 
-  expect_named(cw, c("group", "fma_name", "company", "province", "eco_unit", "area_km2", "mpix"))
+  expect_named(cw, c("group", "fma_name", "name_short", "company", "province", "eco_unit",
+                     "area_km2", "mpix"))
+  expect_equal(cw$name_short[cw$fma_name == "FMA One"], "FMA_One")
   expect_setequal(cw$group[cw$fma_name %in% c("FMA One", "FMA Two")], "RegionA")
   expect_equal(cw$group[cw$fma_name == "Forest Three"], "RegionB")
   expect_equal(cw$province[cw$fma_name == "FMA One"], "AB")
@@ -51,8 +59,37 @@ test_that("sub-threshold tenures are dropped as slivers", {
       crs = crs
     )
   )
-  cw <- suppressMessages(build_studyarea_crosswalk(fmas, eco, min_area_km2 = 100))
+  codes <- tibble::tibble(fma_name = c("Big FMA", "Sliver FMA"), NAME_SHORT = c("Big", "Sliver"))
+  cw <- suppressMessages(
+    build_studyarea_crosswalk(fmas, eco, min_area_km2 = 100, shortNames = codes)
+  )
   expect_equal(cw$fma_name, "Big FMA")
+
+  ## a sliver that is dropped need not be curated -- validation runs on what is RETAINED
+  expect_silent(suppressMessages(build_studyarea_crosswalk(
+    fmas, eco, min_area_km2 = 100,
+    shortNames = tibble::tibble(fma_name = "Big FMA", NAME_SHORT = "Big")
+  )))
+})
+
+test_that("build_studyarea_crosswalk errors on an uncurated member, rather than falling back", {
+  crs <- 3400
+  eco <- sf::st_sf(
+    REGION_NAM = "Region A",
+    geometry = sf::st_sfc(mk_sq(0, 2e5, 0, 2e5), crs = crs)
+  )
+  fmas <- sf::st_sf(
+    FMA_NAME = "Uncurated FMA",
+    FMU_NAME = NA_character_, TSA_NUMB_1 = NA_character_, FOREST_NAM = NA_character_,
+    FML_NAME = NA_character_, Name = NA_character_, LICENSEE_N = NA_character_,
+    geometry = sf::st_sfc(mk_sq(2e4, 6e4, 2e4, 6e4), crs = crs)
+  )
+  expect_error(
+    suppressMessages(build_studyarea_crosswalk(
+      fmas, eco, shortNames = tibble::tibble(fma_name = "Other", NAME_SHORT = "Other")
+    )),
+    "no curated short name"
+  )
 })
 
 test_that("build_studyarea_crosswalk errors on a missing eco_field", {
@@ -93,4 +130,32 @@ test_that("prepStudyArea rejects an unknown study area", {
     prepStudyArea("ZZZNonExistent", destinationPath = tempdir(), crosswalk = cw),
     error = TRUE
   )
+})
+
+test_that("studyAreaCrosswalk rebuilds a cache that predates a column", {
+  dir <- withr::local_tempdir()
+  cachePath <- file.path(dir, "studyAreaCrosswalk.rds")
+
+  ## a complete cache is returned as-is, without touching the (network-bound) build path
+  full <- data.frame(
+    group = "G", fma_name = "F", name_short = "FS", company = "C", province = "AB",
+    eco_unit = "E", area_km2 = 1, mpix = 1, stringsAsFactors = FALSE
+  )
+  saveRDS(full, cachePath)
+  expect_identical(studyAreaCrosswalk(dir), full)
+
+  ## regression: a pre-`name_short` cache was returned silently, so callers reading that column
+  ## got NULL -- which quietly disabled the `members=` restriction on the crossings.
+  ## prepFMAs() is intercepted so the rebuild path is *observed* without any network access.
+  saveRDS(full[, setdiff(names(full), "name_short")], cachePath)
+  rebuilt <- FALSE
+  local_mocked_bindings(prepFMAs = function(...) {
+    rebuilt <<- TRUE
+    stop("rebuild reached prepFMAs")
+  })
+  expect_message(
+    expect_error(studyAreaCrosswalk(dir), "rebuild reached prepFMAs"),
+    "predates column.*name_short"
+  )
+  expect_true(rebuilt)
 })

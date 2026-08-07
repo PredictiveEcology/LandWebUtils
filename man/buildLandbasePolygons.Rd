@@ -6,7 +6,7 @@
 \usage{
 buildLandbasePolygons(
   studyArea,
-  studyAreaName,
+  tenures,
   destinationPath,
   targetCRS = LandWebCRS,
   layers = landbaseLayers()
@@ -15,8 +15,10 @@ buildLandbasePolygons(
 \arguments{
 \item{studyArea}{A \code{SpatVector} (or a source readable by \code{\link[terra:vect]{terra::vect()}}).}
 
-\item{studyAreaName}{Character. The study-area name, matched against each
-layer's \code{applies_to} to decide which landbases to fetch.}
+\item{tenures}{Character vector of the curated tenure short names present in
+this study area (e.g. \code{reportingPolygons[["FMA"]]$Name}, or the study-area
+group's \code{name_short}s from \code{\link[=studyAreaCrosswalk]{studyAreaCrosswalk()}}). Only landbases belonging
+to one of these are fetched.}
 
 \item{destinationPath}{Directory for downloads/extraction.}
 
@@ -29,16 +31,16 @@ A named \code{list} of \code{SpatVector}s, one per applicable, intersecting
 landbase; empty when none apply.
 }
 \description{
-For each candidate landbase source (\code{\link[=landbaseLayers]{landbaseLayers()}}) whose \code{applies_to}
-matches \code{studyAreaName}, download it (idempotent \code{workflowtools} \verb{*_once}
+For each candidate landbase source (\code{\link[=landbaseLayers]{landbaseLayers()}}) whose \code{tenure} is
+present in \code{tenures}, download it (idempotent \code{workflowtools} \verb{*_once}
 helpers), then dissolve it by landbase status and clip it to \code{studyArea} with
 \code{\link[spatialutils:prep_landbase]{spatialutils::prep_landbase()}} -- which pushes the column and spatial
 filters down to the read, so a large coverage is reduced to the study area
 before any geometry work. Sources that do not intersect the study area (or
-whose \code{applies_to} does not match) are skipped; the result is a named list of
-\code{SpatVector}s keyed by layer name, each with a \code{Name} column holding the
-landbase status, suitable for merging into the \code{reportingPolygons} input to
-\code{NRV_summary}.
+whose tenure is absent) are skipped; the result is a named list of
+\code{SpatVector}s keyed \code{"<tenure> <NAME_SHORT>"}, each with a \code{Name} column
+holding the landbase status, suitable for merging into the
+\code{reportingPolygons} input to \code{NRV_summary}.
 }
 \seealso{
 \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}, \code{\link[=landbaseLayers]{landbaseLayers()}}

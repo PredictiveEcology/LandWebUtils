@@ -28,21 +28,36 @@ utils::globalVariables(c("fma_name", "eco_unit", "province", "company", "group")
   sf::st_as_sf(spatialutils::repair_geoms(x))
 }
 
+## The columns `build_studyarea_crosswalk()` emits. Used to detect a cache written by an older
+## version (see `studyAreaCrosswalk()`); extend this whenever a column is added.
+.crosswalkCols <- c(
+  "group", "fma_name", "name_short", "company", "province", "eco_unit", "area_km2", "mpix"
+)
+
+## Pull one identity column as a character vector, tolerating its absence: a clipped/column-pushed
+## copy of the layer need not carry every per-jurisdiction field, and `d[["missing"]]` is NULL,
+## which would silently collapse the coalesce to length zero.
+.identCol <- function(d, nm, n) {
+  if (is.null(d[[nm]])) rep(NA_character_, n) else as.character(d[[nm]])
+}
+
 ## The v10 combined-FMA layer identifies areas in different fields per jurisdiction
 ## (AB/NT: FMA_NAME; ON: FMU_NAME; BC: TSA_NUMB_1; SK: FOREST_NAM; MB: FML_NAME).
 ## Coalesce them into a single stable member identity, and derive the province.
 .fmaMemberIdentity <- function(d) {
+  n <- nrow(d)
+  col <- function(nm) .identCol(d, nm, n)
   member <- .coalesceChr(
-    d[["FMA_NAME"]], d[["FMU_NAME"]], d[["TSA_NUMB_1"]],
-    d[["FOREST_NAM"]], d[["FML_NAME"]], d[["Name"]]
+    col("FMA_NAME"), col("FMU_NAME"), col("TSA_NUMB_1"),
+    col("FOREST_NAM"), col("FML_NAME"), col("Name")
   )
-  province <- ifelse(!is.na(d[["TSA_NUMB_1"]]), "BC",
-    ifelse(!is.na(d[["FOREST_NAM"]]), "SK",
-      ifelse(!is.na(d[["FML_NAME"]]), "MB",
-        ifelse(!is.na(d[["FMU_NAME"]]) & is.na(d[["FMA_NAME"]]), "ON", "AB"))))
+  province <- ifelse(!is.na(col("TSA_NUMB_1")), "BC",
+    ifelse(!is.na(col("FOREST_NAM")), "SK",
+      ifelse(!is.na(col("FML_NAME")), "MB",
+        ifelse(!is.na(col("FMU_NAME")) & is.na(col("FMA_NAME")), "ON", "AB"))))
   ## NWT areas carry an FMA_NAME (so default to "AB"); re-tag by name.
   province[grepl("Fort Providence|Fort Resolution", member)] <- "NT"
-  company <- .coalesceChr(d[["LICENSEE_N"]], member)
+  company <- .coalesceChr(col("LICENSEE_N"), member)
   data.frame(member = member, province = province, company = company, stringsAsFactors = FALSE)
 }
 
@@ -73,17 +88,22 @@ utils::globalVariables(c("fma_name", "eco_unit", "province", "company", "group")
 #' @param min_area_km2 numeric; member tenures smaller than this are dropped as
 #'   sliver artifacts (with a message listing them), since they cannot form a
 #'   meaningful study area. Default `100`. Set to `0` to keep everything.
+#' @param shortNames the curated tenure short-name table (default [tenureShortNames()]).
+#'   Every retained member must appear in it; an uncurated member is an **error**, since
+#'   falling back to the long name is exactly the output-key collision the curated codes
+#'   exist to prevent.
 #'
 #' @return A `data.frame` crosswalk, one row per member tenure, with columns:
 #'   `group` (study-area group token), `fma_name` (the member's coalesced
-#'   FMA/TSA/FML identity --- the join key back to `fmas`), `company` (licensee, for
+#'   FMA/TSA/FML identity --- the join key back to `fmas`), `name_short` (the curated
+#'   partner-facing tenure code, see [tenureShortNames()]), `company` (licensee, for
 #'   company-driven reruns), `province`, `eco_unit` (the dominant ecological unit),
 #'   `area_km2`, and `mpix` (approx. pixels at `res_m`). Sort/split by `group` to get
 #'   each study area's member set.
 #'
 #' @export
 build_studyarea_crosswalk <- function(fmas, eco, eco_field = "REGION_NAM", res_m = 240,
-                                      min_area_km2 = 100) {
+                                      min_area_km2 = 100, shortNames = tenureShortNames()) {
   stopifnot(inherits(fmas, "sf"), inherits(eco, "sf"))
   if (!eco_field %in% names(eco)) {
     stop("`eco_field` '", eco_field, "' is not a column of `eco`.")
@@ -121,6 +141,7 @@ build_studyarea_crosswalk <- function(fmas, eco, eco_field = "REGION_NAM", res_m
   out <- data.frame(
     group = .groupToken(dom),
     fma_name = fmad$fma_name,
+    name_short = shortNameFor(fmad$fma_name, shortNames),
     company = fmad$company,
     province = fmad$province,
     eco_unit = dom,
@@ -138,6 +159,18 @@ build_studyarea_crosswalk <- function(fmas, eco, eco_field = "REGION_NAM", res_m
     )
     out <- out[out$area_km2 >= min_area_km2, , drop = FALSE]
   }
+
+  ## Every retained member MUST have a curated short name: it keys that tenure's crossed reporting
+  ## outputs, and falling back to the long `fma_name` is exactly the collision this guards against.
+  uncurated <- out$fma_name[is.na(out$name_short)]
+  if (length(uncurated)) {
+    stop(
+      "no curated short name for ", length(uncurated), " tenure(s): ",
+      paste(sQuote(uncurated), collapse = ", "),
+      ". Add them to `tenureShortNames()`.", call. = FALSE
+    )
+  }
+  validateShortNames(out$name_short, what = "study-area crosswalk `name_short`")
 
   out <- out[order(out$group, out$fma_name), ]
   rownames(out) <- NULL
@@ -167,7 +200,19 @@ studyAreaCrosswalk <- function(destinationPath, targetCRS = LandWebCRS,
                                cache = TRUE) {
   cachePath <- file.path(destinationPath, "studyAreaCrosswalk.rds")
   if (cache && file.exists(cachePath)) {
-    return(readRDS(cachePath))
+    cached <- readRDS(cachePath)
+    ## Schema check, not just file existence: a cache written before a column was added would
+    ## otherwise be returned silently, and callers that read the new column get NULL. That is how
+    ## a pre-`name_short` cache would have left `buildCrossedReportingPolygons(members = NULL)`,
+    ## quietly crossing every tenure that clips into the study area instead of only its members.
+    missingCols <- setdiff(.crosswalkCols, names(cached))
+    if (!length(missingCols)) {
+      return(cached)
+    }
+    message(
+      "Cached study-area crosswalk at '", cachePath, "' predates column(s) ",
+      paste(sQuote(missingCols), collapse = ", "), "; rebuilding."
+    )
   }
   fmas <- prepFMAs(destinationPath, targetCRS)
   ecoLayer <- eco(destinationPath, targetCRS)
