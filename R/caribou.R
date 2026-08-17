@@ -46,9 +46,11 @@
 #'   `"Not Applicable"` in `CONUNIT`, which [buildReportingPolygons()]'s placeholder
 #'   handling treats as missing. Same footprint as ECCC (IoU 0.9983), subdivided finer.
 #' * **MB** --- by-request from the Government of Manitoba, so Drive-hosted; there is no
-#'   public endpoint to refresh from. This 2015 re-delineation is **newer than any ECCC
-#'   boundary set** and 11.9% of it falls outside every ECCC range, so it is not
-#'   substitutable. Worth re-requesting a current copy.
+#'   public endpoint. Provided in **2018** and **current** --- Manitoba has published nothing
+#'   since, so this is the authoritative version, not a stale copy (the `_2015` in the
+#'   filename is the delineation year, not the delivery). It is also **newer than any ECCC
+#'   boundary set**, and 11.9% of it falls outside every ECCC range, so it is not
+#'   substitutable.
 #' * **NWT** --- GNWT MapServer layer 97, which subdivides NT1 into 6 named planning
 #'   regions the way `LOCALRANGE`/`HERD_NAME` subdivide AB/BC. Labelled on `REGION`, not
 #'   `NAME`: both exist, but `NAME` carries diacritics and apostrophes (`Sahtú`,

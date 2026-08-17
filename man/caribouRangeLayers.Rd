@@ -64,9 +64,11 @@ list in \code{statusCols}.
 \code{"Not Applicable"} in \code{CONUNIT}, which \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}'s placeholder
 handling treats as missing. Same footprint as ECCC (IoU 0.9983), subdivided finer.
 \item \strong{MB} --- by-request from the Government of Manitoba, so Drive-hosted; there is no
-public endpoint to refresh from. This 2015 re-delineation is \strong{newer than any ECCC
-boundary set} and 11.9\% of it falls outside every ECCC range, so it is not
-substitutable. Worth re-requesting a current copy.
+public endpoint. Provided in \strong{2018} and \strong{current} --- Manitoba has published nothing
+since, so this is the authoritative version, not a stale copy (the \verb{_2015} in the
+filename is the delineation year, not the delivery). It is also \strong{newer than any ECCC
+boundary set}, and 11.9\% of it falls outside every ECCC range, so it is not
+substitutable.
 \item \strong{NWT} --- GNWT MapServer layer 97, which subdivides NT1 into 6 named planning
 regions the way \code{LOCALRANGE}/\code{HERD_NAME} subdivide AB/BC. Labelled on \code{REGION}, not
 \code{NAME}: both exist, but \code{NAME} carries diacritics and apostrophes (\code{Sahtú},
