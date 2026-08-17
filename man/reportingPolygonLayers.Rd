@@ -13,8 +13,10 @@ A \code{tibble} with columns \code{key}, \code{NAME_SHORT}, \code{isTenure}, \co
 \description{
 The reporting-polygon layers considered for LandWeb/NRV summaries. Each is
 fetched, clipped to the study area with \code{\link[spatialutils:prep_vector]{spatialutils::prep_vector()}}, and
-kept only if it intersects (see \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}). \code{source} is
-either \code{"drive"} (a Google Drive file id) or \code{"url"} (a direct URL);
+kept only if it intersects (see \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}). \code{source} is one of
+\code{"drive"} (a Google Drive file id), \code{"url"} (a direct URL to a zipped
+shapefile), or \code{"geojson"} (a URL returning GeoJSON directly, e.g. an ArcGIS
+REST \code{query} endpoint -- fetched with no archive-extraction step);
 \code{labelCols} names the attribute(s) holding the sub-region label.
 }
 \details{

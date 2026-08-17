@@ -71,8 +71,48 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
 ## found nothing there -- which callers could not distinguish from a layer that
 ## legitimately does not intersect the study area.
-.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg)$") {
+.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson)$") {
   list.files(dir, pattern, full.names = TRUE, recursive = TRUE)
+}
+
+## `source` gates which fetch path runs, and anything unrecognised would be treated as a zipped URL --
+## so a typo ("geojsn") would silently take the archive path and surface later as an opaque "no vector
+## file found". Fail at the table instead. "assembly" means the layer is built by a dedicated assembler
+## rather than fetched from one file (see `.ASSEMBLERS`).
+.LAYER_SOURCES <- c("drive", "url", "geojson", "assembly")
+
+.validateLayerSources <- function(source) {
+  bad <- setdiff(source, .LAYER_SOURCES)
+  if (length(bad)) {
+    stop(
+      "unknown source(s) ", paste(sQuote(bad), collapse = ", "), "; must be one of ",
+      paste(sQuote(.LAYER_SOURCES), collapse = ", "), ".", call. = FALSE
+    )
+  }
+  invisible(source)
+}
+
+## Fetch one layer to disk and return the vector file to read. Shared by `buildReportingPolygons()` and
+## `buildCaribouRanges()` so the three transports behave identically in both.
+##   "drive"   -- Google Drive id, zipped shapefile
+##   "url"     -- direct URL to a zipped shapefile
+##   "geojson" -- URL returning GeoJSON directly (an ArcGIS REST `query` or an OGC WFS
+##                `outputFormat=application/json`). No archive step, and the download CANNOT be named
+##                from `basename(url)`: a query URL's basename is the query string itself.
+.fetchVectorFile <- function(source, id, dir, slug) {
+  if (identical(source, "drive")) {
+    dest <- file.path(dir, paste0(slug, ".zip"))
+    workflowtools::drive_download_once(googledrive::as_id(id), dest)
+    workflowtools::archive_extract_once(dest, dir = dir)
+  } else if (identical(source, "geojson")) {
+    dest <- file.path(dir, paste0(slug, ".geojson"))
+    workflowtools::download_once(id, dest)
+  } else {
+    dest <- file.path(dir, basename(id))
+    workflowtools::download_once(id, dest)
+    workflowtools::archive_extract_once(dest, dir = dir)
+  }
+  .findVectorFile(dir)
 }
 
 ## Download (googledrive direct, bypassing reproducible's broken Drive path /
@@ -213,8 +253,10 @@ joinReportingPolygons <- function(x, y) {
 #'
 #' The reporting-polygon layers considered for LandWeb/NRV summaries. Each is
 #' fetched, clipped to the study area with [spatialutils::prep_vector()], and
-#' kept only if it intersects (see [buildReportingPolygons()]). `source` is
-#' either `"drive"` (a Google Drive file id) or `"url"` (a direct URL);
+#' kept only if it intersects (see [buildReportingPolygons()]). `source` is one of
+#' `"drive"` (a Google Drive file id), `"url"` (a direct URL to a zipped
+#' shapefile), or `"geojson"` (a URL returning GeoJSON directly, e.g. an ArcGIS
+#' REST `query` endpoint -- fetched with no archive-extraction step);
 #' `labelCols` names the attribute(s) holding the sub-region label.
 #'
 #' `labelCols` is a **comma-separated priority list**, coalesced left to right, because the
@@ -261,26 +303,15 @@ reportingPolygonLayers <- function() {
     ## MB `FML_NAME`) -- `FMA_NAME` alone is NA for every non-AB member, which would have left the
     ## tenure layer empty for the BC/SK/ON/MB study-area groups.
     "FMA Boundaries Updated"           , "FMA"           , TRUE      , FALSE  , "drive" , "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"                                   , "FMA_NAME"   , NA_character_,
-    ## per-jurisdiction range naming: ON/MB `RANGE_NAME` (21 of 74), BC `HERD_NAME` (23),
-    ## AB `LOCALRANGE` (24 -- the RANGE, not the finer `SUBUNIT`: v2 reported by range, and
-    ## e.g. Algar/Egg-Pony/Wiau/Agnes/Bohn/Christina/Wandering are all East Side Athabasca),
-    ## SK `CONUNIT` then `RNGEUNIT`. The columns partition cleanly -- no feature carries two.
-    ## REVISIT (LandWeb#118): Alberta granularity. `LOCALRANGE` gives the 15 ranges; `SUBUNIT`
-    ## would give 26 sub-ranges. Range was chosen to match v2 and is what partners see in the
-    ## figure titles -- worth re-checking with partners before the v3 reporting is finalised.
-    "Caribou Ranges"                   , "Caribou"       , FALSE     , TRUE   , "drive" , "1gwqq3TO-vKfTR3Za7bf7GWW7BobbAusQ"                                   , "RANGE_NAME,HERD_NAME,LOCALRANGE,CONUNIT,RNGEUNIT", NA_character_,
-    ## INTERIM (LandWeb#118): the v10 Caribou layer above carries NO Northwest Territories
-    ## ranges -- 0 of its 74 features intersect either NWT tenure -- so the `FMANWT FP Caribou`
-    ## / `FMANWT FR Caribou` units v2 produced could not be rebuilt. Until an NWT range layer is
-    ## folded into the v10 file, supplement it with the single "Northwest Territories (NWT)"
-    ## polygon from the layer LandWeb used before v10 (the same national Boreal Caribou Ranges
-    ## file already cached at `inputs/Boreal_Caribou_Ranges.zip`; `where` keeps only that
-    ## feature, so the v10 ranges remain authoritative everywhere else).
-    ## REPLACEMENT SOURCE, once agreed: GNWT layer 97 "Boreal Caribou Range Planning Regions"
-    ## (6 named regions -- Southern NWT, Sahtu, Wek'eezhii, Gwich'in, Inuvialuit, Yukon), which
-    ## subdivides NT1 the way `LOCALRANGE`/`HERD_NAME` subdivide AB/BC, instead of one polygon.
-    ## See `## GNWT NWT boreal caribou` note below for the service URLs.
-    "Caribou Ranges (NWT, interim)"    , "Caribou"       , FALSE     , TRUE   , "drive" , "1PYLou8J1wcrme7Z2tx1wtA4GvaWnU1Jy"                                   , "Name"       , "^Northwest Territories",
+    ## Caribou ranges are ASSEMBLED from the six jurisdictional sources rather than fetched from one
+    ## file -- see `caribouRangeLayers()` / `buildCaribouRanges()` for the sources and the reasoning.
+    ## This replaces (a) Julie's pre-combined v10 layer, whose manual combine had dropped the NWT
+    ## ranges entirely and left range names scattered across five columns, and (b) the interim
+    ## GNWT-only supplement that patched the NWT hole. Reporting goes to *jurisdictional* partners,
+    ## who each want their own management-unit names, so the jurisdictional sources are authoritative
+    ## here; the ECCC national layer is kept as a documented comparison only (see
+    ## `scripts/make_caribou_reference.R`), NOT as a reporting layer.
+    "Caribou Ranges"                   , "Caribou"       , FALSE     , TRUE   , "assembly", "caribou"                                                            , NA_character_, NA_character_,
     "Parks"                            , "Parks"         , FALSE     , FALSE  , "drive" , "10-TpJaEOUCN6MNISWhpU-CRLpadyHDS2"                                   , "Name"       , NA_character_,
     "Alberta Natural Subregions"       , "ANSR"          , FALSE     , TRUE   , "drive" , "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ"                                   , "Name"       , NA_character_,
     "BC Biogeoclimatic zones"          , "BEC"           , FALSE     , TRUE   , "drive" , "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS"                                   , "ZONE_NAME"  , NA_character_,
@@ -298,36 +329,45 @@ reportingPolygonLayers <- function() {
     !any(out$isTenure & out$cross)
   )
 
+  .validateLayerSources(out$source)
+
   ## validate the LAYER set, not the rows: repeated NAME_SHORTs are an explicit multi-source
   ## merge (see above), not the accidental collision the validator guards against.
   validateShortNames(unique(out$NAME_SHORT), what = "reportingPolygonLayers()$NAME_SHORT")
   out
 }
 
-## ---- GNWT NWT boreal caribou (candidate replacement for the interim supplement) ---------------
+## ---- GNWT NWT boreal caribou ------------------------------------------------------------------
 ## The v10 Caribou layer has no NWT ranges. The Government of the Northwest Territories publishes
-## them through its ArcGIS service, which supports GeoJSON export, so either could be fetched
-## directly rather than shipped as a file:
+## them through the ArcGIS MapServer below, which supports GeoJSON export, so the layer is fetched
+## live rather than shipped as a file. Portal page (what Julie's `DataSources.xlsx` cites for
+## `CaribouRrange_NWT_LCC1`): https://www.geomatics.gov.nt.ca/en/boreal-caribou-range-planning-data
 ##
-##   base <- paste0("https://www.apps.geomatics.gov.nt.ca/arcgis/rest/services/GNWT/",
-##                  "BiologicEcologic_LCC/MapServer")
 ##   * layer 96 -- "NT1 Boreal Caribou Range (GNWT 2016 version)": the NT1 range as a SINGLE
-##     442,920 km^2 polygon (compiled J. Hodson & A. Smith, ENR/GNWT 2015). Equivalent in
-##     granularity to the interim supplement below, so it buys correctness/currency, not detail.
-##   * layer 97 -- "Boreal Caribou Range Planning Regions": NT1 subdivided into 6 NAMED regions
-##     (Southern NWT 162,418 km^2; Sahtu 149,015; Wek'eezhii 49,505; Gwich'in 38,662;
-##     Inuvialuit 34,393; Yukon 8,928), labelled by `NAME`/`REGION`. PREFERRED for reporting:
-##     it subdivides NT1 the way `LOCALRANGE`/`HERD_NAME` subdivide AB/BC, so an NWT tenure gets
-##     a real sub-region breakdown rather than one whole-territory unit. Both LandWeb NWT
-##     tenures (Fort Providence, Fort Resolution) fall in "Southern NWT".
+##     442,920 km^2 polygon (compiled J. Hodson & A. Smith, ENR/GNWT 2015). Same granularity as
+##     the retired stopgap, so it would buy correctness/currency but not detail.
+##   * layer 97 -- "Boreal Caribou Range Planning Regions": NT1 subdivided into 6 NAMED regions.
+##     IN USE (see `reportingPolygonLayers()`): it subdivides NT1 the way `LOCALRANGE` /
+##     `HERD_NAME` subdivide AB/BC, so an NWT tenure gets a real sub-region breakdown. Both
+##     LandWeb NWT tenures (Fort Providence, Fort Resolution) fall in "Southern NWT".
 ##   * layer 98 -- "Other Canada Boreal Caribou Range Boundaries": the rest-of-Canada ranges, for
 ##     cross-checking against the v10 layer.
 ##
-## Fetch pattern (service CRS is EPSG:102002, Canada Lambert Conformal Conic):
-##   <base>/97/query?where=1%3D1&outFields=REGION,NAME&returnGeometry=true&f=geojson
+## Verified live 2026-08-12: layer 97 returns exactly 6 features, all with valid geometries, and
+## `geoJSON` is in `supportedQueryFormats`. NB the service's native SR is EPSG:102002 (Canada
+## Lambert Conformal Conic) but the `f=geojson` export arrives as EPSG:4326, per the GeoJSON spec
+## -- immaterial here, since `prep_vector()` reprojects to `targetCRS` either way.
+## Region areas from `AREA_HA` -- Southern NWT 16,241,765 ha; Sahtu 14,901,479; Wek'eezhii
+## 4,950,506; Gwich'in 3,866,210; Inuvialuit 3,439,298; Yukon 892,790. The layer also carries
+## disturbance attributes we do not use (`FFPpct`, `BHDpct`, `TDISTpct` over `FIRE_YR_PD`
+## 1984-2023, `HDYR` 2020), which is a useful sign it is actively maintained.
 ##
-## Pending: confirmation that these be folded into the maintained LandWeb caribou layer, rather
-## than LandWeb carrying a second NWT-only source.
+## Open with Julie: whether NWT gets folded into the maintained LandWeb caribou layer, which would
+## make this row deletable. Until then LandWeb carries it as a second, NWT-only source.
+.gnwtBiologicEcologic <- paste0(
+  "https://www.apps.geomatics.gov.nt.ca/arcgis/rest/services/GNWT/",
+  "BiologicEcologic_LCC/MapServer"
+)
 
 #' Build the reporting-polygons named list
 #'
@@ -370,16 +410,16 @@ buildReportingPolygons <- function(
   out <- lapply(seq_len(nrow(layers)), function(i) {
     lyr <- layers[i, ]
     dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
-    if (identical(lyr$source, "drive")) {
-      dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
-      workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
-    } else {
-      dest <- file.path(dir, basename(lyr$id))
-      workflowtools::download_once(lyr$id, dest)
+    ## an "assembly" layer is not one file: hand off to its assembler, which does its own fetching,
+    ## per-source cleaning and merging, and returns an already-clipped layer.
+    if (identical(lyr$source, "assembly")) {
+      v <- .ASSEMBLERS[[lyr$id]](
+        studyArea = studyArea, destinationPath = dir, targetCRS = targetCRS
+      )
+      return(if (is.null(v) || nrow(v) == 0L) NULL else v)
     }
-    workflowtools::archive_extract_once(dest, dir = dir)
 
-    shp <- .findVectorFile(dir)
+    shp <- .fetchVectorFile(lyr$source, lyr$id, dir, .slug(lyr$key))
     if (length(shp) == 0L) {
       ## NB: warn rather than drop silently -- a missing file and a layer that
       ## legitimately does not intersect the study area both returned NULL, making
@@ -437,7 +477,10 @@ buildReportingPolygons <- function(
 ## with no curated code -- an uncurated member must not silently key its outputs off a long,
 ## collision-prone name, so it is reported loudly and left out (add it to `tenureShortNames()`).
 .labelReportingLayer <- function(v, lyr) {
-  if (isTRUE(lyr$isTenure)) {
+  ## guard rather than `lyr$isTenure`: this is also called from `buildCaribouRanges()`, whose source
+  ## table has no `isTenure` column (no caribou source is the tenure layer), and tibble's `$` warns
+  ## "Unknown or uninitialised column" for a missing name.
+  if ("isTenure" %in% names(lyr) && isTRUE(lyr$isTenure)) {
     ident <- .fmaMemberIdentity(as.data.frame(v))
     v$Name <- shortNameFor(ident$member)
     unknown <- unique(ident$member[is.na(v$Name) & !is.na(ident$member)])

@@ -1,7 +1,7 @@
 test_that("reportingPolygonLayers returns the expected schema", {
   lyrs <- reportingPolygonLayers()
   expect_named(lyrs, c("key", "NAME_SHORT", "isTenure", "cross", "source", "id", "labelCols", "where"))
-  expect_setequal(unique(lyrs$source), c("drive", "url"))
+  expect_setequal(unique(lyrs$source), c("drive", "url", "assembly"))
   expect_contains(lyrs$key, "FMA Boundaries Updated")
 
   ## exactly one tenure LAYER (rows sharing a NAME_SHORT are one layer), never crossed with itself
@@ -9,9 +9,22 @@ test_that("reportingPolygonLayers returns the expected schema", {
   expect_identical(sum(vapply(byShort, function(d) d$isTenure[[1L]], logical(1))), 1L)
   expect_false(any(lyrs$isTenure & lyrs$cross))
 
-  ## the NWT interim supplement shares the Caribou layer rather than adding a second one
-  expect_gt(sum(lyrs$NAME_SHORT == "Caribou"), 1L)
-  expect_contains(lyrs$where[lyrs$NAME_SHORT == "Caribou"], "^Northwest Territories")
+  ## caribou is now a single ASSEMBLY row -- the six jurisdictional sources live in
+  ## caribouRangeLayers() and are merged by buildCaribouRanges(). See test-caribou.R.
+  expect_identical(sum(lyrs$NAME_SHORT == "Caribou"), 1L)
+  expect_identical(lyrs$source[lyrs$NAME_SHORT == "Caribou"], "assembly")
+})
+
+test_that("reportingPolygonLayers rejects an unknown source", {
+  ## a typo would otherwise fall through to the zipped-URL path and fail later as an opaque
+  ## "no vector file found"
+  lyrs <- reportingPolygonLayers()
+  lyrs$source[[1L]] <- "geojsn"
+  expect_error(
+    LandWebUtils:::.validateLayerSources(lyrs$source),
+    "unknown source.*geojsn"
+  )
+  expect_silent(LandWebUtils:::.validateLayerSources(c("drive", "url", "geojson")))
 })
 
 test_that(".mergeLayerSources merges rows sharing a NAME_SHORT, and leaves singles alone", {
@@ -66,6 +79,12 @@ test_that(".findVectorFile searches recursively (archives that unpack to a subdi
   ## a non-recursive list.files() found nothing here, so the layer was dropped silently
   expect_match(LandWebUtils:::.findVectorFile(dir), "ecoregions\\.shp$")
   expect_length(LandWebUtils:::.findVectorFile(withr::local_tempdir()), 0L)
+})
+
+test_that(".findVectorFile finds a GeoJSON (the ArcGIS REST sources are not archives)", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "Caribou_Ranges_NWT.geojson"))
+  expect_match(LandWebUtils:::.findVectorFile(dir), "\\.geojson$")
 })
 
 test_that(".findLandbaseSource prefers a File Geodatabase, then a shapefile", {
@@ -135,24 +154,27 @@ test_that("buildLandbasePolygons gates to the landbases of the tenures present",
   expect_length(fetched, 2L)
 })
 
-test_that("labelCols coalesces the per-jurisdiction name columns", {
-  ## regression (LandWeb#118): labelling the Caribou ranges on RANGE_NAME alone left the 53
-  ## of 74 ranges named in the OTHER jurisdictions' columns unnamed -- and unnamed features
-  ## are dropped downstream, which silently removed every tenure x Caribou reporting unit
-  ## outside Ontario/Manitoba.
-  v <- terra::vect(rep("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", 5L))
-  v$RANGE_NAME <- c("Churchill", NA, NA, NA, NA)          # ON/MB
-  v$HERD_NAME  <- c(NA, "Quintette", NA, NA, NA)          # BC
-  v$LOCALRANGE <- c(NA, NA, "East Side Athabasca", NA, NA) # AB
-  v$CONUNIT    <- c(NA, NA, NA, "SK2 West", "Not Applicable") # SK, incl. the placeholder
-  v$RNGEUNIT   <- c(NA, NA, NA, NA, "SK1")
+test_that("labelCols coalesces a source's name columns left to right", {
+  ## Historically (LandWeb#118) the Caribou ranges arrived pre-combined and labelling them on
+  ## RANGE_NAME alone left the 53 of 74 ranges named in the OTHER jurisdictions' columns unnamed --
+  ## and unnamed features are dropped downstream, silently removing every tenure x Caribou unit
+  ## outside Ontario/Manitoba. Caribou is now assembled per jurisdiction, so the coalescing is
+  ## within a single source; these are the two real multi-column cases.
+  lyrs <- caribouRangeLayers()
 
-  lyr <- reportingPolygonLayers()[reportingPolygonLayers()$NAME_SHORT == "Caribou", ]
-  out <- LandWebUtils:::.labelReportingLayer(v, lyr)
-  expect_identical(
-    out$Name,
-    c("Churchill", "Quintette", "East Side Athabasca", "SK2 West", "SK1")
-  )
+  ## SK: CONUNIT, falling back to RNGEUNIT -- SK1 carries the literal "Not Applicable" placeholder
+  sk <- terra::vect(rep("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", 2L))
+  sk$CONUNIT <- c("SK2 West", "Not Applicable")
+  sk$RNGEUNIT <- c("SK2", "SK1")
+  out <- LandWebUtils:::.labelReportingLayer(sk, lyrs[lyrs$juris == "SK", ])
+  expect_identical(out$Name, c("SK2 West", "SK1"))
+
+  ## AB: SUBUNIT, falling back to LOCALRANGE
+  ab <- terra::vect(rep("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", 2L))
+  ab$SUBUNIT <- c("A La Peche", NA)
+  ab$LOCALRANGE <- c("West Central", "Cold Lake")
+  out <- LandWebUtils:::.labelReportingLayer(ab, lyrs[lyrs$juris == "AB", ])
+  expect_identical(out$Name, c("A La Peche", "Cold Lake"))
 })
 
 test_that("placeholder strings never become a reporting-unit name", {
