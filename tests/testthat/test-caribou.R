@@ -50,19 +50,31 @@ test_that(".dropExtirpated drops matching rows, tolerates a missing/renamed colu
     v
   }
   v <- mk(c("Herd", "Extirpated", "Trace occurrences"))
-  expect_identical(as.integer(nrow(LandWebUtils:::.dropExtirpated(v, "HERD_STATUS,HERD_STAT", "^Extirpated$"))), 2L)
+  expect_identical(
+    as.integer(nrow(LandWebUtils:::.dropExtirpated(v, "HERD_STATUS,HERD_STAT", "^Extirpated$"))),
+    2L
+  )
 
   ## the truncated shapefile spelling is found via the candidate list
   v2 <- mk(c("Herd", "Extirpated", "Herd"), col = "HERD_STAT")
-  expect_identical(as.integer(nrow(LandWebUtils:::.dropExtirpated(v2, "HERD_STATUS,HERD_STAT", "^Extirpated$"))), 2L)
+  expect_identical(
+    as.integer(nrow(LandWebUtils:::.dropExtirpated(v2, "HERD_STATUS,HERD_STAT", "^Extirpated$"))),
+    2L
+  )
 
   ## AB's vocabulary is a prefix ("Extirp"), not the whole word
   vab <- mk(c("Active", "Extirp"), col = "STATUS")
   expect_identical(as.integer(nrow(LandWebUtils:::.dropExtirpated(vab, "STATUS", "^Extirp"))), 1L)
 
   ## a source with no status field, or no rule, is passed through untouched
-  expect_identical(as.integer(nrow(LandWebUtils:::.dropExtirpated(v, NA_character_, NA_character_))), 3L)
-  expect_identical(as.integer(nrow(LandWebUtils:::.dropExtirpated(v, "NO_SUCH_COL", "^Extirpated$"))), 3L)
+  expect_identical(
+    as.integer(nrow(LandWebUtils:::.dropExtirpated(v, NA_character_, NA_character_))),
+    3L
+  )
+  expect_identical(
+    as.integer(nrow(LandWebUtils:::.dropExtirpated(v, "NO_SUCH_COL", "^Extirpated$"))),
+    3L
+  )
 })
 
 test_that(".caribouEcotype splits boreal from mountain per source", {
