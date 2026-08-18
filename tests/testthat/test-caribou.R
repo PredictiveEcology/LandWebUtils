@@ -88,13 +88,21 @@ test_that(".caribouEcotype splits boreal from mountain per source", {
   expect_identical(LandWebUtils:::.caribouEcotype(sk, "SK"), c("Boreal", "Boreal"))
 })
 
-test_that(".caribouNameFixes normalises the cross-jurisdiction spelling disagreements", {
+test_that(".caribouNameFixes corrects demonstrable errors ONLY", {
   fx <- LandWebUtils:::.caribouNameFixes()
-  ## Left unfixed these reach partner-facing figures AND block the name-grouping that stitches a
-  ## cross-border range into one reporting unit.
-  expect_identical(fx[["Bischto"]], "Bistcho")            ## Alberta's own typo
-  expect_identical(fx[["Snake-Sahtaneh"]], "Snake-Sahtahneh") ## BC drops the second 'h'
+  ## Verified against NRCan's Canadian Geographical Names Database: it has Bistcho Lake (AB) and no
+  ## match at all for "Bischto".
+  expect_identical(fx[["Bischto"]], "Bistcho")
   expect_false(any(names(fx) == unname(fx))) ## a no-op entry would be a mistake
+
+  ## NOT fixed, deliberately -- the bar is evidence of an error, not disagreement between sources,
+  ## otherwise this table overwrites a jurisdiction's own nomenclature with a neighbour's:
+  ##  * BC's `Snake-Sahtaneh` is CORRECT (CGNDB: Sahtaneh River, BC; no "Sahtahneh"), so ECCC's
+  ##    `Snake-Sahtahneh` is the typo. An earlier version of this table had the fix BACKWARDS.
+  expect_false("Snake-Sahtaneh" %in% names(fx))
+  ##  * Alberta's `East/West Side Athabasca` are official enumerated domain values in its published
+  ##    metadata, not truncations of ECCC's `... River` forms.
+  expect_false(any(grepl("Side Athabasca", names(fx))))
 })
 
 test_that("reportingPolygonLayers routes caribou through the assembler", {

@@ -34,8 +34,9 @@
 #'   contribution at subunit granularity: `A La Peche`, `Narraway` and
 #'   `Redrock-Prairie Creek` were three separate v2 units but are all subunits of the one
 #'   `LOCALRANGE` `"West Central"`, so labelling on `LOCALRANGE` alone would collapse
-#'   them. NB `Bischto` is Alberta's own misspelling of `Bistcho`; normalised by
-#'   [.caribouNameFixes()].
+#'   them. Alberta's `East Side Athabasca` / `West Side Athabasca` are its own official
+#'   domain values and are kept as-is (ECCC appends `River`); `Bischto` is Alberta's
+#'   misspelling of `Bistcho` and is corrected. See `.caribouNameFixes()`.
 #' * **BC** --- fetched live from the BC Data Catalogue WFS rather than a cached export.
 #'   The WFS release is **newer and materially different** from the v2-era shapefile: 55
 #'   features against 72, and it flags **5** extirpated herds where the old export flagged
@@ -93,15 +94,32 @@ caribouRangeLayers <- function() {
   "&outputFormat=application/json"
 )
 
-## Source spellings that disagree across jurisdictions for the SAME range. Left unfixed these go
-## straight into partner-facing figures, and they also block the name-grouping that stitches a
-## cross-border range back into one reporting unit (the summaries group by NAME, not by feature) --
-## which is how `Chinchaga` and `Narraway` already come out whole across the AB/BC border.
+## Source spellings that are demonstrably WRONG for the SAME range. Left unfixed these go straight into
+## partner-facing figures, and they also block the name-grouping that stitches a cross-border range back
+## into one reporting unit (the summaries group by NAME, not by feature) -- which is how `Chinchaga`,
+## `Narraway` and `Redrock-Prairie Creek` already come out whole across the AB/BC border.
 ## Keyed by the wrong spelling; values are the accepted form.
+##
+## The bar is EVIDENCE OF AN ERROR, not disagreement between sources -- otherwise this table would
+## quietly overwrite a jurisdiction's own nomenclature with a neighbour's. Each entry is verified
+## against the authoritative toponym in NRCan's Canadian Geographical Names Database (CGNDB):
+##   * `Bischto` -> `Bistcho`: CGNDB has **Bistcho Lake** (Alberta) and NO match for "Bischto". It is
+##     Alberta's own misspelling, and enshrined in its published `LOCALRANGE`/`SUBUNIT` domain lists
+##     rather than being one bad row -- but a systematic misspelling is still a misspelling.
+##
+## DELIBERATELY NOT FIXED, though the sources disagree:
+##   * BC's `Snake-Sahtaneh` vs ECCC's `Snake-Sahtahneh` -- CGNDB has **Sahtaneh River** (BC) and NO
+##     match for "Sahtahneh", so BC is right and the FEDERAL layer carries the typo. An earlier version
+##     of this table "normalised" BC's correct name into ECCC's incorrect one.
+##   * Alberta's `East Side Athabasca` / `West Side Athabasca` against ECCC's `... River`. These are
+##     official Alberta domain values -- both are enumerated in the published metadata under
+##     "Local Population Ranges" / "Population Subunit" (authority: Wildlife Management, Alberta
+##     Environment and Parks) -- so dropping "River" is Alberta nomenclature, not truncation. (It is
+##     not a field-width artifact either: `LOCALRANGE` is 25 characters wide, its longest value is 19,
+##     and "West Side Athabasca River" would fit in 25.)
 .caribouNameFixes <- function() {
   c(
-    "Bischto" = "Bistcho",          ## Alberta's own typo
-    "Snake-Sahtaneh" = "Snake-Sahtahneh" ## BC drops the second 'h'
+    "Bischto" = "Bistcho" ## CGNDB: Bistcho Lake (AB); no such place as "Bischto"
   )
 }
 

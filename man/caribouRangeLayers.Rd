@@ -50,8 +50,9 @@ comparison in \code{scripts/make_caribou_reference.R}, not as a reporting layer.
 contribution at subunit granularity: \verb{A La Peche}, \code{Narraway} and
 \verb{Redrock-Prairie Creek} were three separate v2 units but are all subunits of the one
 \code{LOCALRANGE} \code{"West Central"}, so labelling on \code{LOCALRANGE} alone would collapse
-them. NB \code{Bischto} is Alberta's own misspelling of \code{Bistcho}; normalised by
-\code{\link[=.caribouNameFixes]{.caribouNameFixes()}}.
+them. Alberta's \verb{East Side Athabasca} / \verb{West Side Athabasca} are its own official
+domain values and are kept as-is (ECCC appends \code{River}); \code{Bischto} is Alberta's
+misspelling of \code{Bistcho} and is corrected. See \code{.caribouNameFixes()}.
 \item \strong{BC} --- fetched live from the BC Data Catalogue WFS rather than a cached export.
 The WFS release is \strong{newer and materially different} from the v2-era shapefile: 55
 features against 72, and it flags \strong{5} extirpated herds where the old export flagged
