@@ -30,13 +30,24 @@
 #' comparison in `scripts/make_caribou_reference.R`, not as a reporting layer.
 #'
 #' @section Per-source notes:
-#' * **AB** --- labelled on `SUBUNIT` before `LOCALRANGE`. v2 reported AB's mountain
-#'   contribution at subunit granularity: `A La Peche`, `Narraway` and
-#'   `Redrock-Prairie Creek` were three separate v2 units but are all subunits of the one
-#'   `LOCALRANGE` `"West Central"`, so labelling on `LOCALRANGE` alone would collapse
-#'   them. Alberta's `East Side Athabasca` / `West Side Athabasca` are its own official
-#'   domain values and are kept as-is (ECCC appends `River`); `Bischto` is Alberta's
-#'   misspelling of `Bistcho` and is corrected. See `.caribouNameFixes()`.
+#' * **AB** --- labelled on `SUBUNIT` before `LOCALRANGE`, i.e. at **subunit granularity
+#'   throughout**. This is a deliberate choice, settled 2026-08-17, and it is not a
+#'   like-for-like reproduction of v2 --- no single setting is. v2 reported Alberta's
+#'   *mountain* ranges at subunit level (`A La Peche`, `Narraway` and
+#'   `Redrock-Prairie Creek` were three separate v2 units, but all three are subunits of the
+#'   one `LOCALRANGE` `"West Central"`) while reporting its *boreal* ranges whole --- because
+#'   v2 took Alberta's boreal ranges from ECCC's national layer, at range level, and only its
+#'   mountain ranges from Alberta. `SUBUNIT` therefore matches v2 for the mountain ranges and
+#'   reports **finer than v2** for exactly one boreal range: `East Side Athabasca River`
+#'   resolves into its 7 subunits (`Agnes`, `Algar`, `Bohn`, `Christina`, `Egg-Pony`,
+#'   `Wandering`, `Wiau`). Every other Alberta range is 1:1 with both v2 and ECCC, so this is
+#'   the only place the two granularities differ; the finer breakdown is kept as an
+#'   improvement. See `outputs/_reference/caribouAlberta3way.csv` for the unit-by-unit
+#'   comparison, and report 03 for the v2 crosswalk.
+#'
+#'   Alberta's `East Side Athabasca` / `West Side Athabasca` are its own official domain
+#'   values and are kept as-is (ECCC appends `River`); `Bischto` is Alberta's misspelling of
+#'   `Bistcho` and is corrected. See `.caribouNameFixes()`.
 #' * **BC** --- fetched live from the BC Data Catalogue WFS rather than a cached export.
 #'   The WFS release is **newer and materially different** from the v2-era shapefile: 55
 #'   features against 72, and it flags **5** extirpated herds where the old export flagged

@@ -46,13 +46,24 @@ comparison in \code{scripts/make_caribou_reference.R}, not as a reporting layer.
 \section{Per-source notes}{
 
 \itemize{
-\item \strong{AB} --- labelled on \code{SUBUNIT} before \code{LOCALRANGE}. v2 reported AB's mountain
-contribution at subunit granularity: \verb{A La Peche}, \code{Narraway} and
-\verb{Redrock-Prairie Creek} were three separate v2 units but are all subunits of the one
-\code{LOCALRANGE} \code{"West Central"}, so labelling on \code{LOCALRANGE} alone would collapse
-them. Alberta's \verb{East Side Athabasca} / \verb{West Side Athabasca} are its own official
-domain values and are kept as-is (ECCC appends \code{River}); \code{Bischto} is Alberta's
-misspelling of \code{Bistcho} and is corrected. See \code{.caribouNameFixes()}.
+\item \strong{AB} --- labelled on \code{SUBUNIT} before \code{LOCALRANGE}, i.e. at \strong{subunit granularity
+throughout}. This is a deliberate choice, settled 2026-08-17, and it is not a
+like-for-like reproduction of v2 --- no single setting is. v2 reported Alberta's
+\emph{mountain} ranges at subunit level (\verb{A La Peche}, \code{Narraway} and
+\verb{Redrock-Prairie Creek} were three separate v2 units, but all three are subunits of the
+one \code{LOCALRANGE} \code{"West Central"}) while reporting its \emph{boreal} ranges whole --- because
+v2 took Alberta's boreal ranges from ECCC's national layer, at range level, and only its
+mountain ranges from Alberta. \code{SUBUNIT} therefore matches v2 for the mountain ranges and
+reports \strong{finer than v2} for exactly one boreal range: \verb{East Side Athabasca River}
+resolves into its 7 subunits (\code{Agnes}, \code{Algar}, \code{Bohn}, \code{Christina}, \code{Egg-Pony},
+\code{Wandering}, \code{Wiau}). Every other Alberta range is 1:1 with both v2 and ECCC, so this is
+the only place the two granularities differ; the finer breakdown is kept as an
+improvement. See \verb{outputs/_reference/caribouAlberta3way.csv} for the unit-by-unit
+comparison, and report 03 for the v2 crosswalk.
+
+Alberta's \verb{East Side Athabasca} / \verb{West Side Athabasca} are its own official domain
+values and are kept as-is (ECCC appends \code{River}); \code{Bischto} is Alberta's misspelling of
+\code{Bistcho} and is corrected. See \code{.caribouNameFixes()}.
 \item \strong{BC} --- fetched live from the BC Data Catalogue WFS rather than a cached export.
 The WFS release is \strong{newer and materially different} from the v2-era shapefile: 55
 features against 72, and it flags \strong{5} extirpated herds where the old export flagged
