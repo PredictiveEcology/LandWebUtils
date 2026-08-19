@@ -281,7 +281,9 @@ joinReportingPolygons <- function(x, y) {
 #'
 #' `cross` marks the layers crossed with each tenure by
 #' [buildCrossedReportingPolygons()], reproducing the v2 per-tenure reporting units.
-#' `Parks` is `FALSE`: v2 reported parks as a stand-alone layer, never per tenure.
+#' Every non-tenure layer is crossed: reporting is `studyAreaReporting` intersected
+#' by tenure, so a stand-alone layer covering ground *outside* the tenures has
+#' nothing to report against.
 #'
 #' A reporting layer may be assembled from **several sources**: rows sharing a
 #' `NAME_SHORT` are built independently and then merged into one layer (reduced to the
@@ -312,7 +314,14 @@ reportingPolygonLayers <- function() {
     ## here; the ECCC national layer is kept as a documented comparison only (see
     ## `scripts/make_caribou_reference.R`), NOT as a reporting layer.
     "Caribou Ranges"                   , "Caribou"       , FALSE     , TRUE   , "assembly", "caribou"                                                            , NA_character_, NA_character_,
-    "Parks"                            , "Parks"         , FALSE     , FALSE  , "drive" , "10-TpJaEOUCN6MNISWhpU-CRLpadyHDS2"                                   , "Name"       , NA_character_,
+    ## NB: no `Parks` layer. Reporting is always `studyAreaReporting` INTERSECTED BY TENURE, and
+    ## protected areas are carved OUT of forest tenures, so a parks layer has essentially nothing
+    ## to report against here: for WesternAlbertaUpland, 81 of 732 parks merely abut the FMAs and
+    ## the whole intersection is 0.05 km^2 (vs 6,538 km^2 against the buffered `studyArea`). v2
+    ## never reported parks either. Parks reporting only becomes meaningful at province-wide
+    ## scale, and even that does not resolve it -- provincial parks sit inside one province, but
+    ## NATIONAL parks cross provincial boundaries, so summarising "all parks" needs a domain
+    ## wider than any single province. Excluded pending that review (LandWeb#118).
     "Alberta Natural Subregions"       , "ANSR"          , FALSE     , TRUE   , "drive" , "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ"                                   , "Name"       , NA_character_,
     "BC Biogeoclimatic zones"          , "BEC"           , FALSE     , TRUE   , "drive" , "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS"                                   , "ZONE_NAME"  , NA_character_,
     "Northwest Territories Ecoregions" , "NT_Ecoregion"  , FALSE     , TRUE   , "drive" , "1iRAQfARkmS6-XVHFnTkB-iltzMNPAczC"                                   , "ECO4_NAM_1" , NA_character_,

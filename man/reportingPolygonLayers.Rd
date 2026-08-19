@@ -42,7 +42,9 @@ layer may carry it.
 
 \code{cross} marks the layers crossed with each tenure by
 \code{\link[=buildCrossedReportingPolygons]{buildCrossedReportingPolygons()}}, reproducing the v2 per-tenure reporting units.
-\code{Parks} is \code{FALSE}: v2 reported parks as a stand-alone layer, never per tenure.
+Every non-tenure layer is crossed: reporting is \code{studyAreaReporting} intersected
+by tenure, so a stand-alone layer covering ground \emph{outside} the tenures has
+nothing to report against.
 
 A reporting layer may be assembled from \strong{several sources}: rows sharing a
 \code{NAME_SHORT} are built independently and then merged into one layer (reduced to the
