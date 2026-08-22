@@ -53,9 +53,16 @@ The 4 values are for 4 different fire size conditions. See details.}
 These are 2 size (in hectares) thresholds that affect which
 \code{spawnNewActive} probabilities are used. See details.}
 
-\item{spreadProbRel}{A raster layer of of relative probabilities, with non-flammable pixels \code{NA}.}
+\item{spreadProbRel}{Relative probabilities, with non-flammable pixels \code{NA}: either a
+raster layer, or a numeric vector of length \code{terra::ncell(landscape)}.
+For \code{landmine_burn1()}, prefer the numeric vector, for the same
+reason as \code{spreadProb} (needs SpaDES.tools >= 2.1.2.9000).}
 
-\item{spreadProb}{A raster layer of spread probabilities, with non-flammable pixels \code{NA}.}
+\item{spreadProb}{Spread probabilities, with non-flammable pixels \code{NA}: either a
+raster layer, or a numeric vector of length \code{terra::ncell(landscape)}.
+For \code{landmine_burn1()}, prefer the numeric vector: \code{spread2()}
+re-materialises a raster \code{spreadProb} on every spread step,
+which is O(ncell) per step.}
 
 \item{omitPixels}{An optional vector of pixel IDs to omit from fire size calculations.
 Can be used if \code{spreadProb} or \code{spreadProbRel} do not designate

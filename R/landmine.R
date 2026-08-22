@@ -33,9 +33,16 @@ utils::globalVariables(c(
 #'                       These are 2 size (in hectares) thresholds that affect which
 #'                       `spawnNewActive` probabilities are used. See details.
 #'
-#' @param spreadProbRel  A raster layer of of relative probabilities, with non-flammable pixels `NA`.
+#' @param spreadProbRel  Relative probabilities, with non-flammable pixels `NA`: either a
+#'                       raster layer, or a numeric vector of length `terra::ncell(landscape)`.
+#'                       For `landmine_burn1()`, prefer the numeric vector, for the same
+#'                       reason as `spreadProb` (needs SpaDES.tools >= 2.1.2.9000).
 #'
-#' @param spreadProb     A raster layer of spread probabilities, with non-flammable pixels `NA`.
+#' @param spreadProb     Spread probabilities, with non-flammable pixels `NA`: either a
+#'                       raster layer, or a numeric vector of length `terra::ncell(landscape)`.
+#'                       For `landmine_burn1()`, prefer the numeric vector: `spread2()`
+#'                       re-materialises a raster `spreadProb` on every spread step,
+#'                       which is O(ncell) per step.
 #'
 #' @param omitPixels     An optional vector of pixel IDs to omit from fire size calculations.
 #'                       Can be used if `spreadProb` or `spreadProbRel` do not designate
