@@ -30,3 +30,19 @@
       Error:
       ! calibration parameter file not found: no-such-file.csv
 
+# landmine_optim_fireSizes warns outside Andison's fitted range
+
+    Code
+      x <- landmine_optim_fireSizes(240, c(57.6, 576000))
+    Condition
+      Warning:
+      fire size(s) 576000 ha fall outside the 10-3000 ha range Andison fitted; the shape target extrapolates sharply beyond it.
+
+# landmine_optim_fireSizes warns when a fire is only a few pixels
+
+    Code
+      x <- landmine_optim_fireSizes(240, c(11, 600))
+    Condition
+      Warning:
+      fire size(s) 11 ha are under 5 pixels at 240 m; shape and island statistics are dominated by quantization at that size.
+

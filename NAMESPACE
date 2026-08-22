@@ -27,15 +27,25 @@ export(landmine_optim_calibrate)
 export(landmine_optim_clusterExport)
 export(landmine_optim_clusterSetup)
 export(landmine_optim_clusterWrap)
+export(landmine_optim_fireSizes)
+export(landmine_optim_fitAndison)
 export(landmine_optim_fitSN)
 export(landmine_optim_fitSN2)
+export(landmine_optim_islandTarget)
+export(landmine_optim_islands)
 export(landmine_optim_landscape)
 export(landmine_optim_params_append)
 export(landmine_optim_params_read)
+export(landmine_optim_shapeIndex)
+export(landmine_optim_shapeTarget)
 export(landmine_optim_unpack)
 export(landmine_plot_FRI)
 export(landmine_plot_LTHFC)
 export(landmine_plot_areaBurnedOverTime)
+export(landmine_plot_calibDiscrimination)
+export(landmine_plot_calibIslands)
+export(landmine_plot_calibParams)
+export(landmine_plot_calibShape)
 export(loadCASFRI)
 export(meanTruncPareto)
 export(plotFMA)
@@ -104,12 +114,22 @@ importFrom(ggplot2,
   element_text,
   geom_abline,
   geom_area,
+  geom_boxplot,
+  geom_hline,
+  geom_jitter,
+  geom_line,
   geom_point,
+  geom_rect,
+  geom_segment,
   geom_sf,
   ggplot,
   ggsave,
   ggtitle,
+  labs,
+  position_jitter,
+  scale_colour_manual,
   scale_x_continuous,
+  scale_x_log10,
   scale_y_continuous,
   theme,
   theme_bw,

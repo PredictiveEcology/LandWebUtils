@@ -43,7 +43,9 @@ landmine_optim_burnFun <- function(
     startCells = centreCell,
     fireSizes = fireSize,
     spreadProb = spreadProb,
-    spreadProbRel = ros,
+    ## materialise once: `spread2()` re-reads a raster `spreadProbRel` on every spread step,
+    ## which is O(ncell) per step. Bit-identical, ~2x faster per objective evaluation.
+    spreadProbRel = as.numeric(terra::values(ros, mat = FALSE)),
     spawnNewActive = spawnNewActive,
     sizeCutoffs = sizeCutoffs
   )
@@ -83,6 +85,12 @@ landmine_optim_burnFun <- function(
   ) |>
     dplyr::mutate(perim.area.ratio = perimeter / area) ## need m/m^2
 
+  ## NOTE: `burnedMap` holds `initialPixels` (the ignition cell index) at every burned cell, so
+  ## `sum(burnedMap[])` sums pixel IDs and is NOT a cell count. Use `nBurned` to ask whether a
+  ## fire reached its target size.
+  LM$nBurned <- sum(!is.na(terra::values(burnedMap, mat = FALSE)))
+  LM$shapeIndex <- landmine_optim_shapeIndex(LM$perimeter, LM$area)
+
   list(burnedMap = burnedMap, LM = LM)
 }
 
@@ -92,10 +100,16 @@ landmine_optim_burnFun <- function(
 #'              to use on the current machine (`localhost`), or a character vector of
 #'              hostnames on which to run worker copies.
 #'
+#' @param seed Optional integer passed to [parallel::clusterSetRNGStream()], so the per-worker
+#'             RNG streams are reproducible. Without it the seed is drawn from ambient RNG
+#'             state, which made calibration runs irreproducible unless the caller happened to
+#'             call `set.seed()` first. Note reproducibility also requires a fixed worker count,
+#'             since one stream is assigned per worker.
+#'
 #' @return a cluster object
 #'
 #' @export
-landmine_optim_clusterSetup <- function(nodes = NULL) {
+landmine_optim_clusterSetup <- function(nodes = NULL, seed = NULL) {
   stopifnot(
     requireNamespace("parallel", quietly = TRUE),
     requireNamespace("parallelly", quietly = TRUE),
@@ -110,13 +124,15 @@ landmine_optim_clusterSetup <- function(nodes = NULL) {
     stop("nodes must be an integer of length 1 or a character vector of nodenames")
   }
 
-  ## check the number of nodes used for the cluster:
-  ## 1. at least 10 populations per parameter; 7 params;
-  ## 2. ensure it's a multiple of the number of params (7);
-  ## 3. R can't create more than ~125 socket connections.
+  ## NOTE: this used to also require `nnodes >= 70` and `nnodes %% 7 == 0`. Those are
+  ## constraints on DEoptim's POPULATION SIZE (>= 10 per parameter, 7 parameters), not on the
+  ## number of workers -- `NP` and the worker count are independent, and DEoptim distributes a
+  ## population of any size across whatever workers exist. Conflating them made the calibration
+  ## unrunnable on a 64-core host, and made both `NP` and the per-worker RNG streams depend on
+  ## `availableCores()`, i.e. on the machine and its current load. Set `NP` explicitly instead.
+  ## R can't create more than ~125 socket connections.
   stopifnot(
-    nnodes >= 70,
-    nnodes %% 7 == 0,
+    nnodes >= 1,
     nnodes <= parallelly::availableCores(constraints = c("connections"))
   )
 
@@ -128,7 +144,9 @@ landmine_optim_clusterSetup <- function(nodes = NULL) {
     cl <- parallel::makeCluster(nnodes, type = "FORK")
   }
 
-  parallel::clusterSetRNGStream(cl, sample(1e8, 1))
+  ## seeding from `sample(1e8, 1)` drew from ambient RNG state, so streams were not
+  ## reproducible unless the caller happened to set.seed() first.
+  parallel::clusterSetRNGStream(cl, if (is.null(seed)) sample(1e8, 1) else seed)
 
   return(cl)
 }
@@ -251,8 +269,11 @@ landmine_optim_fitSN <- function(
   })
   res <- lapply(seq(bfs1), function(bfCount) {
     abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +
-      100 * (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
-    ## it needs to get to above 90,000 HA for it to count
+      100 * (bfs1[[bfCount]]$LM[1, "nBurned"] < fireSizes[bfCount])
+    ## NOTE: this previously read `sum(burnedMap[], na.rm = TRUE)`, which sums the ignition-cell
+    ## INDEX stored at each burned cell (~5e9), not the number of cells burned -- so the penalty
+    ## never fired in any calibration run. Fixing it CHANGES this objective: rows in
+    ## `LandMine_DEoptim_params.csv` fitted before this are not comparable to rows fitted after.
   })
   a <- sum(unlist(res)) # * log10(fireSizes)) # weigh larger ones more
   attr(a, "bfs1") <- bfs1
@@ -281,8 +302,11 @@ landmine_optim_fitSN2 <- function(
   })
   res <- lapply(seq(bfs1), function(bfCount) {
     abs(log(bfs1[[bfCount]]$LM[1, "perim.area.ratio"]) - log(desiredPerimeterArea)) +
-      100 * (sum(bfs1[[bfCount]]$burnedMap[], na.rm = TRUE) < fireSizes[bfCount])
-    ## it needs to get to above 90,000 HA for it to count
+      100 * (bfs1[[bfCount]]$LM[1, "nBurned"] < fireSizes[bfCount])
+    ## NOTE: this previously read `sum(burnedMap[], na.rm = TRUE)`, which sums the ignition-cell
+    ## INDEX stored at each burned cell (~5e9), not the number of cells burned -- so the penalty
+    ## never fired in any calibration run. Fixing it CHANGES this objective: rows in
+    ## `LandMine_DEoptim_params.csv` fitted before this are not comparable to rows fitted after.
   })
   a <- sum(unlist(res))
   attr(a, "bfs1") <- bfs1

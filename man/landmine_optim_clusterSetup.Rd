@@ -4,12 +4,18 @@
 \alias{landmine_optim_clusterSetup}
 \title{Setup a cluster for LandMine optimization}
 \usage{
-landmine_optim_clusterSetup(nodes = NULL)
+landmine_optim_clusterSetup(nodes = NULL, seed = NULL)
 }
 \arguments{
 \item{nodes}{positive integer of length 1 specifying the number of threads
 to use on the current machine (\code{localhost}), or a character vector of
 hostnames on which to run worker copies.}
+
+\item{seed}{Optional integer passed to \code{\link[parallel:clusterSetRNGStream]{parallel::clusterSetRNGStream()}}, so the per-worker
+RNG streams are reproducible. Without it the seed is drawn from ambient RNG
+state, which made calibration runs irreproducible unless the caller happened to
+call \code{set.seed()} first. Note reproducibility also requires a fixed worker count,
+since one stream is assigned per worker.}
 }
 \value{
 a cluster object

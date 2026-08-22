@@ -99,13 +99,25 @@ Spawning probability was originally set at 13\%, but created problems with very
 large and very small fires, so over time has been adjusted to vary depending on:
 a) number of active "firelets" (NF); and b) fire size (FS), such that:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{  - If 10 <= NF < 36 and FS < 20,000 ha then P = 20\%;
-  - If NF > 36 and FS < 8,000 ha, P = 11\%;
-  - If NF < 36 and FS > 20,000 ha, P = 26\%;
-  - If NF < 10 then P = 46\%;
+\if{html}{\out{<div class="sourceCode">}}\preformatted{  - If nActiveCells1[1] <= NF <  nActiveCells1[2] and FS < sizeCutoffs[2] -> spawnNewActive[2];
+  - If                      NF >= nActiveCells1[2] and FS < sizeCutoffs[1] -> spawnNewActive[4];
+  - If                      NF <  nActiveCells1[2] and FS > sizeCutoffs[2] -> spawnNewActive[3];
+  - otherwise (including NF < nActiveCells1[1])                            -> spawnNewActive[1].
 }\if{html}{\out{</div>}}
 
-These rule create more heterogeneity in the pattern of burning.
+These rules create more heterogeneity in the pattern of burning.
+
+Thresholds are given symbolically because the fitted values differ from the figures this
+documentation used to quote: \code{sizeCutoffs} is calibrated, and is currently 1629 / 52016 ha
+rather than the 8,000 / 20,000 originally described.
+
+The second rule uses \code{>=}: with \code{>}, the \code{NF == nActiveCells1[2]} case matched no rule.
+
+A gap remains, and is deliberately \emph{not} patched silently: when \code{NF >= nActiveCells1[2]}
+and \code{FS >= sizeCutoffs[1]}, no rule applies and \code{spawnNewActive[1]} is used. The deprecated
+\code{landmine_burn()} set that region to zero instead, noting it is "undescribed in Andison" and
+that fires "look too circular" without it. Deciding between those requires a re-fit, so it
+is left as a documented open question.
 }
 
 \subsection{Fire jumping}{

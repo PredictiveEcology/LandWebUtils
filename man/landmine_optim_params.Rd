@@ -14,6 +14,7 @@ landmine_optim_params_append(
   file,
   par,
   pixelSize,
+  objective = NA_character_,
   date = format(Sys.time(), "\%Y-\%m-\%d")
 )
 }
@@ -25,6 +26,11 @@ landmine_optim_params_append(
 \item{rowID}{Optional row number to extract. If \code{NULL} (default), all rows are returned.}
 
 \item{pixelSize}{Pixel resolution (m) the calibration was run at.}
+
+\item{objective}{Name of the objective the fit was made against. Recorded because parameter
+values are only comparable within one objective: fits made against
+\code{\link[=landmine_optim_fitSN]{landmine_optim_fitSN()}} before its size penalty was repaired, or before fire sizes were
+specified in hectares, are not comparable to anything fitted since.}
 
 \item{date}{Date of the run, as a string. Defaults to today.}
 }

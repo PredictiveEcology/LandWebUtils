@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9024
+Version: 1.0.3.9025
 Date: 2026-08-17
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
@@ -70,6 +70,7 @@ Collate:
     'caribou.R'
     'equivalentName.R'
     'histograms.R'
+    'landmine-calibration-plot.R'
     'landmine-calibration.R'
     'landmine-helpers.R'
     'landmine-plot.R'

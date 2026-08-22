@@ -8,7 +8,8 @@ landmine_optim_calibrate(
   pixelSize = 240,
   n = 1000L,
   file = tempfile(fileext = ".tif"),
-  fireSizes = c(10, 100, 1000, 10000, 1e+05),
+  fireSizesHa = c(50, 200, 600, 1500, 3000),
+  fireSizes = NULL,
   desiredPerimeterArea = 0.003,
   lower = c(-2, -3, -3, -3, 1, 3.5, 0.75),
   upper = c(-0.1, -0.5, -0.5, -1, 3.5, 5, 1),
@@ -19,15 +20,23 @@ landmine_optim_calibrate(
   cl = NULL,
   nodes = NULL,
   seed = NULL,
+  objective = c("andison", "sn"),
+  crnSeed = 1L,
   paramsFile = NULL
 )
 }
 \arguments{
 \item{pixelSize, n, file}{Passed to \code{landmine_optim_landscape()}.}
 
-\item{fireSizes}{Target fire sizes (pixels) the objective fits against.}
+\item{fireSizesHa}{Target fire sizes in \strong{hectares}, converted to pixels for the current
+\code{pixelSize} by \code{\link[=landmine_optim_fireSizes]{landmine_optim_fireSizes()}}. Defaults sit inside the 10--3,000 ha range
+Andison fitted.}
 
-\item{desiredPerimeterArea}{Target perimeter-to-area ratio (m/m^2).}
+\item{fireSizes}{Target fire sizes in \strong{pixels}. Normally \code{NULL}; supply it only to
+reproduce a historical fit that was specified in pixels, and note that a pixel-count
+vector means a different physical fire at each resolution.}
+
+\item{desiredPerimeterArea}{Target perimeter-to-area ratio (m/m^2); \code{objective = "sn"} only.}
 
 \item{lower, upper}{Search bounds for the 7 parameters.}
 
@@ -43,6 +52,15 @@ landmine_optim_calibrate(
 streams are reproducible. Note that reproducibility also requires \code{NP} to be
 held fixed, since the stream count follows the number of workers.}
 
+\item{objective}{Which objective to optimise. \code{"andison"} (default) uses
+\code{\link[=landmine_optim_fitAndison]{landmine_optim_fitAndison()}}, which fits the shape-vs-area relationship and the remnant
+island fractions Andison (1996) reported. \code{"sn"} uses the original
+\code{\link[=landmine_optim_fitSN]{landmine_optim_fitSN()}}, retained so historical fits can be reproduced.}
+
+\item{crnSeed}{Passed to \code{\link[=landmine_optim_fitAndison]{landmine_optim_fitAndison()}} as common random numbers. Strongly
+recommended: the objective is stochastic, and without it the optimiser compares parameter
+vectors evaluated against \emph{different} random draws.}
+
 \item{paramsFile}{Optional path to a calibration CSV; if given, the best parameters
 found are appended to it.}
 }
@@ -54,10 +72,12 @@ Wraps the DEoptim fit that was previously written inline in \code{LandMine.Rmd}.
 reproduce that fit exactly.
 }
 \note{
-The objective is stochastic and evaluated once per parameter vector, with no
-common random numbers, so repeated runs return \emph{similar but different} values. In 43
-repeat fits recorded in \code{LandMine_DEoptim_params.csv}, four of the seven parameters
-scattered across more than 90\% of their search interval, which indicates the objective
-does not identify them individually. Treat a single fit as one draw from a broad
-optimum rather than as a point estimate.
+The objective is stochastic, so treat any single fit as one draw rather than a point
+estimate, and pass \code{crnSeed}. The original objective (\code{\link[=landmine_optim_fitSN]{landmine_optim_fitSN()}}) did not
+identify the parameters at all: in 43 repeat fits recorded in
+\code{LandMine_DEoptim_params.csv}, four of seven scattered over more than 90\% of their search
+interval, and repeat solutions proved statistically indistinguishable from one another --
+and from some randomly drawn parameter vectors. \code{objective = "andison"} adds constraints to
+address that; verify identifiability again after any change to the objective rather than
+assuming it.
 }
