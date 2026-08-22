@@ -22,6 +22,7 @@ landmine_optim_calibrate(
   seed = NULL,
   objective = c("andison", "sn"),
   crnSeed = 1L,
+  replicates = 1L,
   paramsFile = NULL
 )
 }
@@ -60,6 +61,10 @@ island fractions Andison (1996) reported. \code{"sn"} uses the original
 \item{crnSeed}{Passed to \code{\link[=landmine_optim_fitAndison]{landmine_optim_fitAndison()}} as common random numbers. Strongly
 recommended: the objective is stochastic, and without it the optimiser compares parameter
 vectors evaluated against \emph{different} random draws.}
+
+\item{replicates}{Passed to \code{\link[=landmine_optim_fitAndison]{landmine_optim_fitAndison()}}: evaluations to average per fire
+size. The island statistic is highly variable between draws, so \code{replicates > 1} buys
+discrimination at linear cost. \code{objective = "andison"} only.}
 
 \item{paramsFile}{Optional path to a calibration CSV; if given, the best parameters
 found are appended to it.}

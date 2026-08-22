@@ -170,6 +170,9 @@ landmine_optim_landscape <- function(pixelSize, n = 1000L,
 #'   [landmine_optim_fitAndison()], which fits the shape-vs-area relationship and the remnant
 #'   island fractions Andison (1996) reported. `"sn"` uses the original
 #'   [landmine_optim_fitSN()], retained so historical fits can be reproduced.
+#' @param replicates Passed to [landmine_optim_fitAndison()]: evaluations to average per fire
+#'   size. The island statistic is highly variable between draws, so `replicates > 1` buys
+#'   discrimination at linear cost. `objective = "andison"` only.
 #' @param crnSeed Passed to [landmine_optim_fitAndison()] as common random numbers. Strongly
 #'   recommended: the objective is stochastic, and without it the optimiser compares parameter
 #'   vectors evaluated against *different* random draws.
@@ -205,6 +208,7 @@ landmine_optim_calibrate <- function(pixelSize = 240, n = 1000L,
                                      NP = NULL, itermax = 200L, VTR = 0.001, strategy = 6L,
                                      cl = NULL, nodes = NULL, seed = NULL,
                                      objective = c("andison", "sn"), crnSeed = 1L,
+                                     replicates = 1L,
                                      paramsFile = NULL) {
   objective <- match.arg(objective)
   if (!requireNamespace("DEoptim", quietly = TRUE)) {
@@ -244,7 +248,7 @@ landmine_optim_calibrate <- function(pixelSize = 240, n = 1000L,
     DEoptim::DEoptim(
       fn = landmine_optim_fitAndison, lower = lower, upper = upper, control = ctrl,
       ros = lscape$file, centreCell = lscape$centreCell,
-      fireSizes = fireSizes, crnSeed = crnSeed
+      fireSizes = fireSizes, crnSeed = crnSeed, replicates = replicates
     )
   } else {
     DEoptim::DEoptim(

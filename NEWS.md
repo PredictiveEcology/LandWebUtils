@@ -12,7 +12,7 @@
 
 * New `landmine_optim_fitAndison()` fits against the statistics Andison (1996) actually reported, replacing the single constant perimeter-to-area target: the shape-vs-area relationship `SHAPE = 1.770 + 0.041*log10(AREA)^4` (§3.3.1), a continuous size shortfall rather than a step penalty, and the remnant-island fractions of Table 3.5. Supporting functions: `landmine_optim_shapeIndex()`, `landmine_optim_shapeTarget()`, `landmine_optim_islands()`, `landmine_optim_islandTarget()`. It accepts `crnSeed` for common random numbers. Note the defaults use the **empirical** column of each Andison table (shape intercept 1.770, island fractions 4.0/6.0/9.0); the other column in each is that model's own output, and targeting it would be circular;
 
-* `landmine_optim_calibrate()` gains `objective` (`"andison"`, the new default, or `"sn"` to reproduce historical fits) and `crnSeed`;
+* `landmine_optim_calibrate()` gains `objective` (`"andison"`, the new default, or `"sn"` to reproduce historical fits), `crnSeed`, and `replicates`;
 
 * `landmine_optim_burnFun()` returns `nBurned` and `shapeIndex` in its `LM` table, and passes `spreadProbRel` to `spread2()` as a numeric vector -- bit-identical, and about twice as fast per objective evaluation;
 
