@@ -42,6 +42,7 @@ NULL
 #' @importFrom ggplot2 geom_rect
 #' @importFrom ggplot2 geom_segment
 #' @importFrom ggplot2 geom_sf
+#' @importFrom ggplot2 geom_vline
 #' @importFrom ggplot2 ggplot
 #' @importFrom ggplot2 ggsave
 #' @importFrom ggplot2 ggtitle
