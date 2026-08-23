@@ -16,7 +16,7 @@ landmine_optim_fitAndison(
   replicates = 1L,
   wShape = 1,
   wSize = 1,
-  wIsland = 1,
+  wIsland = NULL,
   crnSeed = NULL
 )
 }
@@ -47,7 +47,10 @@ than signal.}
 statistic in particular is highly variable between draws, so \code{replicates > 1} buys
 discrimination at linear cost.}
 
-\item{wShape, wSize, wIsland}{Weights on the three components. Set one to 0 to drop it.}
+\item{wShape, wSize, wIsland}{Weights on the three components. Set one to 0 to drop it.
+\code{wIsland} defaults to \code{\link[=landmine_optim_islandWeight]{landmine_optim_islandWeight()}} for the landscape's own resolution,
+because a coarse grid cannot form the small islands that carry most of Andison's island
+area. Pass an explicit value to override.}
 
 \item{crnSeed}{Optional integer. If given, the RNG is seeded as \code{crnSeed + i} before the
 \code{i}th fire, so every parameter vector is evaluated against the \strong{same} random

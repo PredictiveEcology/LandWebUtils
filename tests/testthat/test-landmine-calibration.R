@@ -147,3 +147,38 @@ test_that("landmine_optim_fireSizes warns outside Andison's fitted range", {
 test_that("landmine_optim_fireSizes warns when a fire is only a few pixels", {
   expect_snapshot(x <- landmine_optim_fireSizes(240, c(11, 600)))
 })
+
+test_that("fitAndison's crnSeed pins the RNG kind, so results reproduce anywhere", {
+  skip_if_not_installed("landscapemetrics")
+  lscape <- landmine_optim_landscape(pixelSize = 240, n = 60L)
+  par <- c(-0.48, -0.71, -2.72, -1.64, 1.77, 4.44, 0.89)
+  fs <- c(9L, 35L)
+
+  runUnder <- function(kind) {
+    old <- RNGkind(); on.exit(RNGkind(kind = old[1], normal.kind = old[2], sample.kind = old[3]))
+    RNGkind(kind = kind)
+    as.numeric(landmine_optim_fitAndison(par, lscape$file, lscape$centreCell,
+                                         fireSizes = fs, replicates = 1L, crnSeed = 1L))
+  }
+  ## cluster workers use L'Ecuyer-CMRG; a plain session uses Mersenne-Twister. The objective
+  ## must not depend on which one happens to be active.
+  expect_equal(runUnder("Mersenne-Twister"), runUnder("L'Ecuyer-CMRG"))
+
+  ## and the caller's generator must be left as it was found
+  RNGkind(kind = "L'Ecuyer-CMRG")
+  invisible(landmine_optim_fitAndison(par, lscape$file, lscape$centreCell,
+                                      fireSizes = fs, replicates = 1L, crnSeed = 1L))
+  expect_equal(RNGkind()[1], "L'Ecuyer-CMRG")
+  RNGkind(kind = "Mersenne-Twister")
+})
+
+test_that("landmine_optim_islandWeight scales down with coarsening resolution", {
+  ## Andison rasterised at 50 m (quarter-hectare pixels)
+  expect_equal(landmine_optim_islandWeight(50), 1)
+  expect_equal(landmine_optim_islandWeight(100), 0.5)
+  expect_equal(landmine_optim_islandWeight(120), 50 / 120)
+  expect_equal(landmine_optim_islandWeight(240), 50 / 240)
+  ## never exceeds 1, even finer than the reference
+  expect_equal(landmine_optim_islandWeight(25), 1)
+  expect_true(all(diff(landmine_optim_islandWeight(c(50, 100, 120, 240))) < 0))
+})

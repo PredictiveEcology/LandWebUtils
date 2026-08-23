@@ -430,6 +430,9 @@ landmine_optim_islandTarget <- function(fireAreaHa) {
 #'   statistic in particular is highly variable between draws, so `replicates > 1` buys
 #'   discrimination at linear cost.
 #' @param wShape,wSize,wIsland Weights on the three components. Set one to 0 to drop it.
+#'   `wIsland` defaults to [landmine_optim_islandWeight()] for the landscape's own resolution,
+#'   because a coarse grid cannot form the small islands that carry most of Andison's island
+#'   area. Pass an explicit value to override.
 #' @param crnSeed Optional integer. If given, the RNG is seeded as `crnSeed + i` before the
 #'                `i`th fire, so every parameter vector is evaluated against the **same** random
 #'                draws (common random numbers). This is variance reduction, not determinism:
@@ -447,18 +450,35 @@ landmine_optim_fitAndison <- function(par, ros, centreCell,
                                       shapeIntercept = 1.770, shapeSlope = 0.041,
                                       minIslandSizeHa = 2, islandRangeHa = c(100, Inf),
                                       replicates = 1L,
-                                      wShape = 1, wSize = 1, wIsland = 1,
+                                      wShape = 1, wSize = 1, wIsland = NULL,
                                       crnSeed = NULL) {
   stopifnot(is.character(ros))
   ros <- terra::rast(ros)
+  if (is.null(wIsland)) {
+    ## scale by resolution: a coarse grid cannot form the small islands that carry most of
+    ## Andison's island area, so the target is partly unreachable by construction.
+    wIsland <- landmine_optim_islandWeight(terra::res(ros)[1])
+  }
   p <- landmine_optim_unpack(par)
+
+  if (!is.null(crnSeed)) {
+    ## leave the caller's generator as we found it
+    oldRNG <- RNGkind()
+    on.exit(RNGkind(kind = oldRNG[1], normal.kind = oldRNG[2], sample.kind = oldRNG[3]),
+            add = TRUE)
+  }
 
   grid <- expand.grid(i = seq_along(fireSizes), rep = seq_len(replicates))
   comp <- lapply(seq_len(nrow(grid)), function(k) {
     i <- grid$i[k]
     if (!is.null(crnSeed)) {
-      ## distinct stream per (fire size, replicate), identical across parameter vectors
-      set.seed(crnSeed + i + 1000L * grid$rep[k])
+      ## Distinct stream per (fire size, replicate), identical across parameter vectors.
+      ## The `kind` matters: `set.seed()` alone reseeds whatever generator is current, and
+      ## cluster workers run L'Ecuyer-CMRG (from `clusterSetRNGStream()`) while a plain session
+      ## runs Mersenne-Twister. Without pinning it, the same parameters and the same `crnSeed`
+      ## gave objective values differing by ~8x depending on where they were evaluated, so a
+      ## calibration result could not be reproduced outside the cluster that produced it.
+      set.seed(crnSeed + i + 1000L * grid$rep[k], kind = "Mersenne-Twister")
     }
     bf <- landmine_optim_burnFun(
       ros = ros, centreCell = centreCell, fireSize = fireSizes[i],
@@ -497,6 +517,7 @@ landmine_optim_fitAndison <- function(par, ros, centreCell,
   perFire <- stats::aggregate(cbind(shape, size, island) ~ fireSize, data = comp, FUN = mean)
   out <- sum(wShape * perFire$shape + wSize * perFire$size + wIsland * perFire$island)
   attr(out, "components") <- comp
+  attr(out, "weights") <- c(shape = wShape, size = wSize, island = wIsland)
   out
 }
 
@@ -539,4 +560,42 @@ landmine_optim_fireSizes <- function(pixelSize, areaHa = c(50, 200, 600, 1500, 3
             "at that size.", call. = FALSE)
   }
   structure(px, areaHa = areaHa, haPerPixel = haPerPx)
+}
+
+#' Resolution-dependent weight for the remnant-island term
+#'
+#' Andison (1996) rasterised at **50 m (quarter-hectare) pixels** -- his spatial database was
+#' 260 x 422 = 114,920 quarter-hectare pixels. LandWeb runs much coarser, and remnant islands
+#' are the statistic that suffers most, because a coarse grid cannot form small islands at all:
+#'
+#' | resolution | ha/pixel | smallest possible island |
+#' | ---------- | -------- | ------------------------ |
+#' | Andison 50 m | 0.25 | 0.25 ha |
+#' | LandWeb 100 m | 1.00 | 1 ha |
+#' | LandWeb 120 m | 1.44 | 1.44 ha |
+#' | LandWeb 240 m | 5.76 | 5.76 ha |
+#'
+#' Andison's Table 3.6 puts **65%** of island area in the 2--5 ha class for fires under 1,000 ha
+#' (24% for larger fires). At 240 m a single pixel is already 5.76 ha, so that entire class is
+#' unreachable by construction and the island target cannot be met however the parameters are
+#' set. Weighting the term down with coarsening resolution stops the optimiser chasing a target
+#' the grid forbids, at the expense of statistics it can actually reproduce.
+#'
+#' @param pixelSize Pixel resolution, in metres.
+#' @param refPixelSize Resolution the target statistics were measured at; defaults to Andison's
+#'                     50 m.
+#'
+#' @return A weight in `(0, 1]`: `min(1, refPixelSize / pixelSize)`. 1.0 at 50 m, 0.42 at 120 m,
+#'         0.21 at 240 m.
+#'
+#' @note This is a deliberate, documented judgement, not a derived quantity. The linear ratio is
+#'   a pragmatic choice; the representability argument above justifies *down-weighting*, not this
+#'   particular functional form. Record the weight used alongside any fit.
+#'
+#' @export
+#' @examples
+#' landmine_optim_islandWeight(c(50, 100, 120, 240))
+landmine_optim_islandWeight <- function(pixelSize, refPixelSize = 50) {
+  stopifnot(all(pixelSize > 0), refPixelSize > 0)
+  pmin(1, refPixelSize / pixelSize)
 }
