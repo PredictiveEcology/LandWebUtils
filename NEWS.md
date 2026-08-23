@@ -1,5 +1,7 @@
 # LandWebUtils (development version)
 
+* New `landmine_plot_calibConvergence()` plots DEoptim's best value against iteration and annotates where improvement stopped, so it is visible whether a run converged or was still improving when it hit `itermax`. On the first 240 m/120 m calibrations the last improvement came at iterations 149 and 128 of 200, with no gain in the final 50 -- i.e. iteration count was not the binding constraint, objective noise was;
+
 * `landmine_optim_fitAndison()` pins the RNG kind when `crnSeed` is given, and restores the caller's generator on exit. `set.seed()` reseeds whichever generator is current, and cluster workers run L'Ecuyer-CMRG (from `clusterSetRNGStream()`) while a plain session runs Mersenne-Twister -- so the same parameters and the same `crnSeed` gave objective values differing by ~8x (0.260 vs 2.117) depending on where they were evaluated, and a calibration could not be reproduced outside the cluster that produced it;
 
 * New `landmine_optim_islandWeight()`, used by default to scale the remnant-island term by resolution. Andison rasterised at **50 m** (quarter-hectare) pixels, and his Table 3.6 puts 65% of island area in the 2-5 ha class for fires under 1,000 ha. At 240 m a single pixel is already 5.76 ha, so that entire class is unreachable by construction and no parameter choice can meet the target. The weight is `min(1, 50 / pixelSize)`: 1.0 at 50 m, 0.42 at 120 m, 0.21 at 240 m. The weights used are recorded on the result's `"weights"` attribute;

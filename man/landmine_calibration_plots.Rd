@@ -6,6 +6,7 @@
 \alias{landmine_plot_calibIslands}
 \alias{landmine_plot_calibDiscrimination}
 \alias{landmine_plot_calibParams}
+\alias{landmine_plot_calibConvergence}
 \title{LandMine calibration diagnostic plots}
 \usage{
 landmine_plot_calibShape(components, shapeRangeHa = c(10, 3000))
@@ -15,6 +16,8 @@ landmine_plot_calibIslands(components)
 landmine_plot_calibDiscrimination(scores)
 
 landmine_plot_calibParams(params, lower, upper)
+
+landmine_plot_calibConvergence(deoptim)
 }
 \arguments{
 \item{components}{The \code{"components"} attribute of a \code{\link[=landmine_optim_fitAndison]{landmine_optim_fitAndison()}} result: one
@@ -30,6 +33,8 @@ because the \code{log10(AREA)^4} term extrapolates sharply outside it.}
 (as returned by \code{\link[=landmine_optim_params_read]{landmine_optim_params_read()}}).}
 
 \item{lower, upper}{Search bounds used for the fit, in the same parameter order.}
+
+\item{deoptim}{A \code{DEoptim} result object (or its \code{member$bestvalit} vector).}
 }
 \value{
 a \code{ggplot} object.
@@ -44,6 +49,8 @@ serve the module vignette, the project reports, and ad-hoc checks.
 \item \code{landmine_plot_calibShape()} -- simulated shape index against Andison's fitted curve;
 \item \code{landmine_plot_calibIslands()} -- simulated remnant-island fraction against Andison Table 3.5;
 \item \code{landmine_plot_calibDiscrimination()} -- objective values for fitted vs random parameters;
-\item \code{landmine_plot_calibParams()} -- spread of repeat fits within the search bounds.
+\item \code{landmine_plot_calibParams()} -- spread of repeat fits within the search bounds;
+\item \code{landmine_plot_calibConvergence()} -- DEoptim's best value against iteration, showing
+whether the run had converged or was still improving when it stopped.
 }
 }

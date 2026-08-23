@@ -1,6 +1,7 @@
 utils::globalVariables(c(
-  "areaHa", "empirical", "fitted", "group", "hi", "lo", "model1996", "objective",
-  "pctIslandsExp", "pctIslandsObs", "parameter", "shapeExp", "shapeObs", "value", "what"
+  "areaHa", "bestval", "empirical", "fitted", "group", "hi", "iteration", "lo", "model1996",
+  "objective", "pctIslandsExp", "pctIslandsObs", "parameter", "shapeExp", "shapeObs", "value",
+  "what"
 ))
 
 #' LandMine calibration diagnostic plots
@@ -12,7 +13,9 @@ utils::globalVariables(c(
 #' - `landmine_plot_calibShape()` -- simulated shape index against Andison's fitted curve;
 #' - `landmine_plot_calibIslands()` -- simulated remnant-island fraction against Andison Table 3.5;
 #' - `landmine_plot_calibDiscrimination()` -- objective values for fitted vs random parameters;
-#' - `landmine_plot_calibParams()` -- spread of repeat fits within the search bounds.
+#' - `landmine_plot_calibParams()` -- spread of repeat fits within the search bounds;
+#' - `landmine_plot_calibConvergence()` -- DEoptim's best value against iteration, showing
+#'   whether the run had converged or was still improving when it stopped.
 #'
 #' @return a `ggplot` object.
 #'
@@ -145,4 +148,33 @@ landmine_plot_calibParams <- function(params, lower, upper) {
                         "identified by the objective")
     ) +
     theme_bw()
+}
+
+#' @param deoptim A `DEoptim` result object (or its `member$bestvalit` vector).
+#'
+#' @export
+#' @rdname landmine_calibration_plots
+landmine_plot_calibConvergence <- function(deoptim) {
+  bv <- if (is.numeric(deoptim)) deoptim else deoptim$member$bestvalit
+  if (is.null(bv)) {
+    stop("could not find `member$bestvalit`; pass a DEoptim result or the trace vector.",
+         call. = FALSE)
+  }
+  d <- data.frame(iteration = seq_along(bv), bestval = as.numeric(bv))
+  lastImp <- suppressWarnings(max(which(diff(d$bestval) < 0) + 1))
+  sub <- if (is.finite(lastImp)) {
+    sprintf("last improvement at iteration %d of %d; %d further iterations gained nothing",
+            lastImp, nrow(d), nrow(d) - lastImp)
+  } else {
+    "no improvement recorded"
+  }
+  p <- ggplot(d, aes(x = iteration, y = bestval)) +
+    geom_line(colour = "firebrick", linewidth = 0.8) +
+    labs(x = "DEoptim iteration", y = "Best objective value",
+         title = "Calibration convergence", subtitle = sub) +
+    theme_bw()
+  if (is.finite(lastImp)) {
+    p <- p + geom_vline(xintercept = lastImp, linetype = "dotted")
+  }
+  p
 }

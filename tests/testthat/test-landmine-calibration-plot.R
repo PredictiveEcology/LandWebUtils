@@ -52,3 +52,22 @@ test_that("landmine_plot_calibParams builds and normalises to the search interva
   expect_true(all(p$data$value >= 0 & p$data$value <= 1))
   expect_equal(nrow(p$data), 8 * 7)
 })
+
+test_that("landmine_plot_calibConvergence builds and reports where improvement stopped", {
+  ## monotone non-increasing trace that flattens at iteration 12 of 30
+  bv <- c(seq(1, 0.2, length.out = 12), rep(0.2, 18))
+  p <- landmine_plot_calibConvergence(bv)
+  expect_s3_class(p, "ggplot")
+  expect_no_error(ggplot2::ggplot_build(p))
+  expect_match(p$labels$subtitle, "last improvement at iteration 12 of 30")
+  expect_match(p$labels$subtitle, "18 further iterations gained nothing")
+})
+
+test_that("landmine_plot_calibConvergence accepts a DEoptim-shaped list", {
+  p <- landmine_plot_calibConvergence(list(member = list(bestvalit = c(1, 0.5, 0.5))))
+  expect_s3_class(p, "ggplot")
+})
+
+test_that("landmine_plot_calibConvergence errors informatively on the wrong input", {
+  expect_snapshot(error = TRUE, landmine_plot_calibConvergence(list(a = 1)))
+})
