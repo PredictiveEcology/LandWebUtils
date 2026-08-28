@@ -21,7 +21,10 @@ export(findOldSimFiles)
 export(findSimFile)
 export(joinReportingPolygons)
 export(landbaseLayers)
+export(landmine_area_burned_by_zone)
 export(landmine_burn1)
+export(landmine_draw_num_fires)
+export(landmine_fri_summary)
 export(landmine_optim_burnFun)
 export(landmine_optim_calibrate)
 export(landmine_optim_clusterExport)
@@ -48,6 +51,8 @@ export(landmine_plot_calibDiscrimination)
 export(landmine_plot_calibIslands)
 export(landmine_plot_calibParams)
 export(landmine_plot_calibShape)
+export(landmine_reburn_ceiling)
+export(landmine_sizes_to_pixels)
 export(loadCASFRI)
 export(meanTruncPareto)
 export(plotFMA)
@@ -89,6 +94,7 @@ importFrom(data.table,
   .N,
   .NGRP,
   .SD,
+  as.data.table,
   data.table,
   fread,
   melt,
@@ -185,7 +191,9 @@ importFrom(sf,
 )
 importFrom(stats,
   na.omit,
-  quantile
+  quantile,
+  rnbinom,
+  runif
 )
 importFrom(terra,
   "NAflag<-",
