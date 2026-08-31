@@ -52,6 +52,7 @@ export(landmine_plot_calibDiscrimination)
 export(landmine_plot_calibIslands)
 export(landmine_plot_calibParams)
 export(landmine_plot_calibShape)
+export(landmine_reburn_budget)
 export(landmine_reburn_ceiling)
 export(landmine_sizes_to_pixels)
 export(loadCASFRI)
@@ -96,6 +97,7 @@ importFrom(data.table,
   .NGRP,
   .SD,
   as.data.table,
+  copy,
   data.table,
   fread,
   melt,

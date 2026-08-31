@@ -265,3 +265,101 @@ test_that("an entirely non-flammable landscape yields an empty budget, not an er
   expect_length(na.omit(out$numFiresPerYear), 0L)
   expect_true(all(is.na(terra::values(out$fireReturnInterval, mat = FALSE))))
 })
+
+# ---- landmine_reburn_budget -------------------------------------------------------------
+
+## The inline logic this replaces, kept verbatim as the equivalence oracle.
+.reburn_inline <- function(tooSmallByPoly, friByPolygon, remainingSize = NULL) {
+  p <- data.table::copy(tooSmallByPoly)
+  p <- p[, N := .N, by = polygonNumeric]
+  if (!is.null(remainingSize)) p <- p[, maxSize := remainingSize]
+  p <- p[data.table::data.table(polygonNumeric = friByPolygon), on = "polygonNumeric"]
+  p[is.na(N), N := 0]
+  if ("pixel" %in% names(p)) data.table::set(p, NULL, "pixel", NULL)
+  list(numFiresThisPeriod = p[, N[1], by = "polygonNumeric"]$V1,
+       fireSizesInPixels = na.omit(p)$maxSize)
+}
+
+test_that("output order is driven by friByPolygon: zones ascending, NA row LAST", {
+  ## This is what makes the caller's `numFiresThisPeriod[.GRP]` indexing correct.
+  tsbp <- data.table::data.table(
+    pixel = c(11L, 12L, 13L, 14L),
+    polygonNumeric = c(170, 30, 170, 55),
+    maxSize = c(500, 10, 700, 90)
+  )
+  fbp <- c(30, 55, 170, NA)
+
+  out <- landmine_reburn_budget(tsbp, fbp)
+  expect_identical(out$polysNeedMoreFires$polygonNumeric, c(30, 55, 170, 170, NA))
+  expect_identical(out$numFiresThisPeriod, c(1L, 1L, 2L, 0L)) ## zone order + NA row last
+})
+
+test_that("zones with nothing short get N = 0 and are dropped from fireSizesInPixels", {
+  ## na.omit() on the whole table is load-bearing: it drops both the unmatched zones and the
+  ## NA-FRI row, which is what keeps fireSizesInPixels paired with the start cells.
+  tsbp <- data.table::data.table(
+    pixel = c(11L, 12L), polygonNumeric = c(30, 170), maxSize = c(10, 500)
+  )
+  fbp <- c(30, 55, 170, NA) ## zone 55 has no short fires
+
+  out <- landmine_reburn_budget(tsbp, fbp)
+  expect_identical(out$numFiresThisPeriod, c(1L, 0L, 1L, 0L))
+  expect_identical(out$fireSizesInPixels, c(10, 500)) ## zone 55 and the NA row absent
+})
+
+test_that("phase 2 replaces maxSize with the REMAINING shortfall", {
+  tsbp <- data.table::data.table(
+    pixel = c(11L, 12L), polygonNumeric = c(30, 170), maxSize = c(100, 500)
+  )
+  fbp <- c(30, 170, NA)
+
+  ph1 <- landmine_reburn_budget(tsbp, fbp)
+  ph2 <- landmine_reburn_budget(tsbp, fbp, remainingSize = c(40, 120))
+
+  expect_identical(ph1$fireSizesInPixels, c(100, 500)) ## full original targets
+  expect_identical(ph2$fireSizesInPixels, c(40, 120))  ## what is LEFT to burn
+})
+
+test_that("a zero remaining shortfall survives to the caller's >0 filter", {
+  tsbp <- data.table::data.table(
+    pixel = c(11L, 12L), polygonNumeric = c(30, 170), maxSize = c(100, 500)
+  )
+  out <- landmine_reburn_budget(tsbp, c(30, 170, NA), remainingSize = c(0, 120))
+  expect_identical(out$fireSizesInPixels, c(0, 120))
+})
+
+test_that("the input table is NOT modified by reference", {
+  ## The inline version mutated tooSmallByPoly via `:=`.
+  tsbp <- data.table::data.table(
+    pixel = 11L, polygonNumeric = 30, maxSize = 100
+  )
+  before <- data.table::copy(tsbp)
+  invisible(landmine_reburn_budget(tsbp, c(30, NA)))
+  expect_identical(tsbp, before)
+})
+
+test_that("EQUIVALENCE with the inline logic over randomised multi-zone inputs", {
+  ## The blast radius of an ordering mistake here is a plausible-but-wrong fire regime, so
+  ## compare against the original code path rather than against hand-computed expectations.
+  withr::local_seed(11)
+  zones <- c(30, 45, 55, 90, 170)
+  for (i in seq_len(200)) {
+    nz <- sample(2:5, 1)
+    zs <- sort(sample(zones, nz))
+    nfire <- sample(1:12, 1)
+    tsbp <- data.table::data.table(
+      pixel = sample.int(1000L, nfire),
+      polygonNumeric = sample(zs, nfire, replace = TRUE), ## interleaved across zones
+      maxSize = sample(1:900, nfire, replace = TRUE)
+    )
+    data.table::setkeyv(tsbp, NULL)
+    fbp <- c(zs, NA)
+    rem <- if (i %% 2 == 0) sample(0:400, nfire, replace = TRUE) else NULL
+
+    got <- landmine_reburn_budget(tsbp, fbp, remainingSize = rem)
+    want <- .reburn_inline(tsbp, fbp, remainingSize = rem)
+
+    expect_identical(got$numFiresThisPeriod, want$numFiresThisPeriod)
+    expect_identical(got$fireSizesInPixels, want$fireSizesInPixels)
+  }
+})

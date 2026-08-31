@@ -1,3 +1,10 @@
+# LandWebUtils 1.0.3.9028
+
+* new `landmine_reburn_budget()`, promoted from both branches of `LandMine`'s reburn loop -- the densest concentration of positional contracts in that module, and the one its own comments warn is order-sensitive. It rebuilds the per-zone fire counts and target sizes for the next round, for phase 1 (each too-small fire keeps its full original target) and phase 2 (new fires sized to the remaining shortfall);
+* three contracts are now tested, none of which errored when broken -- they simply produced a plausible but wrong fire regime: the right join is driven by `friByPolygon`, so `numFiresThisPeriod` comes out zones-ascending with the `NA` row last, matching the `[.GRP]` indexing at the call site; `na.omit()` on the whole table is load-bearing, dropping both zero-shortfall zones and the `NA`-FRI row so `fireSizesInPixels` stays positionally paired with the start cells; and `remainingSize` is assigned by position onto the too-small rows;
+* correctness is established by **equivalence testing against the original inline logic** over 200 randomised multi-zone inputs (interleaved zones, both phases), rather than against hand-computed expectations -- the failure mode is subtle enough that hand-derived cases would not be convincing;
+* the input table is no longer modified by reference, which the inline `:=` version did;
+
 # LandWebUtils 1.0.3.9027
 
 * new `landmine_ignition_budget()`, promoted from `LandMine`'s `Init()`. It masks zero-FRI and non-flammable pixels out of the fire-return-interval raster, tabulates pixels per FRI zone, and converts that to expected fires per year (`(area / meanFireSize) / FRI`). Verified behaviour-neutral against the previous inline block on the real WesternAlbertaUpland rasters: the masked raster, the per-zone FRI vector and `numFiresPerYear` (including names and order) are all identical;

@@ -272,3 +272,61 @@ landmine_ignition_budget <- function(fireReturnInterval, flammableMap, kBest,
     numFiresPerYear = (numHa / meanFireSizeHa) / friByPolygon
   )
 }
+
+#' Rebuild the per-zone fire budget for the next reburn round
+#'
+#' After a burn round, decides how many fires each FRI zone still needs and at what target
+#' sizes, for both reburn phases.
+#'
+#' @param tooSmallByPoly a `data.table` of the fires that did not reach their target, joined to
+#'   their ignition zone: needs `polygonNumeric`, `maxSize`, and (optionally) `pixel`.
+#' @param friByPolygon the per-zone FRI vector from [landmine_ignition_budget()] -- ascending,
+#'   with a trailing `NA`. Its order **defines** the output order.
+#' @param remainingSize optional numeric; phase 2 passes the *remaining shortfall* per fire, which
+#'   replaces `maxSize`. Phase 1 leaves it `NULL`, keeping each fire's full original target.
+#'
+#' @details
+#' Three positional contracts live here, none of which errors when broken:
+#'
+#' * the right join is driven by `friByPolygon`, so the result -- and hence
+#'   `numFiresThisPeriod` -- is in **that** order (zones ascending, `NA` row last). The caller
+#'   indexes it with `[.GRP]` against a `polygonNumeric`-keyed table whose groups are also
+#'   ascending, and the trailing `NA` row is never reached because that table has no `NA` zone.
+#' * `na.omit()` on the whole table is load-bearing: it drops both the zero-shortfall zones
+#'   (`maxSize` is `NA` where the join found no match) and the `NA`-FRI row, leaving
+#'   `fireSizesInPixels` paired **positionally** with the start cells the caller then draws
+#'   `by = polygonNumeric`. It would also silently drop a row if any other column went `NA`.
+#' * `remainingSize` is assigned **by position** onto the too-small rows; both descend from the
+#'   same `fa[tooSmall]` subset, so they agree -- but nothing enforces it.
+#'
+#' `remainingSize` can be `0` for a fire that burned exactly its target; the caller's
+#' `fireSizesInPixels > 0` filter is what removes those.
+#'
+#' Unlike the inline code this replaces, the input table is **not** modified by reference.
+#'
+#' @return A list with `polysNeedMoreFires` (the joined table), `numFiresThisPeriod` (fires still
+#'   needed per zone, in `friByPolygon` order) and `fireSizesInPixels` (target sizes, positionally
+#'   paired with the start cells to be drawn).
+#'
+#' @export
+#' @importFrom data.table as.data.table copy set
+#' @importFrom stats na.omit
+landmine_reburn_budget <- function(tooSmallByPoly, friByPolygon, remainingSize = NULL) {
+  dt <- data.table::copy(data.table::as.data.table(tooSmallByPoly))
+  dt[, N := .N, by = "polygonNumeric"]
+  if (!is.null(remainingSize)) {
+    dt[, maxSize := remainingSize] ## phase 2: what is LEFT to burn, not the original target
+  }
+
+  out <- dt[data.table::data.table(polygonNumeric = friByPolygon), on = "polygonNumeric"]
+  out[is.na(N), N := 0]
+  if ("pixel" %in% names(out)) {
+    data.table::set(out, NULL, "pixel", NULL)
+  }
+
+  list(
+    polysNeedMoreFires = out,
+    numFiresThisPeriod = out[, N[1], by = "polygonNumeric"]$V1,
+    fireSizesInPixels = stats::na.omit(out)$maxSize
+  )
+}
