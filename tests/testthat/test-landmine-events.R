@@ -180,3 +180,88 @@ test_that("the NA-FRI row never reaches the output", {
   out <- landmine_reburn_ceiling(dt, year = 3)
   expect_identical(out$FRI, 30)
 })
+
+# ---- landmine_ignition_budget -----------------------------------------------------------
+
+test_that("the budget is (area / meanFireSize) / FRI over FLAMMABLE pixels", {
+  fri <- fri_rast(rep(c(30, 70), each = 8))
+  flam <- fri_rast(rep(1, 16))
+  ## 1 x 1 map units per pixel -> 1e-4 ha; use kBest/upper that give a known mean fire size
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.5, biggestPossibleFireSizeHa = 1e5)
+
+  mfs <- meanTruncPareto(k = 0.5, lower = 1, upper = 1e5, alpha = 1)
+  haPerPix <- 1 / 1e4
+  expect_equal(unname(out$numFiresPerYear[c("30", "70")]),
+               c((8 * haPerPix / mfs) / 30, (8 * haPerPix / mfs) / 70))
+})
+
+test_that("non-flammable and zero-FRI pixels are masked OUT of the raster and the budget", {
+  ## Consequence: they can never be ignition locations either, since the start-cell pool is
+  ## built from this same masked raster.
+  fri <- fri_rast(c(rep(30, 4), rep(0, 4), rep(70, 4), rep(30, 4)))
+  flam <- fri_rast(c(rep(1, 12), rep(0, 4))) ## last 4 (zone 30) non-flammable
+
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.5, biggestPossibleFireSizeHa = 1e5)
+  vals <- terra::values(out$fireReturnInterval, mat = FALSE)
+
+  expect_true(all(is.na(vals[5:8])))    ## zero-FRI masked
+  expect_true(all(is.na(vals[13:16])))  ## non-flammable masked
+  expect_identical(sort(unique(na.omit(vals))), c(30, 70))
+  ## zone 30 keeps only its 4 flammable pixels, so its budget is half zone 70's x (70/30)
+  expect_equal(unname(out$numFiresPerYear["30"] / out$numFiresPerYear["70"]), 70 / 30)
+})
+
+test_that("THE ORDERING CONTRACT: zones ascending, NA row last, and NA-valued so na.omit drops it", {
+  ## The reburn loop indexes fire counts by GROUP POSITION of a polygonNumeric-keyed table.
+  ## That is valid only if all three of these hold. Break any one and zones silently receive
+  ## each other's fire counts -- no error, just a wrong fire regime.
+  fri <- fri_rast(c(rep(250, 4), rep(60, 4), rep(120, 4), rep(NA_real_, 4))) ## deliberately unsorted
+  flam <- fri_rast(rep(1, 16))
+
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.5, biggestPossibleFireSizeHa = 1e5)
+  fri_by_poly <- out$fireReturnIntervalsByPolygonNumeric
+
+  ## 1. ascending, regardless of the order values appear in the raster
+  expect_identical(fri_by_poly[!is.na(fri_by_poly)], c(60, 120, 250))
+  ## 2. the NA row is LAST
+  expect_identical(which(is.na(fri_by_poly)), length(fri_by_poly))
+  ## 3. the NA entry's VALUE is NA, so na.omit() drops it (an NA *name* alone would not)
+  nf <- out$numFiresPerYear
+  expect_true(is.na(nf[length(nf)]))
+  expect_identical(names(na.omit(nf)), c("60", "120", "250"))
+
+  ## and the contract the loop actually relies on: keyed-group order == names(numFiresPerYear)
+  pool <- data.table::data.table(
+    pixel = seq_along(terra::values(out$fireReturnInterval, mat = FALSE)),
+    polygonNumeric = terra::values(out$fireReturnInterval, mat = FALSE)
+  )
+  pool <- na.omit(pool)[polygonNumeric > 0]
+  data.table::setkeyv(pool, "polygonNumeric")
+  expect_identical(as.character(pool[, unique(polygonNumeric)]), names(na.omit(nf)))
+})
+
+test_that("a raster with no NA cells still yields a trailing NA row", {
+  fri <- fri_rast(rep(c(30, 70), each = 8))
+  flam <- fri_rast(rep(1, 16))
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.5, biggestPossibleFireSizeHa = 1e5)
+
+  fbp <- out$fireReturnIntervalsByPolygonNumeric
+  expect_identical(which(is.na(fbp)), length(fbp))
+  expect_identical(names(na.omit(out$numFiresPerYear)), c("30", "70"))
+})
+
+test_that("a single-zone raster works", {
+  fri <- fri_rast(rep(40, 16))
+  flam <- fri_rast(rep(1, 16))
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.5, biggestPossibleFireSizeHa = 1e5)
+  expect_identical(names(na.omit(out$numFiresPerYear)), "40")
+})
+
+test_that("an entirely non-flammable landscape yields an empty budget, not an error", {
+  fri <- fri_rast(rep(c(30, 70), each = 8))
+  flam <- fri_rast(rep(0, 16))
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.5, biggestPossibleFireSizeHa = 1e5)
+
+  expect_length(na.omit(out$numFiresPerYear), 0L)
+  expect_true(all(is.na(terra::values(out$fireReturnInterval, mat = FALSE))))
+})

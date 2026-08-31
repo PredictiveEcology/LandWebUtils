@@ -25,6 +25,7 @@ export(landmine_area_burned_by_zone)
 export(landmine_burn1)
 export(landmine_draw_num_fires)
 export(landmine_fri_summary)
+export(landmine_ignition_budget)
 export(landmine_optim_burnFun)
 export(landmine_optim_calibrate)
 export(landmine_optim_clusterExport)
@@ -203,6 +204,7 @@ importFrom(terra,
   crop,
   crs,
   extend,
+  freq,
   levels,
   ncell,
   rast,

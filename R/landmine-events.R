@@ -190,3 +190,85 @@ landmine_reburn_ceiling <- function(polysNeedMoreFires, year) {
     pixelsShort = as.integer(out$pixelsShort)
   )
 }
+
+#' Ignition budget per FRI zone
+#'
+#' Masks ineligible pixels out of the fire-return-interval raster, tabulates pixels per FRI
+#' zone, and converts that to an expected number of fires per year per zone.
+#'
+#' @param fireReturnInterval `SpatRaster` whose pixel values are the target fire return
+#'   interval. Zero-valued and non-flammable pixels are set to `NA`.
+#' @param flammableMap `SpatRaster`; pixels that are `NA` or `0` are non-flammable.
+#' @param kBest numeric, the fitted truncated-Pareto shape for the fire-size distribution.
+#' @param biggestPossibleFireSizeHa numeric, the distribution's upper bound, in hectares.
+#'
+#' @details
+#' The budget is `(zone area / mean fire size) / FRI`, so the expected area burned per year in a
+#' zone equals `area / FRI` by construction -- provided each fire ignites in the zone, reaches
+#' its drawn size, and burns inside the zone.
+#'
+#' **This function creates an ordering contract that the reburn loop then consumes
+#' positionally.** Downstream, `numFiresThisPeriod[.GRP]` indexes the per-zone fire counts by
+#' the *group position* of a `polygonNumeric`-keyed table, which is valid only because:
+#'
+#' 1. `terra::freq()` returns rows sorted ascending by value;
+#' 2. the `value = NA` row is appended **last**;
+#' 3. dividing by the `NA` return interval makes that entry's **value** `NA`, so a later
+#'    `na.omit()` drops it -- an `NA` *name* alone would not.
+#'
+#' Break any one and zones are handed each other's fire counts, with no error. All three are
+#' pinned by tests here, at the point where the contract is created.
+#'
+#' Non-flammable pixels are masked out of the raster *before* tabulation, so the budget is a
+#' flammable-area budget and matches how achieved FRI is measured in
+#' [landmine_fri_summary()]. It also means such pixels can never be ignition locations, since
+#' the start-cell pool is built from this same masked raster.
+#'
+#' @return A list with:
+#'   \describe{
+#'     \item{`fireReturnInterval`}{the masked raster.}
+#'     \item{`fireReturnIntervalsByPolygonNumeric`}{FRI per zone, ascending, with a trailing `NA`.}
+#'     \item{`numFiresPerYear`}{expected fires per year per zone, named by FRI, in the same order.}
+#'   }
+#'
+#' @export
+#' @importFrom terra freq res
+landmine_ignition_budget <- function(fireReturnInterval, flammableMap, kBest,
+                                     biggestPossibleFireSizeHa) {
+  ## fireReturnInterval should have no zeros
+  zeros <- fireReturnInterval[] == 0L
+  if (any(zeros, na.rm = TRUE)) {
+    fireReturnInterval[zeros] <- NA_integer_
+  }
+
+  ## 2023-09: exclude non-flammable pixels for FRI calculations
+  nonFlammable <- which(is.na(flammableMap[]) | flammableMap[] == 0)
+  if (length(nonFlammable) > 0) {
+    fireReturnInterval[nonFlammable] <- NA
+  }
+
+  ## NOTE: the NA-FRI count is kept (as a trailing row) because the burn function needs it.
+  ## The module previously also built a `value = seq_len(NROW(.))` column and `order()`ed by
+  ## it -- a trivially-identity permutation, since the column IS the row index. Dropped.
+  freqDT <- stats::setNames(
+    rbind(
+      terra::freq(fireReturnInterval, bylayer = FALSE),
+      terra::freq(fireReturnInterval, value = NA, bylayer = FALSE)
+    ),
+    c("fri", "count")
+  )
+
+  friByPolygon <- freqDT[, "fri"]
+  numPixels <- stats::setNames(freqDT[, "count"], friByPolygon)
+
+  numHa <- numPixels * (prod(terra::res(fireReturnInterval)) / 1e4)
+  meanFireSizeHa <- meanTruncPareto(
+    k = kBest, lower = 1, upper = biggestPossibleFireSizeHa, alpha = 1
+  )
+
+  list(
+    fireReturnInterval = fireReturnInterval,
+    fireReturnIntervalsByPolygonNumeric = friByPolygon,
+    numFiresPerYear = (numHa / meanFireSizeHa) / friByPolygon
+  )
+}

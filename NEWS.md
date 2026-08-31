@@ -1,3 +1,9 @@
+# LandWebUtils 1.0.3.9027
+
+* new `landmine_ignition_budget()`, promoted from `LandMine`'s `Init()`. It masks zero-FRI and non-flammable pixels out of the fire-return-interval raster, tabulates pixels per FRI zone, and converts that to expected fires per year (`(area / meanFireSize) / FRI`). Verified behaviour-neutral against the previous inline block on the real WesternAlbertaUpland rasters: the masked raster, the per-zone FRI vector and `numFiresPerYear` (including names and order) are all identical;
+* the promotion exists to pin an **ordering contract that is consumed positionally downstream**. The reburn loop indexes per-zone fire counts with `numFiresThisPeriod[.GRP]`, which is valid only because (1) `terra::freq()` returns rows ascending by value, (2) the `value = NA` row is appended last, and (3) dividing by the `NA` return interval makes that entry's *value* `NA` so a later `na.omit()` drops it -- an `NA` *name* alone would not. Break any one and zones silently receive each other's fire counts, with no error. All three are now tested at the point where the contract is created, including with a deliberately unsorted input raster;
+* also dropped dead code in the same block: a `value = seq_len(NROW(.))` column that was then `order()`ed by, a trivially-identity permutation since the column *is* the row index;
+
 # LandWebUtils 1.0.3.9026
 
 * new `landmine_fri_summary()`, `landmine_area_burned_by_zone()`, `landmine_draw_num_fires()`, `landmine_sizes_to_pixels()` and `landmine_reburn_ceiling()`, promoted from the `LandMine` module so they can be unit-tested. The module has no working test suite -- its `tests/` are the untouched SpaDES stub, with hardcoded `c:/Eliot/...` paths and a call to a function that does not exist -- so this logic was previously exercised only by running a 1000-year simulation, where each failure mode below produces plausible numbers rather than an error;
