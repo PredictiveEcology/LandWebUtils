@@ -18,6 +18,10 @@ jobs:
   R-CMD-check:
     uses: PredictiveEcology/actions/.github/workflows/R-CMD-check.yaml@main
     with:
+      ## post-install calls remotes::install_github, and the reusable
+      ## workflow does not install remotes for us.
+      extra-packages: |
+        any::remotes
       post-install: |
         remotes::install_github('PredictiveEcology/Require@development')
         remotes::install_github('PredictiveEcology/reproducible@development')
