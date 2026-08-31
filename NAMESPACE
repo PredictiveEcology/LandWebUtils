@@ -24,8 +24,10 @@ export(landbaseLayers)
 export(landmine_area_burned_by_zone)
 export(landmine_burn1)
 export(landmine_draw_num_fires)
+export(landmine_fire_ros)
 export(landmine_fri_summary)
 export(landmine_ignition_budget)
+export(landmine_known_species)
 export(landmine_optim_burnFun)
 export(landmine_optim_calibrate)
 export(landmine_optim_clusterExport)
@@ -83,6 +85,7 @@ export(tenureShortNames)
 export(validateShortNames)
 import(methods)
 importFrom(SpaDES.tools,
+  inRange,
   randomPolygon,
   spread,
   spread2
@@ -105,6 +108,7 @@ importFrom(data.table,
   set,
   setDT,
   setkey,
+  setkeyv,
   setnames
 )
 importFrom(dplyr,
