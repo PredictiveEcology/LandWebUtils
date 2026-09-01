@@ -424,3 +424,58 @@ test_that("EQUIVALENCE with the inline logic over randomised multi-zone inputs",
     expect_identical(got$fireSizesInPixels, want$fireSizesInPixels)
   }
 })
+
+## ---- the fire-size distribution fit --------------------------------------------------------------
+
+test_that("landmine_area_share computes the share carried by the largest fires", {
+  ## 5 fires; the largest 50% is anything above the median (1) -- so just the 100
+  expect_equal(landmine_area_share(c(1, 1, 1, 1, 100), 0.5), 100 / 104)
+  ## an all-equal set has nothing strictly above its quantile
+  expect_equal(landmine_area_share(rep(5, 10), 0.9), 0)
+})
+
+test_that("landmine_area_share is NA rather than NaN for degenerate input", {
+  expect_true(is.na(landmine_area_share(numeric(0))))
+  expect_true(is.na(landmine_area_share(c(0, 0, 0))))
+})
+
+test_that("THE RULE OF THUMB: the fitted k puts ~95% of area in the largest fires", {
+  skip_if_not_installed("VGAM")
+  set.seed(42)
+  k <- landmine_estimate_kBest(1e6, nDraws = 2e5)
+  expect_gt(k, 0.05)
+  expect_lt(k, 0.99)
+
+  ## the property the fit exists to produce, checked on a fresh draw
+  set.seed(43)
+  fs <- round(VGAM::rtruncpareto(2e5, 1, upper = 1e6, shape = k))
+  expect_equal(landmine_area_share(fs, 0.95), 0.95, tolerance = 0.02)
+})
+
+test_that("a different target area share moves the fit", {
+  skip_if_not_installed("VGAM")
+  set.seed(7)
+  loose <- landmine_estimate_kBest(1e6, nDraws = 5e4, targetAreaShare = 0.5)
+  set.seed(7)
+  tight <- landmine_estimate_kBest(1e6, nDraws = 5e4, targetAreaShare = 0.95)
+  expect_false(isTRUE(all.equal(loose, tight)))
+})
+
+test_that("the fit is reproducible under a seed, and stochastic without one", {
+  skip_if_not_installed("VGAM")
+  set.seed(99)
+  a <- landmine_estimate_kBest(1e6, nDraws = 2e4)
+  set.seed(99)
+  b <- landmine_estimate_kBest(1e6, nDraws = 2e4)
+  expect_identical(a, b)
+
+  c1 <- landmine_estimate_kBest(1e6, nDraws = 2e4)
+  expect_false(isTRUE(all.equal(a, c1)))
+})
+
+test_that("a degenerate search interval is refused", {
+  expect_error(landmine_estimate_kBest(1e6, interval = 0.4), "interval")
+  expect_error(landmine_estimate_kBest(1e6, interval = c(0.9, 0.1)), "interval")
+  expect_error(landmine_estimate_kBest(1e6, topFireQuantile = 1), "topFireQuantile")
+  expect_error(landmine_estimate_kBest(1e6, targetAreaShare = 0), "targetAreaShare")
+})

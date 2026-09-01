@@ -386,3 +386,86 @@ landmine_reburn_budget <- function(tooSmallByPoly, friByPolygon, remainingSize =
     fireSizesInPixels = stats::na.omit(out)$maxSize
   )
 }
+
+#' Fit the truncated-Pareto shape for the fire-size distribution
+#'
+#' Chooses the shape parameter `k` so that a given share of total burned area falls in
+#' a given share of the largest fires.
+#'
+#' @param biggestPossibleFireSizeHa numeric, the distribution's upper bound, in hectares.
+#' @param interval length-2 numeric, the search interval for `k`.
+#' @param nDraws integer, draws per objective evaluation. The objective is stochastic, so
+#'   this trades run time against the precision of the fit.
+#' @param topFireQuantile numeric, the quantile defining "the largest fires" -- `0.95`
+#'   means the largest 5%.
+#' @param targetAreaShare numeric, the share of total burned area those fires should carry.
+#'
+#' @details
+#' This is a **rule of thumb, deliberately not a fit to fire data**: Dave Andison's
+#' "95% of the area is in 5% of the fires". The observational record (NBAC, NFDB) is used
+#' elsewhere, in the burn summaries, but not here -- see the LandMine documentation for
+#' why that was decided.
+#'
+#' The rule has been restated several times, and the module carried each earlier version as
+#' commented-out code. They are recorded here instead, since they are history rather than
+#' options:
+#'
+#' * "90% of area in 5% of fires" -- the original rule of thumb;
+#' * "95% of area in 5% of fires" -- Eliot's adjustment, because each year came out too
+#'   constant and the regime needed more variation. This is what the defaults reproduce;
+#' * "95% of area in 10% of fires" (2018-10-23) -- a further adjustment for still more
+#'   variation, which was written but never adopted.
+#'
+#' Because the objective draws `nDraws` random fire sizes on every evaluation, the result
+#' varies from call to call. Set a seed for reproducibility.
+#'
+#' @return A numeric scalar, the fitted shape parameter.
+#'
+#' @export
+#' @importFrom stats optimize quantile
+#' @examples
+#' set.seed(1)
+#' k <- landmine_estimate_kBest(1e6, nDraws = 1e4)
+landmine_estimate_kBest <- function(biggestPossibleFireSizeHa, interval = c(0.05, 0.99),
+                                    nDraws = 1e6, topFireQuantile = 0.95,
+                                    targetAreaShare = 0.95) {
+  stopifnot(
+    length(interval) == 2L, interval[[1]] < interval[[2]],
+    topFireQuantile > 0, topFireQuantile < 1,
+    targetAreaShare > 0, targetAreaShare < 1
+  )
+  if (!requireNamespace("VGAM", quietly = TRUE)) {
+    stop("`VGAM` is required to fit the fire-size distribution.")
+  }
+
+  objective <- function(k) {
+    fs <- round(VGAM::rtruncpareto(nDraws, 1, upper = biggestPossibleFireSizeHa, shape = k))
+    abs(landmine_area_share(fs, topFireQuantile) - targetAreaShare)
+  }
+
+  stats::optimize(objective, interval = interval)$minimum
+}
+
+#' Share of total area carried by the largest fires
+#'
+#' @param sizes numeric vector of fire sizes.
+#' @param topQuantile numeric; `0.95` selects the largest 5%.
+#'
+#' @return A numeric scalar between 0 and 1.
+#'
+#' @details
+#' Strictly greater-than, so fires exactly at the quantile are excluded. With a heavily
+#' tied distribution -- which a rounded truncated Pareto is, since most draws round to 1 --
+#' that matters: the selected set can be much smaller than `1 - topQuantile` of the fires.
+#'
+#' @export
+#' @importFrom stats quantile
+#' @examples
+#' landmine_area_share(c(1, 1, 1, 1, 100), 0.5)
+landmine_area_share <- function(sizes, topQuantile = 0.95) {
+  if (!length(sizes) || sum(sizes) == 0) {
+    return(NA_real_)
+  }
+  big <- sizes[sizes > stats::quantile(sizes, topQuantile)]
+  sum(big) / sum(sizes)
+}

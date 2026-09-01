@@ -22,8 +22,10 @@ export(findSimFile)
 export(joinReportingPolygons)
 export(landbaseLayers)
 export(landmine_area_burned_by_zone)
+export(landmine_area_share)
 export(landmine_burn1)
 export(landmine_draw_num_fires)
+export(landmine_estimate_kBest)
 export(landmine_fire_ros)
 export(landmine_fri_metrics)
 export(landmine_fri_summary)
@@ -209,6 +211,7 @@ importFrom(sf,
 )
 importFrom(stats,
   na.omit,
+  optimize,
   quantile,
   rnbinom,
   runif

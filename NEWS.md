@@ -1,3 +1,8 @@
+# LandWebUtils 1.0.3.9034
+
+* new `landmine_estimate_kBest()` and `landmine_area_share()`, promoted from `LandMine`'s `EstimateTruncPareto()`. The fit is to Dave Andison's "95% of the area is in 5% of the fires" rule of thumb, deliberately not to NBAC/NFDB, and that is unchanged. The module carried the two superseded versions of the rule as commented-out code inside the objective; they are recorded in the documentation instead, where they read as history rather than as options;
+* `landmine_area_share()` is separated out because it is the property the fit exists to produce, and is therefore what a test should check: the suite fits `k` and then verifies the area share on a **fresh** draw, rather than re-checking the objective the optimiser just minimised. It uses a strict `>` against the quantile, which matters for a rounded truncated Pareto, where most draws tie at 1 and the selected set is much smaller than `1 - topQuantile` of the fires;
+
 # LandWebUtils 1.0.3.9033
 
 * **`landmine_fire_ros()` now gives mixedwood stands the `ROSTable`'s mixed rates.** `mixed` is the one fuel type invented for attribute-table entries matching no species rather than derived from `landmine_known_species()`, so the species join left its `leading` value `NA` and the join onto `ROSTable` dropped it -- mixedwood fell through to `ROSother`, the mature-spruce rate at every age, and both `mixed` rows of Andison's Table 3.2 were dead entries. On WesternAlbertaUpland all 126,850 mixedwood pixels moved from 30 to 12 (young/immature) or 17 (mature). **This changes simulated fire regimes.**
