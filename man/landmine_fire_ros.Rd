@@ -15,7 +15,7 @@ landmine_fire_ros(
   knownSpecies = landmine_known_species(),
   ROStype = c("default", "burny"),
   ageCutoffs = c(young = 40, immature = 120),
-  youngFilter = c("legacy", "always"),
+  youngFilter = c("always", "legacy"),
   assertions = getOption("LandR.assertions", TRUE)
 )
 }
@@ -91,8 +91,9 @@ through to \code{ROSother} instead of their \code{immature_young} rate. With Lan
 \code{ROSTable}, \code{"young"} appears only for pine, so this bites on any landscape with no
 pine in it, and not otherwise.
 
-The default is \code{"legacy"} so that promoting this function out of the module changed
-no results.
+The default is \code{"always"}. It makes no difference on a landscape containing pine (0 of
+4,458,168 pixels differ on WesternAlbertaUpland), and prevents a pine-free study area
+from being silently wrong. \code{"legacy"} remains available to reproduce older runs.
 }
 
 \section{Attribute-table row order}{
@@ -107,18 +108,22 @@ saved WesternAlbertaUpland \code{vegTypeMap}, that meant aspen and pine, 36\% of
 landscape between them, taking each other's and softwood's rates of spread.
 }
 
-\section{Mixedwood stands never use the table's mixed rates}{
-\code{knownSpecies} maps species onto \code{spruce}, \code{pine}, \code{decid} and \code{softwood} only.
-The fifth fuel type, \code{mixed}, is invented for attribute-table entries that match
-no species, so it exists on one side of the species join and not the other: the
-join leaves its \code{leading} value \code{NA}, and the subsequent join onto \code{ROSTable}
-(which is keyed on \code{leading}) drops it. Mixedwood pixels therefore never receive
-the \code{ROSTable}'s \code{mixed} rates at any age, and instead fall through to \code{ROSother}.
+\section{Mixedwood, and a related defect that is NOT fixed}{
+\code{knownSpecies} maps species onto \code{spruce}, \code{pine}, \code{decid} and \code{softwood} only. The
+fifth fuel type, \code{mixed}, is invented for attribute-table entries matching no species,
+so it exists on one side of the species join and not the other: the join leaves its
+\code{leading} value \code{NA}, and the subsequent join onto \code{ROSTable} (keyed on \code{leading})
+dropped it. Mixedwood therefore used to fall through to \code{ROSother} -- 30 with the
+default table, the mature-spruce rate, at every age -- instead of 12 (young/immature)
+or 17 (mature), leaving both \code{mixed} rows dead. \code{leading} is now filled in for that
+row, which is unambiguous because \code{knownSpecies} can never produce "mixed".
 
-With LandMine's default table this means mixedwood burns at 30 rather than 12
-(young/immature) or 17 (mature) -- i.e. at the mature-spruce rate -- and both
-\code{mixed} rows of the table are dead entries. This is preserved here rather than
-fixed, because changing it changes the fire regime; a test pins the behaviour so
-that any future change is deliberate.
+A related defect is \strong{deliberately left alone}: the pattern-based fuel typing can
+disagree with \code{knownSpecies}. \code{Lari_spp} matches none of \code{Pice}/\code{Pinu}/\code{Popu}, so it is
+typed \code{softwood}, while \code{knownSpecies} calls larch \code{decid}; the two disagree, the join
+finds no match, and larch also falls through to \code{ROSother}. It is not swept up by the
+fix above because the pattern-derived value would override the authoritative mapping,
+which is the wrong direction. Larch is 3 pixels on WesternAlbertaUpland. A test pins
+the behaviour so a future change is deliberate.
 }
 

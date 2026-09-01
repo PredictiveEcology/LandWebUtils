@@ -118,12 +118,20 @@ landmine_known_species <- function() {
     )
   }
 
-  ## NOTE: `knownSpecies` maps species onto spruce/pine/decid/softwood only -- never "mixed", which
-  ## `onRaster` invents for RAT entries that match no species. The join above therefore maps "mixed"
-  ## onto `LandMine` and leaves `leading` NA, and the `ROSTable` join below (on `leading`) drops the
-  ## mixed row entirely. Mixedwood pixels consequently never receive the `ROSTable`'s mixed rates and
-  ## fall through to `ROSother`. Preserved as-is -- see the "Mixedwood" section of
-  ## [landmine_fire_ros()] -- and pinned by a test.
+  ## `knownSpecies` maps species onto spruce/pine/decid/softwood only -- never "mixed", which
+  ## `onRaster` invents for attribute-table entries matching no species. The join above therefore
+  ## carries "mixed" into `LandMine` and leaves `leading` NA, so the `ROSTable` join below (keyed
+  ## on `leading`) would drop it and mixedwood would fall through to `ROSother` -- the
+  ## mature-spruce rate at every age -- leaving both `mixed` rows of the table dead. Since
+  ## `knownSpecies` can never produce "mixed", filling it in here is unambiguous.
+  ##
+  ## Deliberately narrow: other rows can also end up with an NA `leading` when the pattern-based
+  ## fuel typing above disagrees with `knownSpecies` (larch is the case in point -- `Lari_spp`
+  ## matches none of Pice/Pinu/Popu so it is typed "softwood", while `knownSpecies` calls it
+  ## "decid"). Those are a different defect and are NOT swept up here, because `LandMine` is the
+  ## pattern-derived value and would override the authoritative mapping.
+  sppEquiv[is.na(leading) & LandMine == "mixed", leading := "mixed"]
+
   sppEquiv <- unique(sppEquiv, by = c("LandMine", "leading", "pixelValue"))
   sppEquiv <- sppEquiv[ROSTable, on = "leading", allow.cartesian = TRUE, nomatch = NULL]
   sppEquiv <- sppEquiv[, c("leading", "age", "ros", "pixelValue")]
@@ -305,8 +313,9 @@ landmine_known_species <- function() {
 #' `ROSTable`, `"young"` appears only for pine, so this bites on any landscape with no
 #' pine in it, and not otherwise.
 #'
-#' The default is `"legacy"` so that promoting this function out of the module changed
-#' no results.
+#' The default is `"always"`. It makes no difference on a landscape containing pine (0 of
+#' 4,458,168 pixels differ on WesternAlbertaUpland), and prevents a pine-free study area
+#' from being silently wrong. `"legacy"` remains available to reproduce older runs.
 #'
 #' # Attribute-table row order
 #'
@@ -320,20 +329,24 @@ landmine_known_species <- function() {
 #' saved WesternAlbertaUpland `vegTypeMap`, that meant aspen and pine, 36% of the
 #' landscape between them, taking each other's and softwood's rates of spread.
 #'
-#' # Mixedwood stands never use the table's mixed rates
+#' # Mixedwood, and a related defect that is NOT fixed
 #'
-#' `knownSpecies` maps species onto `spruce`, `pine`, `decid` and `softwood` only.
-#' The fifth fuel type, `mixed`, is invented for attribute-table entries that match
-#' no species, so it exists on one side of the species join and not the other: the
-#' join leaves its `leading` value `NA`, and the subsequent join onto `ROSTable`
-#' (which is keyed on `leading`) drops it. Mixedwood pixels therefore never receive
-#' the `ROSTable`'s `mixed` rates at any age, and instead fall through to `ROSother`.
+#' `knownSpecies` maps species onto `spruce`, `pine`, `decid` and `softwood` only. The
+#' fifth fuel type, `mixed`, is invented for attribute-table entries matching no species,
+#' so it exists on one side of the species join and not the other: the join leaves its
+#' `leading` value `NA`, and the subsequent join onto `ROSTable` (keyed on `leading`)
+#' dropped it. Mixedwood therefore used to fall through to `ROSother` -- 30 with the
+#' default table, the mature-spruce rate, at every age -- instead of 12 (young/immature)
+#' or 17 (mature), leaving both `mixed` rows dead. `leading` is now filled in for that
+#' row, which is unambiguous because `knownSpecies` can never produce "mixed".
 #'
-#' With LandMine's default table this means mixedwood burns at 30 rather than 12
-#' (young/immature) or 17 (mature) -- i.e. at the mature-spruce rate -- and both
-#' `mixed` rows of the table are dead entries. This is preserved here rather than
-#' fixed, because changing it changes the fire regime; a test pins the behaviour so
-#' that any future change is deliberate.
+#' A related defect is **deliberately left alone**: the pattern-based fuel typing can
+#' disagree with `knownSpecies`. `Lari_spp` matches none of `Pice`/`Pinu`/`Popu`, so it is
+#' typed `softwood`, while `knownSpecies` calls larch `decid`; the two disagree, the join
+#' finds no match, and larch also falls through to `ROSother`. It is not swept up by the
+#' fix above because the pattern-derived value would override the authoritative mapping,
+#' which is the wrong direction. Larch is 3 pixels on WesternAlbertaUpland. A test pins
+#' the behaviour so a future change is deliberate.
 #'
 #' @return An integer vector of rates of spread, one element per pixel of
 #'   `vegTypeMap`.
@@ -347,7 +360,7 @@ landmine_fire_ros <- function(vegTypeMap, rstTimeSinceFire, flammableMap, ROSTab
                               knownSpecies = landmine_known_species(),
                               ROStype = c("default", "burny"),
                               ageCutoffs = c(young = 40, immature = 120),
-                              youngFilter = c("legacy", "always"),
+                              youngFilter = c("always", "legacy"),
                               assertions = getOption("LandR.assertions", TRUE)) {
   ROStype <- match.arg(ROStype)
   youngFilter <- match.arg(youngFilter)

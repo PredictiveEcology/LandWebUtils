@@ -42,6 +42,12 @@
     data.table::setnames(old = 1:3, new = c("age", "leading", "ros"))
 }
 
+## raster values whose attribute-table label matches no species, i.e. the `mixed` fuel type
+.ros_mixed_pixels <- function(f) {
+  rat <- terra::levels(f$vegTypeMap)[[1]]
+  rat[[1]][!(as.character(rat[[2]]) %in% f$sppEquiv$LandWeb)]
+}
+
 .ros_call <- function(f, ROSother = 30L, ...) {
   landmine_fire_ros(
     vegTypeMap = f$vegTypeMap, rstTimeSinceFire = f$tsf, flammableMap = f$flammable,
@@ -186,24 +192,37 @@ test_that("each vegetation type gets its own table rate at each age class", {
   ))
 })
 
-test_that("MIXEDWOOD never receives the table's mixed rates (pinned, not endorsed)", {
-  ## ages chosen to avoid the young class, which is separately confounded here -- see
-  ## the youngFilter tests
+test_that("MIXEDWOOD receives the table's mixed rates", {
   f <- .ros_fixture(labels = c("Pice_mar", "Mixed"), vegType = c(1L, 1L, 2L, 2L),
                     tsf = c(60, 200, 60, 200))
   ros <- .ros_call(f)
 
-  expect_equal(ros[1:2], c(20L, 30L)) ## spruce is assigned normally
-  ## mixed would be 12L (young) and 17L (mature) if it reached the table; it gets ROSother instead
-  expect_equal(ros[3:4], c(30L, 30L))
-  expect_false(any(ros %in% c(12L, 17L)))
+  expect_equal(ros[1:2], c(20L, 30L)) ## spruce
+  expect_equal(ros[3:4], c(12L, 17L)) ## mixed: immature_young, mature
 })
 
-test_that("the mixed rows of a default ROSTable are therefore dead entries", {
-  f <- .ros_fixture()
+test_that("the mixed rows of the ROSTable are live entries", {
+  f <- .ros_fixture(labels = c("Pice_mar", "Mixed"), vegType = c(2L, 2L), tsf = c(60, 200))
   withMixed <- .ros_call(f)
   f$ROSTable <- f$ROSTable[leading != "mixed"]
-  expect_equal(.ros_call(f), withMixed)
+  ## without them, mixedwood has no rate and falls through to ROSother
+  expect_equal(withMixed, c(12L, 17L))
+  expect_equal(.ros_call(f), c(30L, 30L))
+})
+
+test_that("LARCH still falls through to ROSother (a related defect, deliberately NOT fixed)", {
+  ## `Lari_spp` matches none of Pice/Pinu/Popu so the pattern-based typing calls it "softwood",
+  ## while `knownSpecies` calls it "decid"; the two disagree and the join finds no match.
+  ## Filling `leading` from the pattern-derived value would override the authoritative mapping.
+  f <- .ros_fixture(labels = c("Lari_spp", "Popu_spp"), vegType = c(1L, 2L), tsf = c(60, 60))
+  ## larch must be IN sppEquiv, or it is simply an unmatched entry and becomes `mixed`
+  f$sppEquiv <- rbind(f$sppEquiv, data.table::data.table(
+    LandWeb = "Lari_spp", LandR = "Lari_spp",
+    LandMine = landmine_known_species()[["Lari_spp"]]
+  ))
+  ros <- .ros_call(f)
+  expect_equal(ros[[1]], 30L) ## larch -> ROSother, NOT decid's 6L
+  expect_equal(ros[[2]], 6L) ## poplar, the same fuel type per knownSpecies, is assigned
 })
 
 ## ---- age class boundaries -----------------------------------------------------------------------
@@ -278,9 +297,9 @@ test_that("ROStype = 'burny' gives non-flammable pixels the young deciduous rate
 })
 
 test_that("flammable pixels with no table rate get ROSother", {
-  ## Thuj_pli is in sppEquiv (softwood) but absent from the map; an unmatched RAT entry
-  ## becomes `mixed`, which the ROSTable join drops -> ROSother
-  f <- .ros_fixture(labels = c("Pinu_spp", "Mixed"), vegType = c(1L, 2L), tsf = c(10, 10))
+  ## drop softwood from the table, so Abie_spp has no rate at any age
+  f <- .ros_fixture(labels = c("Pinu_spp", "Abie_spp"), vegType = c(1L, 2L), tsf = c(10, 10))
+  f$ROSTable <- f$ROSTable[leading != "softwood"]
   expect_equal(.ros_call(f), c(22L, 30L))
 })
 
@@ -450,9 +469,14 @@ test_that("EQUIVALENCE with the module's inline fireROS over randomised landscap
       f$vegTypeMap, f$tsf, f$flammable, f$ROSTable, data.table::copy(f$sppEquiv),
       "LandWeb", 30L, landmine_known_species(), ROStype
     )
-    got <- .ros_call(f, ROStype = ROStype)
+    got <- .ros_call(f, ROStype = ROStype, youngFilter = "legacy")
 
-    expect_identical(got, want, info = paste("iteration", i))
+    ## The two diverge by design on mixedwood -- the oracle drops it, this assigns the table's
+    ## rates -- so the claim under test is that mixedwood is the ONLY place they differ.
+    ## The mixed rates themselves are checked deterministically above.
+    mixedPx <- .ros_mixed_pixels(f)
+    keep <- !(terra::values(f$vegTypeMap, mat = FALSE) %in% mixedPx)
+    expect_identical(got[keep], want[keep], info = paste("iteration", i))
   }
 })
 
@@ -467,7 +491,7 @@ test_that("EQUIVALENCE holds when a fuel type is missing from the landscape", {
       f$vegTypeMap, f$tsf, f$flammable, f$ROSTable, data.table::copy(f$sppEquiv),
       "LandWeb", 30L, landmine_known_species()
     )
-    expect_identical(.ros_call(f), want, info = drop)
+    expect_identical(.ros_call(f, youngFilter = "legacy"), want, info = drop)
   }
 })
 
