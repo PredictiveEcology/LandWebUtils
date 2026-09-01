@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9029
+Version: 1.0.3.9030
 Date: 2026-08-17
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
@@ -48,7 +48,8 @@ Suggests:
     landscapemetrics,
     parallel,
     parallelly,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tidyterra
 Remotes:
     FOR-CAST/spatialutils,
     FOR-CAST/workflowtools@development,
@@ -73,6 +74,7 @@ Collate:
     'landmine-calibration-plot.R'
     'landmine-calibration.R'
     'landmine-events.R'
+    'landmine-fri-diagnostics.R'
     'landmine-helpers.R'
     'landmine-plot.R'
     'landmine-ros.R'
