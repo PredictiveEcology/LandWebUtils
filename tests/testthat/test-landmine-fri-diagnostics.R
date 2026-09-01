@@ -214,13 +214,32 @@ test_that("the verdict caps how many zones it names", {
 
 ## ---- the figures --------------------------------------------------------------------------------
 
-test_that("the zone map builds and carries the verdict as its caption", {
+test_that("the zone map builds, with SEPARATE fill scales per panel", {
   skip_if_not_installed("tidyterra")
+  skip_if_not_installed("patchwork")
   f <- .fri_fixture(zones = c(50, 100), burnRate = c(1 / 200, 1 / 100))
   m <- .fri_call(f)
   p <- landmine_plot_fri_zones(f$lthfc, m, "test")
-  expect_s3_class(p, "ggplot")
-  expect_equal(p$labels$caption, landmine_fri_verdict(m))
+  expect_s3_class(p, "patchwork")
+  expect_length(p$patches$plots, 1L) ## plus the top-level plot = 2 panels
+
+  ## a shared scale would put target intervals (tens of years) and log-ratios (about one
+  ## unit) on one range, collapsing panel B to a flat block of colour
+  scales <- lapply(list(p[[1]], p[[2]]), function(x) {
+    x$scales$get_scales("fill")
+  })
+  expect_false(identical(scales[[1]]$limits, scales[[2]]$limits))
+  ## zone 50 achieves 200 -> ratio 4 -> log2 = 2; the scale is symmetric about ratio 1
+  expect_equal(scales[[2]]$limits, c(-2, 2))
+})
+
+test_that("the map carries the verdict as its caption", {
+  skip_if_not_installed("tidyterra")
+  skip_if_not_installed("patchwork")
+  f <- .fri_fixture(zones = c(50, 100), burnRate = c(1 / 200, 1 / 100))
+  m <- .fri_call(f)
+  p <- landmine_plot_fri_zones(f$lthfc, m, "test")
+  expect_match(p$patches$annotation$caption, "within tolerance", fixed = TRUE)
 })
 
 test_that("the drivers plot builds with either driver column alone", {

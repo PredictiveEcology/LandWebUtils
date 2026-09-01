@@ -152,6 +152,7 @@ importFrom(ggplot2,
   labs,
   position_jitter,
   scale_colour_manual,
+  scale_fill_distiller,
   scale_fill_gradientn,
   scale_x_continuous,
   scale_x_log10,
@@ -200,10 +201,7 @@ importFrom(reproducible,
   postProcess,
   prepInputs
 )
-importFrom(scales,
-  hue_pal,
-  rescale
-)
+importFrom(scales,hue_pal)
 importFrom(sf,
   st_as_sf,
   st_join,
@@ -222,7 +220,6 @@ importFrom(terra,
   compareGeom,
   crop,
   crs,
-  deepcopy,
   extend,
   freq,
   levels,

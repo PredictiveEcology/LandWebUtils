@@ -1,3 +1,9 @@
+# LandWebUtils 1.0.3.9031
+
+* `landmine_fri_summary()` gains `studyArea`, so the fix for the denominator lives at the source rather than only in `landmine_fri_metrics()`. Callers that do not pass it keep their previous (wrong) numbers until updated deliberately;
+* `landmine_plot_fri_zones()` now builds its two panels with `patchwork` and gives each its own fill scale. Faceting forced a single shared scale, on which log-ratios spanning about one unit collapsed entirely against target intervals spanning 170 years -- panel B rendered as a flat block of colour. Panel A is also now a sequential single-hue ramp (it encodes a magnitude) rather than a diverging one, and the caption wraps instead of running off the page;
+* `landmine_plot_fri_drivers()` uses a reserved status palette -- neutral for on-target, amber for outside tolerance, red for severe -- rather than an arbitrary hue cycle that coloured "ok" red;
+
 # LandWebUtils 1.0.3.9030
 
 * new `landmine_fri_metrics()`, `landmine_fri_verdict()`, `landmine_plot_fri_zones()` and `landmine_plot_fri_drivers()`: per-FRI-zone attainment diagnostics, so a user does not have to read a simulation log to learn that a zone missed its target, nor mount a bespoke investigation to find out why;

@@ -8,7 +8,8 @@ landmine_fri_summary(
   lthfc,
   flammableMap,
   meanAnnualCumulBurnMap,
-  studyAreaName
+  studyAreaName,
+  studyArea = NULL
 )
 }
 \arguments{
@@ -20,6 +21,9 @@ and are excluded from both the numerator and the denominator.}
 \item{meanAnnualCumulBurnMap}{\code{SpatRaster} of mean annual burn counts per pixel.}
 
 \item{studyAreaName}{character, recorded in the returned table.}
+
+\item{studyArea}{optional \code{SpatVector}/\code{sf} polygon of the area the fire model was
+permitted to burn. \strong{Supply this.} See Details.}
 }
 \value{
 A \code{data.table} with columns \code{studyArea}, \code{LTHFC}, \code{FRI}, sorted by \code{LTHFC}.
@@ -32,6 +36,18 @@ the mean annual burn rate over that zone's \strong{flammable} pixels.
 \details{
 This was duplicated verbatim in the LandMine module's single- and multi-mode
 summary functions, so the two could silently diverge.
+}
+\section{\code{studyArea} is not optional in practice}{
+Without it, the achieved interval is computed over every flammable pixel carrying a
+fire return interval -- including pixels outside the polygon that LandMine masks
+\code{ROSmap} and \code{mod$spreadProb} to, which therefore cannot burn at all. On
+WesternAlbertaUpland, 988,437 of 3,361,240 flammable zone pixels (29.4\%) were
+outside, burning at a mean rate of 0.51 against 16.59 inside, and one zone had 73
+burnable pixels out of 146,627. That made two zones look as though they under-burned
+by 3.5x and 12.2x; with the denominator restricted to the burnable area every zone
+came in between 0.90 and 1.07, i.e. there was no shortfall to explain. The argument
+defaults to \code{NULL} only so that existing callers keep their previous (wrong) numbers
+until they are updated deliberately.
 
 Two edge cases are \strong{preserved as-is} rather than "fixed", because changing them
 would change published outputs:
@@ -45,3 +61,4 @@ a zone makes that whole zone's achieved FRI \code{NA}. Masking all three rasters
 covered by tests so a future change to either is deliberate.
 }
 }
+

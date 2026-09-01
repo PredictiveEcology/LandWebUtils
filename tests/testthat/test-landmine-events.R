@@ -90,6 +90,32 @@ test_that("an NA burn pixel not shared by the flammable mask makes that zone NA"
 
 # ---- landmine_draw_num_fires ------------------------------------------------------------
 
+test_that("STUDY AREA: pixels the fire model cannot reach are excluded from the denominator", {
+  ## left half burns at the target rate; the right half is unburnable because it lies outside
+  ## the polygon LandMine masks `ROSmap` and `mod$spreadProb` to
+  lthfc <- terra::rast(nrows = 10L, ncols = 10L, vals = 100)
+  flam <- terra::setValues(terra::rast(lthfc), 1L)
+  burn <- terra::setValues(terra::rast(lthfc), rep(c(rep(1 / 100, 5), rep(0, 5)), 10))
+  e <- terra::ext(lthfc)
+  poly <- terra::vect(terra::ext(e[1], e[1] + 0.5 * (e[2] - e[1]), e[3], e[4]),
+                      crs = terra::crs(lthfc))
+
+  expect_equal(landmine_fri_summary(lthfc, flam, burn, "t")$FRI, 200)
+  expect_equal(landmine_fri_summary(lthfc, flam, burn, "t", studyArea = poly)$FRI, 100)
+})
+
+test_that("a zone lying entirely outside the study area drops out of the summary", {
+  lthfc <- terra::rast(nrows = 10L, ncols = 10L, vals = rep(c(rep(50, 5), rep(170, 5)), 10))
+  flam <- terra::setValues(terra::rast(lthfc), 1L)
+  burn <- terra::setValues(terra::rast(lthfc), 1 / 50)
+  e <- terra::ext(lthfc)
+  poly <- terra::vect(terra::ext(e[1], e[1] + 0.5 * (e[2] - e[1]), e[3], e[4]),
+                      crs = terra::crs(lthfc))
+
+  expect_equal(landmine_fri_summary(lthfc, flam, burn, "t")$LTHFC, c(50, 170))
+  expect_equal(landmine_fri_summary(lthfc, flam, burn, "t", studyArea = poly)$LTHFC, 50)
+})
+
 test_that("zone names survive the draw", {
   ## `rnbinom()` drops names, and the caller indexes fire counts by zone -- losing them
   ## silently assigns zones each other's counts.

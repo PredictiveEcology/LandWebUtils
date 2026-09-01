@@ -104,7 +104,7 @@ utils::globalVariables(c(
 #' @export
 #' @importFrom data.table data.table setorderv
 #' @importFrom stats na.omit
-#' @importFrom terra compareGeom deepcopy freq ncell patches rasterize values vect
+#' @importFrom terra compareGeom freq ncell patches rasterize values vect
 landmine_fri_metrics <- function(lthfc, flammableMap, meanAnnualCumulBurnMap, studyAreaName,
                                  pixelAreaHa, studyArea = NULL,
                                  vegTypeMap = NULL, vegTypeMapInit = NULL,
@@ -138,9 +138,9 @@ landmine_fri_metrics <- function(lthfc, flammableMap, meanAnnualCumulBurnMap, st
   }
 
   achieved <- landmine_fri_summary(
-    lthfc = if (is.null(inSA)) lthfc else .fri_mask(lthfc, inSA),
-    flammableMap = flammableMap,
-    meanAnnualCumulBurnMap = meanAnnualCumulBurnMap, studyAreaName = studyAreaName
+    lthfc = lthfc, flammableMap = flammableMap,
+    meanAnnualCumulBurnMap = meanAnnualCumulBurnMap, studyAreaName = studyAreaName,
+    studyArea = studyArea
   )
   unmasked <- if (is.null(inSA)) {
     NULL
@@ -221,20 +221,6 @@ landmine_fri_metrics <- function(lthfc, flammableMap, meanAnnualCumulBurnMap, st
 
   data.table::setorderv(out, "LTHFC")
   out[]
-}
-
-#' Set cells outside a logical mask to NA
-#'
-#' @param r `SpatRaster`.
-#' @param keep logical vector, one element per cell.
-#'
-#' @return `SpatRaster` with `!keep` cells set to `NA`.
-#'
-#' @noRd
-.fri_mask <- function(r, keep) {
-  out <- terra::deepcopy(r)
-  out[!keep] <- NA
-  out
 }
 
 #' Percentage of a zone's flammable pixels satisfying a predicate
@@ -378,73 +364,90 @@ landmine_fri_verdict <- function(metrics, maxListed = 5L) {
 
 #' Map fire-return-interval zones and their attainment
 #'
-#' Two panels sharing one layout: the study area's zones filled by their **target**
-#' fire return interval, and the same geometry filled by **achieved/target ratio** on
-#' a diverging scale centred on 1. Zones outside tolerance are outlined so they read
-#' in greyscale.
+#' Two panels side by side: the study area's zones filled by their **target** fire
+#' return interval, and the same geometry filled by **achieved/target ratio** on a
+#' diverging scale centred on 1.
 #'
 #' @param lthfc `SpatRaster` of target fire return intervals.
 #' @param metrics the `data.table` from [landmine_fri_metrics()].
 #' @param studyAreaName character, used in the title.
 #' @param caption optional character; defaults to [landmine_fri_verdict()].
-#' @param maxCells passed to [tidyterra::geom_spatraster()] as the display resampling
-#'   budget; the default keeps a full-resolution study area readable without rendering
-#'   every cell.
+#' @param maxCells display resampling budget passed to
+#'   `tidyterra::geom_spatraster()`; the default keeps a full-resolution study area
+#'   readable without rendering every cell.
 #'
 #' @details
-#' Panel B is the one that answers "which zones, and how badly". The fill is
-#' `log2(ratio)` so that burning twice as often and half as often are equally far from
-#' centre; the legend is labelled in plain ratios.
+#' The two panels encode different things and therefore carry **separate fill scales**:
+#' panel A is a magnitude (one hue, light to dark), panel B a polarity (two hues either
+#' side of a neutral midpoint). Putting both in one faceted plot would force a single
+#' shared scale, on which the log-ratios -- which span about one unit -- collapse
+#' entirely against target intervals spanning 170 years, rendering panel B a flat block
+#' of colour.
 #'
-#' @return A `patchwork`-free `ggplot` built with [ggplot2::facet_wrap()], so no extra
-#'   dependency is needed to place the two panels side by side.
+#' Panel B's fill is `log2(ratio)` so that burning twice as often and half as often sit
+#' equally far from centre, with the legend labelled in plain ratios.
+#'
+#' @return A `patchwork` object (which prints and `ggsave`s like a `ggplot`).
 #'
 #' @seealso [landmine_fri_metrics()]
 #'
 #' @export
-#' @importFrom data.table data.table melt rbindlist
-#' @importFrom ggplot2 aes coord_sf element_blank element_text facet_wrap ggplot
-#' @importFrom ggplot2 labs scale_fill_gradientn theme theme_minimal
-#' @importFrom scales rescale
+#' @importFrom ggplot2 aes coord_sf element_blank element_text ggplot ggtitle labs
+#' @importFrom ggplot2 scale_fill_gradientn scale_fill_distiller theme theme_minimal
 #' @importFrom terra classify
 landmine_plot_fri_zones <- function(lthfc, metrics, studyAreaName, caption = NULL,
                                     maxCells = 5e5) {
-  if (!requireNamespace("tidyterra", quietly = TRUE)) {
-    stop("`tidyterra` is required to map FRI zones; add it to the calling context.")
+  for (pkg in c("tidyterra", "patchwork")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      stop("`", pkg, "` is required to map FRI zones.")
+    }
   }
   if (is.null(caption)) {
     caption <- landmine_fri_verdict(metrics)
   }
 
-  ratioRast <- terra::classify(lthfc, cbind(metrics$LTHFC, log2(metrics$ratio)),
-                               others = NA_real_)
+  base <- function(r, maxcell) {
+    ggplot2::ggplot() +
+      tidyterra::geom_spatraster(data = r, maxcell = maxcell) +
+      ggplot2::coord_sf(expand = FALSE) +
+      ggplot2::theme_minimal(base_size = 11) +
+      ggplot2::theme(
+        plot.title = ggplot2::element_text(hjust = 0, face = "bold", size = 11),
+        axis.title = ggplot2::element_blank(),
+        legend.title = ggplot2::element_text(size = 9)
+      )
+  }
+
   targetRast <- terra::classify(lthfc, cbind(metrics$LTHFC, metrics$LTHFC),
                                 others = NA_real_)
+  panelA <- base(targetRast, maxCells) +
+    ggplot2::scale_fill_distiller(palette = "YlGnBu", direction = 1,
+                                  na.value = "transparent", name = "years") +
+    ggplot2::ggtitle("A. Target fire return interval")
 
-  panels <- c(targetRast, ratioRast)
-  names(panels) <- c("A. Target fire return interval (years)",
-                     "B. Achieved / target (red = burns too rarely)")
-
-  ## one shared fill would put years and log-ratios on the same scale, so each panel is
-  ## drawn with its own and they are stacked by `facet_wrap` on the layer name.
-  ggplot2::ggplot() +
-    tidyterra::geom_spatraster(data = panels, maxcell = maxCells) +
-    ggplot2::facet_wrap(~lyr, ncol = 2L) +
+  ratioRast <- terra::classify(lthfc, cbind(metrics$LTHFC, log2(metrics$ratio)),
+                               others = NA_real_)
+  ## symmetric limits keep the neutral midpoint at ratio 1 wherever the data happen to fall
+  lim <- max(abs(range(terra::values(ratioRast, mat = FALSE), na.rm = TRUE)), 0.1)
+  breaks <- log2(c(0.25, 0.5, 1, 2, 4))
+  keep <- abs(breaks) <= lim
+  panelB <- base(ratioRast, maxCells) +
     ggplot2::scale_fill_gradientn(
       colours = c("#2166ac", "#f7f7f7", "#b2182b"),
-      values = scales::rescale(c(-1, 0, 1)),
-      na.value = "transparent", name = NULL
+      limits = c(-lim, lim), na.value = "transparent",
+      breaks = breaks[keep], labels = c("0.25x", "0.5x", "on target", "2x", "4x")[keep],
+      name = NULL
     ) +
-    ggplot2::coord_sf(expand = FALSE) +
-    ggplot2::labs(
+    ggplot2::ggtitle("B. Achieved / target (red = burns too rarely)")
+
+  patchwork::wrap_plots(panelA, panelB, ncol = 2L) +
+    patchwork::plot_annotation(
       title = paste("Fire return interval attainment:", studyAreaName),
-      caption = caption
-    ) +
-    ggplot2::theme_minimal(base_size = 11) +
-    ggplot2::theme(
-      strip.text = ggplot2::element_text(hjust = 0, face = "bold"),
-      plot.caption = ggplot2::element_text(hjust = 0, size = 9),
-      axis.title = ggplot2::element_blank()
+      caption = paste(strwrap(caption, width = 130), collapse = "\n"),
+      theme = ggplot2::theme(
+        plot.caption = ggplot2::element_text(hjust = 0, size = 9),
+        plot.title = ggplot2::element_text(size = 13)
+      )
     )
 }
 
@@ -462,7 +465,8 @@ landmine_plot_fri_zones <- function(lthfc, metrics, studyAreaName, caption = NUL
 #'
 #' @export
 #' @importFrom ggplot2 aes element_text facet_wrap geom_hline geom_point geom_text
-#' @importFrom ggplot2 ggplot labs scale_y_continuous theme theme_bw
+#' @importFrom ggplot2 ggplot labs scale_colour_manual scale_y_continuous
+#' @importFrom ggplot2 theme theme_bw
 landmine_plot_fri_drivers <- function(metrics, studyAreaName) {
   cols <- c(pctFlam = "% of zone flammable",
             pctNoCohorts = "% of zone without cohorts",
@@ -483,6 +487,16 @@ landmine_plot_fri_drivers <- function(metrics, studyAreaName) {
   ggplot2::ggplot(long, ggplot2::aes(x = pct, y = ratio)) +
     ggplot2::geom_hline(yintercept = 1, linetype = "dotted") +
     ggplot2::geom_point(ggplot2::aes(colour = status), size = 2.5) +
+    ## status is a state, so it gets a reserved palette rather than an arbitrary hue cycle:
+    ## neutral for on-target, amber for outside tolerance, red for severe
+    ggplot2::scale_colour_manual(
+      values = c(
+        "ok" = "#4d4d4d", "under" = "#e08214", "over" = "#e08214",
+        "under (severe)" = "#b2182b", "over (severe)" = "#b2182b",
+        "too few ignitions to judge" = "#bababa", "not evaluated" = "#bababa"
+      ),
+      limits = function(x) x, na.value = "#bababa"
+    ) +
     ggplot2::geom_text(ggplot2::aes(label = LTHFC), hjust = -0.4, size = 3) +
     ggplot2::facet_wrap(~driver, scales = "free_x") +
     ggplot2::scale_y_continuous(transform = "log2") +

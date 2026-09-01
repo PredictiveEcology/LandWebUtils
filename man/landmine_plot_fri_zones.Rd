@@ -21,24 +21,28 @@ landmine_plot_fri_zones(
 
 \item{caption}{optional character; defaults to \code{\link[=landmine_fri_verdict]{landmine_fri_verdict()}}.}
 
-\item{maxCells}{passed to \code{\link[tidyterra:geom_spatraster]{tidyterra::geom_spatraster()}} as the display resampling
-budget; the default keeps a full-resolution study area readable without rendering
-every cell.}
+\item{maxCells}{display resampling budget passed to
+\code{tidyterra::geom_spatraster()}; the default keeps a full-resolution study area
+readable without rendering every cell.}
 }
 \value{
-A \code{patchwork}-free \code{ggplot} built with \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}, so no extra
-dependency is needed to place the two panels side by side.
+A \code{patchwork} object (which prints and \code{ggsave}s like a \code{ggplot}).
 }
 \description{
-Two panels sharing one layout: the study area's zones filled by their \strong{target}
-fire return interval, and the same geometry filled by \strong{achieved/target ratio} on
-a diverging scale centred on 1. Zones outside tolerance are outlined so they read
-in greyscale.
+Two panels side by side: the study area's zones filled by their \strong{target} fire
+return interval, and the same geometry filled by \strong{achieved/target ratio} on a
+diverging scale centred on 1.
 }
 \details{
-Panel B is the one that answers "which zones, and how badly". The fill is
-\code{log2(ratio)} so that burning twice as often and half as often are equally far from
-centre; the legend is labelled in plain ratios.
+The two panels encode different things and therefore carry \strong{separate fill scales}:
+panel A is a magnitude (one hue, light to dark), panel B a polarity (two hues either
+side of a neutral midpoint). Putting both in one faceted plot would force a single
+shared scale, on which the log-ratios -- which span about one unit -- collapse
+entirely against target intervals spanning 170 years, rendering panel B a flat block
+of colour.
+
+Panel B's fill is \code{log2(ratio)} so that burning twice as often and half as often sit
+equally far from centre, with the legend labelled in plain ratios.
 }
 \seealso{
 \code{\link[=landmine_fri_metrics]{landmine_fri_metrics()}}

@@ -16,10 +16,25 @@ utils::globalVariables(c("maxSize", "N", "nFires", "polygonNumeric"))
 #'   and are excluded from both the numerator and the denominator.
 #' @param meanAnnualCumulBurnMap `SpatRaster` of mean annual burn counts per pixel.
 #' @param studyAreaName character, recorded in the returned table.
+#' @param studyArea optional `SpatVector`/`sf` polygon of the area the fire model was
+#'   permitted to burn. **Supply this.** See Details.
 #'
 #' @details
 #' This was duplicated verbatim in the LandMine module's single- and multi-mode
 #' summary functions, so the two could silently diverge.
+#'
+#' # `studyArea` is not optional in practice
+#'
+#' Without it, the achieved interval is computed over every flammable pixel carrying a
+#' fire return interval -- including pixels outside the polygon that LandMine masks
+#' `ROSmap` and `mod$spreadProb` to, which therefore cannot burn at all. On
+#' WesternAlbertaUpland, 988,437 of 3,361,240 flammable zone pixels (29.4%) were
+#' outside, burning at a mean rate of 0.51 against 16.59 inside, and one zone had 73
+#' burnable pixels out of 146,627. That made two zones look as though they under-burned
+#' by 3.5x and 12.2x; with the denominator restricted to the burnable area every zone
+#' came in between 0.90 and 1.07, i.e. there was no shortfall to explain. The argument
+#' defaults to `NULL` only so that existing callers keep their previous (wrong) numbers
+#' until they are updated deliberately.
 #'
 #' Two edge cases are **preserved as-is** rather than "fixed", because changing them
 #' would change published outputs:
@@ -36,8 +51,21 @@ utils::globalVariables(c("maxSize", "N", "nFires", "polygonNumeric"))
 #'
 #' @export
 #' @importFrom data.table data.table
-#' @importFrom terra values
-landmine_fri_summary <- function(lthfc, flammableMap, meanAnnualCumulBurnMap, studyAreaName) {
+#' @importFrom terra rasterize values vect
+landmine_fri_summary <- function(lthfc, flammableMap, meanAnnualCumulBurnMap, studyAreaName,
+                                 studyArea = NULL) {
+  ## Pixels the fire model was never allowed to reach must not be in the denominator. LandMine
+  ## masks both `ROSmap` and `mod$spreadProb` to `sim$studyArea`, so a pixel outside that polygon
+  ## can be neither ignited nor spread into -- but the fire return interval raster is not masked
+  ## and routinely overhangs the polygon, so without this each such pixel inflates its zone's
+  ## achieved interval while contributing no opportunity to burn. See the Details section.
+  if (!is.null(studyArea)) {
+    sv <- if (inherits(studyArea, "SpatVector")) studyArea else terra::vect(studyArea)
+    outside <- is.na(terra::values(terra::rasterize(sv, lthfc, field = 1L), mat = FALSE))
+    lthfc[outside] <- NA
+    meanAnnualCumulBurnMap[outside] <- NA
+  }
+
   nonFlammable <- which(is.na(flammableMap[]) | flammableMap[] == 0)
   if (length(nonFlammable) > 0) {
     lthfc[nonFlammable] <- NA

@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9030
+Version: 1.0.3.9031
 Date: 2026-08-17
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
@@ -48,6 +48,7 @@ Suggests:
     landscapemetrics,
     parallel,
     parallelly,
+    patchwork,
     testthat (>= 3.0.0),
     tidyterra
 Remotes:
