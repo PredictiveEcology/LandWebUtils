@@ -1,3 +1,8 @@
+# LandWebUtils 1.0.3.9032
+
+* `landmine_ignition_budget()` gains `studyArea`. LandMine masks both its rate-of-spread map and `spreadProb` to `sim$studyArea`, so a fire ignited outside that polygon burns its own start cell and spreads no further -- but the fire return interval raster is not masked and routinely overhangs it. Those pixels were inflating each zone's area and therefore its expected fires per year, and, because the start-cell pool is built from the same raster, were being drawn as ignition points. On WesternAlbertaUpland the budget was **2,918 fires per year against a correct 2,015 -- 31% of every year's ignitions aimed at ground the model cannot burn** -- with one zone, 99.95% outside the polygon, over-allocated by a factor of **2,008** (45.6 fires per year against 0.023);
+* the masked raster is what the module then uses as its start-cell pool, so this also stops ignitions being drawn outside the burnable area. The ordering contract the reburn loop consumes positionally is unchanged and is tested against the masking, including the case where a zone disappears from the study area entirely;
+
 # LandWebUtils 1.0.3.9031
 
 * `landmine_fri_summary()` gains `studyArea`, so the fix for the denominator lives at the source rather than only in `landmine_fri_metrics()`. Callers that do not pass it keep their previous (wrong) numbers until updated deliberately;

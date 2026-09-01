@@ -237,6 +237,41 @@ test_that("non-flammable and zero-FRI pixels are masked OUT of the raster and th
   expect_equal(unname(out$numFiresPerYear["30"] / out$numFiresPerYear["70"]), 70 / 30)
 })
 
+test_that("STUDY AREA: the budget excludes ground the fire model cannot burn", {
+  ## zone 50 spans the whole grid but only its left half is inside the burnable polygon
+  fri <- terra::rast(nrows = 10L, ncols = 10L, vals = 50)
+  flam <- terra::setValues(terra::rast(fri), 1L)
+  e <- terra::ext(fri)
+  poly <- terra::vect(terra::ext(e[1], e[1] + 0.5 * (e[2] - e[1]), e[3], e[4]),
+                      crs = terra::crs(fri))
+
+  now <- landmine_ignition_budget(fri, flam, kBest = 0.731, biggestPossibleFireSizeHa = 1e6)
+  fixed <- landmine_ignition_budget(fri, flam, kBest = 0.731, biggestPossibleFireSizeHa = 1e6,
+                                    studyArea = poly)
+
+  ## the budget is proportional to burnable area, so halving the area halves the fires
+  expect_equal(unname(fixed$numFiresPerYear["50"]), unname(now$numFiresPerYear["50"]) / 2)
+
+  ## and the returned raster -- which is also the start-cell pool -- is masked, so ignitions
+  ## can no longer be drawn outside the polygon
+  expect_equal(sum(!is.na(terra::values(fixed$fireReturnInterval, mat = FALSE))), 50L)
+  expect_equal(sum(!is.na(terra::values(now$fireReturnInterval, mat = FALSE))), 100L)
+})
+
+test_that("the ordering contract survives study-area masking", {
+  fri <- terra::rast(nrows = 10L, ncols = 10L, vals = rep(c(rep(50, 5), rep(170, 5)), 10))
+  flam <- terra::setValues(terra::rast(fri), 1L)
+  e <- terra::ext(fri)
+  ## keep the left half: zone 50 survives in full, zone 170 disappears entirely
+  poly <- terra::vect(terra::ext(e[1], e[1] + 0.5 * (e[2] - e[1]), e[3], e[4]),
+                      crs = terra::crs(fri))
+  out <- landmine_ignition_budget(fri, flam, kBest = 0.731, biggestPossibleFireSizeHa = 1e6,
+                                  studyArea = poly)
+
+  expect_equal(out$fireReturnIntervalsByPolygonNumeric, c(50, NA))
+  expect_true(is.na(out$numFiresPerYear[[2]])) ## NA-VALUED, so na.omit() drops it downstream
+})
+
 test_that("THE ORDERING CONTRACT: zones ascending, NA row last, and NA-valued so na.omit drops it", {
   ## The reburn loop indexes fire counts by GROUP POSITION of a polygonNumeric-keyed table.
   ## That is valid only if all three of these hold. Break any one and zones silently receive

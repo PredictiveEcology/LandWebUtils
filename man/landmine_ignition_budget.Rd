@@ -8,7 +8,8 @@ landmine_ignition_budget(
   fireReturnInterval,
   flammableMap,
   kBest,
-  biggestPossibleFireSizeHa
+  biggestPossibleFireSizeHa,
+  studyArea = NULL
 )
 }
 \arguments{
@@ -20,6 +21,9 @@ interval. Zero-valued and non-flammable pixels are set to \code{NA}.}
 \item{kBest}{numeric, the fitted truncated-Pareto shape for the fire-size distribution.}
 
 \item{biggestPossibleFireSizeHa}{numeric, the distribution's upper bound, in hectares.}
+
+\item{studyArea}{optional \code{SpatVector}/\code{sf} polygon of the area the fire model can
+actually burn. \strong{Supply this.} See Details.}
 }
 \value{
 A list with:
@@ -50,9 +54,23 @@ the \emph{group position} of a \code{polygonNumeric}-keyed table, which is valid
 
 Break any one and zones are handed each other's fire counts, with no error. All three are
 pinned by tests here, at the point where the contract is created.
+}
+\section{\code{studyArea} is not optional in practice}{
+LandMine masks both its rate-of-spread map and \code{spreadProb} to \code{sim$studyArea}, so a fire
+ignited outside that polygon burns its own start cell and can spread no further. The fire
+return interval raster is not similarly masked and routinely overhangs the polygon, so
+without \code{studyArea} those pixels inflate each zone's area and therefore its expected fires
+per year -- and, because the start-cell pool is built from this same raster, they are drawn
+as ignition points too.
+
+On WesternAlbertaUpland this allocated \strong{2,918 fires per year against a correct 2,015 --
+31\% of every year's ignitions aimed at ground the model cannot burn.} One zone, 99.95\%
+outside the polygon, was over-allocated by a factor of \strong{2,008} (45.6 fires per year
+against 0.023).
 
 Non-flammable pixels are masked out of the raster \emph{before} tabulation, so the budget is a
 flammable-area budget and matches how achieved FRI is measured in
 \code{\link[=landmine_fri_summary]{landmine_fri_summary()}}. It also means such pixels can never be ignition locations, since
 the start-cell pool is built from this same masked raster.
 }
+
