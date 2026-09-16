@@ -71,6 +71,7 @@ Collate:
     'misc.R'
     'boxplots.R'
     'caribou.R'
+    'current-conditions.R'
     'equivalentName.R'
     'histograms.R'
     'landmine-calibration-plot.R'

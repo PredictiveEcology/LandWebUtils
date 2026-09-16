@@ -2,9 +2,9 @@
 #'
 #' @param poly A polygon or character string identifying the path to polygon
 #'
-#' @param minFRI Numeric or integer, indicating the minimum fire return interval
-#'               that will be part of the cleanup of polygon. Anything below
-#'               this will be `NA`.
+#' @param minFRI Numeric or integer, the minimum fire return interval kept.
+#'               Intervals strictly below this become `NA`; an interval equal
+#'               to `minFRI` is kept.
 #' @export
 .cleanLandWebStudyArea <- function(poly, minFRI = 40) {
   if (is.character(poly)) {
@@ -21,8 +21,10 @@
 
   poly <- dplyr::rename(poly, fireReturnInterval = "LTHFC")
 
-  ## fires with Fire Return Interval 30 years are not correctly simulated; remove
-  poly$fireReturnInterval[poly$fireReturnInterval <= minFRI] <- NA
+  ## fires with Fire Return Interval 30 years are not correctly simulated; remove.
+  ## Strictly BELOW `minFRI`, as documented: this was `<=`, which at the default of 40 also dropped
+  ## every FRI-40 polygon -- 27 of them, 91,797 km2 of LTHFC v10, much of it NW Alberta.
+  poly$fireReturnInterval[poly$fireReturnInterval < minFRI] <- NA
 
   return(poly)
 }

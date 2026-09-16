@@ -9,9 +9,9 @@
 \arguments{
 \item{poly}{A polygon or character string identifying the path to polygon}
 
-\item{minFRI}{Numeric or integer, indicating the minimum fire return interval
-that will be part of the cleanup of polygon. Anything below
-this will be \code{NA}.}
+\item{minFRI}{Numeric or integer, the minimum fire return interval kept.
+Intervals strictly below this become \code{NA}; an interval equal
+to \code{minFRI} is kept.}
 }
 \description{
 Clean up the LandWeb LTHFCs
