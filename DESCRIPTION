@@ -1,53 +1,97 @@
-Package: LandWebUtils
 Type: Package
+Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Description: Additional utilities for LandWeb analyses.
-URL: 
-    http://LandWebUtils.predictiveecology.org,
-    https://github.com/PredictiveEcology/LandWebUtils
-Date: 2020-08-28
-Version: 0.1.2
+Version: 1.0.3.9035
+Date: 2026-08-17
 Authors@R: c(
-    person("Eliot J B", "McIntire", email = "eliot.mcintire@canada.ca",
-    role = c("aut", "cre"), comment=c(ORCID = "0000-0002-6914-8316")),
-    person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
-    role = c("aut"), comment = c(ORCID = "0000-0001-7146-8135")),
-    person("Her Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada",
-    role = "cph")
-    )
+    person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
+           comment = c(ORCID = "0000-0002-6914-8316")),
+    person("Alex M", "Chubaty", , "achubaty@for-cast.ca", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-7146-8135")),
+    person("His Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada", role = "cph")
+  )
+Description: Additional utilities for LandWeb analyses.
+License: GPL-3
+URL: http://LandWebUtils.predictiveecology.org,
+    https://github.com/PredictiveEcology/LandWebUtils
 Depends:
-    R (>= 3.6)
+    R (>= 4.4)
 Imports:
-    data.table (>= 1.10.4),
+    data.table,
+    dplyr,
+    fs,
+    future.apply,
+    ggplot2,
+    googledrive,
     graphics,
     grDevices,
-    LandR (>= 0.0.5),
-    magrittr,
     map,
     methods,
     pemisc,
-    raster,
+    purrr,
+    rasterVis,
     reproducible,
-    SpaDES.core,
+    scales,
+    sf,
+    SpaDES.tools (>= 2.1.2.9000),
+    spatialutils,
     stats,
+    terra,
+    tibble,
     tools,
-    utils
+    utils,
+    withr,
+    workflowtools
+Suggests:
+    covr,
+    DEoptim,
+    landscapemetrics,
+    parallel,
+    parallelly,
+    patchwork,
+    testthat (>= 3.0.0),
+    tidyterra,
+    VGAM
 Remotes:
-    PredictiveEcology/LandR@LandWeb,
+    FOR-CAST/spatialutils,
+    FOR-CAST/workflowtools@development,
     PredictiveEcology/map@development,
-    PredictiveEcology/pemisc@development
-License: GPL-3
+    PredictiveEcology/pemisc@development,
+    PredictiveEcology/reproducible@development,
+    PredictiveEcology/SpaDES.tools@development
+Additional_repositories: https://predictiveecology.r-universe.dev
+Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-CA
 LazyData: true
-RoxygenNote: 7.1.0
+Roxygen: list(markdown = TRUE)
 Collate: 
+    'CASFRIv4.R'
     'LandWebUtils-package.R'
     'misc.R'
     'boxplots.R'
+    'caribou.R'
+    'current-conditions.R'
+    'equivalentName.R'
     'histograms.R'
+    'landmine-calibration-plot.R'
+    'landmine-calibration.R'
+    'landmine-events.R'
+    'landmine-fri-diagnostics.R'
+    'landmine-helpers.R'
+    'landmine-plot.R'
+    'landmine-ros.R'
+    'landmine.R'
     'largePatches.R'
     'leading.R'
+    'plotting.R'
+    'polygon-clean.R'
+    'rasterListByPoly.R'
+    'reportingPolygonCrossings.R'
+    'reportingPolygons.R'
+    'shortNames.R'
+    'simfiles.R'
+    'studyAreaGroups.R'
+    'studyAreas.R'
     'zzz.R'
-Suggests: 
-    covr
+Config/roxygen2/version: 8.1.0

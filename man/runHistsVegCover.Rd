@@ -9,12 +9,12 @@ runHistsVegCover(map, functionName, analysisGroups, dPath)
 \arguments{
 \item{map}{A \code{map} object.}
 
-\item{functionName}{TODO: description needed}
+\item{functionName}{Character specifying the name of the function to apply.}
 
-\item{analysisGroups}{TODO: description needed}
+\item{analysisGroups}{Character specifying the analysis groups to run.}
 
 \item{dPath}{Destination path for the resulting PNG files.}
 }
 \description{
-TODO: description needed
+Generate histograms for leading vegetation cover
 }

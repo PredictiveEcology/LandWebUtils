@@ -1,8 +1,21 @@
 #' @keywords internal
-.ageClassCutOffs <- c(0, 40, 80, 120)
+.ageClassCutOffs <- c(0L, 40L, 80L, 120L) ## keep as integer
 
 #' @keywords internal
 .ageClasses <- c("Young", "Immature", "Mature", "Old")
+
+#' Simulation timesteps for analyses
+#'
+#' @param period numeric vector of length 2 corresponding to the start and end times
+#'               to use for analyses.
+#'
+#' @param interval numeric indicating the interval between timesteps for analyses
+#'
+#' @export
+#' @return numeric vector of timesteps for which to run analyses
+analysesOutputsTimes <- function(period, interval) {
+  seq(period[1], period[2], by = interval)
+}
 
 #' Extract study area name from run name
 #'
@@ -10,26 +23,7 @@
 #'
 #' @export
 cleanAreaName <- Vectorize(function(area) {
-  strsplit(area, "_")[[1]] %>%
-    grep("Dispersal|ROS", ., invert = TRUE, value = TRUE) %>%
-    paste(., collapse = "_")
+  strsplit(area, "_")[[1]] |>
+    grep("Dispersal|ROS", x = _, invert = TRUE, value = TRUE) |>
+    paste(collapse = "_")
 })
-
-#' Generate simulation file name
-#'
-#' Assists with saving/retrieving LandWeb simulations.
-#'
-#' @param name Object name (e.g., \code{"mySimOut"})
-#' @param path Directory location in where the file will be located (e.g., an \code{outputPath}).
-#' @param time Optional simulation time to use as filename suffix. Default \code{NULL}.
-#' @param ext  The file extension to use (default \code{"rds"}).
-#' @export
-#' @importFrom SpaDES.core paddedFloatToChar
-#' @importFrom reproducible normPath
-simFile <- function(name, path, time = NULL, ext = "rds") {
-  if (is.null(time))
-    file.path(normPath(path), paste0(name, ".", ext))
-  else {
-    file.path(normPath(path), paste0(name, "_", paddedFloatToChar(time, padL = 4), ".", ext))
-  }
-}

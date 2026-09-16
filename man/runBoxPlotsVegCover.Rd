@@ -16,5 +16,5 @@ runBoxPlotsVegCover(map, functionName, analysisGroups, dPath)
 \item{dPath}{Destination path for the resulting PNG files.}
 }
 \description{
-TODO: description needed
+Generate box and whisker plots for leading vegetation cover
 }

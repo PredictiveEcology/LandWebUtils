@@ -1,0 +1,277 @@
+utils::globalVariables(c(
+  "active", "id", "initialPixels", "numActive", "pixels", "pSpawnNewActive",
+  "size", "spreadProb", "state"
+))
+
+#' Core Burn function for Andison's LandMine Fire Module
+#'
+#' @description The main function for the Andison Fire Module. See details.
+#'
+#' @note The original version (`landmine_burn()`) is deprecated and should not be used.
+#'       Use `landmine_burn1()` instead.
+#'
+#' @param landscape      A `SpatRaster`. This only provides the extent and
+#'                       resolution for the fire spread algorithm.
+#'
+#' @param startCells     A numeric vector indicating the indices on the `landscape`
+#'                       where the fires will start with 100%% certainty.
+#' @param fireSizes      A numeric vector indicating the final size of each of the fires.
+#'                       Must be same length as `startCells`.
+#'
+#' @param nActiveCells1  A numeric vector of length 2. These are cutoffs above and
+#'                       below each of which different values of `spawnNewActive`
+#'                       are used. See details.
+#'
+#' @param spawnNewActive A numeric vector of length 4. These are the probabilities
+#'                       of creating spreading to 2 neighbours instead of the 1
+#'                       default neighbour, each time step.
+#'                       The 4 values are for 4 different fire size conditions. See details.
+#'
+#' @param maxRetriesPerID  Integer. Maximum number of retry attempts per firelet ID.
+#'
+#' @param sizeCutoffs    A numeric vector of length 2.
+#'                       These are 2 size (in hectares) thresholds that affect which
+#'                       `spawnNewActive` probabilities are used. See details.
+#'
+#' @param spreadProbRel  Relative probabilities, with non-flammable pixels `NA`: either a
+#'                       raster layer, or a numeric vector of length `terra::ncell(landscape)`.
+#'                       For `landmine_burn1()`, prefer the numeric vector, for the same
+#'                       reason as `spreadProb` (needs SpaDES.tools >= 2.1.2.9000).
+#'
+#' @param spreadProb     Spread probabilities, with non-flammable pixels `NA`: either a
+#'                       raster layer, or a numeric vector of length `terra::ncell(landscape)`.
+#'                       For `landmine_burn1()`, prefer the numeric vector: `spread2()`
+#'                       re-materialises a raster `spreadProb` on every spread step,
+#'                       which is O(ncell) per step.
+#'
+#' @param omitPixels     An optional vector of pixel IDs to omit from fire size calculations.
+#'                       Can be used if `spreadProb` or `spreadProbRel` do not designate
+#'                       non-flammable pixels as `NA`, to allow fires to move through these pixels,
+#'                       while excluding these pixels from burn area calculations.
+#'                       Useful in study areas with discontinuous fuels, which would otherwise
+#'                       result in fires getting 'stuck' too often, and not reach their target size.
+#'
+#' @details
+#' This algorithm is a modified contagious cellular automaton.
+#'
+#' @section Algorithm:
+#'
+#' \subsection{Core}{
+#' Each fire starts at a single pixel, `startCells` and will spread,
+#' i.e., visit and convert from a 0 to the fire id number.
+#' It will iteratively spread until the number of cells visited is equal to `floor(fireSizes)`.
+#' }
+#'
+#' \subsection{Adjustments due to current fire size and number of active pixels}{
+#' That can vary too, but it gets a bit complicated, so use that for now.
+#' Spawning probability was originally set at 13%, but created problems with very
+#' large and very small fires, so over time has been adjusted to vary depending on:
+#' a) number of active "firelets" (NF); and b) fire size (FS), such that:
+#' ```
+#'   - If nActiveCells1[1] <= NF <  nActiveCells1[2] and FS < sizeCutoffs[2] -> spawnNewActive[2];
+#'   - If                      NF >= nActiveCells1[2] and FS < sizeCutoffs[1] -> spawnNewActive[4];
+#'   - If                      NF <  nActiveCells1[2] and FS > sizeCutoffs[2] -> spawnNewActive[3];
+#'   - otherwise (including NF < nActiveCells1[1])                            -> spawnNewActive[1].
+#' ````
+#' These rules create more heterogeneity in the pattern of burning.
+#'
+#' Thresholds are given symbolically because the fitted values differ from the figures this
+#' documentation used to quote: `sizeCutoffs` is calibrated, and is currently 1629 / 52016 ha
+#' rather than the 8,000 / 20,000 originally described.
+#'
+#' The second rule uses `>=`: with `>`, the `NF == nActiveCells1[2]` case matched no rule.
+#'
+#' A gap remains, and is deliberately *not* patched silently: when `NF >= nActiveCells1[2]`
+#' and `FS >= sizeCutoffs[1]`, no rule applies and `spawnNewActive[1]` is used. The deprecated
+#' `landmine_burn()` set that region to zero instead, noting it is "undescribed in Andison" and
+#' that fires "look too circular" without it. Deciding between those requires a re-fit, so it
+#' is left as a documented open question.
+#' }
+#'
+#' \subsection{Fire jumping}{
+#' If the fire has not reached its target size, it will try to pick new neighbours among
+#' the 8 immediate neighbours up to 4 times.
+#' If it still did not find enough neighbours, then it will jump or "spot" up to 4 pixels away.
+#' It will then repeat the previous 2 stages again once (i.e., 4 neighbours, 1 jump, repeat),
+#' then it will stop, unable to achieve the desired `fireSize`.
+#' }
+#'
+#' @return A `data.table` with 4 columns (`initialPixels`, `pixels`, `state`, `order`).
+#'
+#' @export
+#' @rdname landmine-burn
+landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
+                           spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L, sizeCutoffs = c(8e3, 2e4),
+                           spreadProbRel = NA_real_, spreadProb = 0.77, omitPixels = NULL) {
+  stopifnot(is.integer(maxRetriesPerID))
+
+  ## convert to pixels
+  sizeCutoffs <- sizeCutoffs / (prod(res(landscape)) / 1e4)
+
+  a <- SpaDES.tools::spread2(
+    landscape,
+    start = startCells,
+    spreadProb = 1, ## initial step can have spreadProb 1 so guarantees something
+    asRaster = FALSE,
+    exactSize = fireSizes,
+    directions = 8,
+    iterations = 1,
+    maxRetriesPerID = maxRetriesPerID,
+    spreadProbRel = spreadProbRel,
+    neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1])
+    # skipChecks = FALSE
+  )
+
+  if (!is.null(omitPixels)) {
+    ## ensure non-flammable pixels omitted from fire size calculations
+    for (i in a[
+      pixels %in% omitPixels & state == "activeSource",
+    ]$initialPixels) {
+      if (length(i)) {
+        attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
+      }
+    }
+  }
+
+  whActive <- attr(a, "spreadState")$whActive
+  while (any(whActive)) {
+    set(a, NULL, "numActive", 0L)
+    a[whActive, numActive := .N, by = initialPixels]
+    b <- attr(a, "spreadState")$clusterDT
+    b <- a[b, mult = "last"]
+    set(
+      b,
+      NULL,
+      c("numRetries", "maxSize", "exactSize", "id", "state", "pixels"),
+      NULL
+    )
+    set(a, NULL, "numActive", NULL)
+    set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
+
+    b[
+      numActive >= nActiveCells1[1] &
+        numActive < nActiveCells1[2] &
+        size < sizeCutoffs[2],
+      pSpawnNewActive := spawnNewActive[2]
+    ]
+    ## NOTE: `>=`, not `>`. With `>`, `numActive == nActiveCells1[2]` matched none of the three
+    ## rules and silently fell through to `spawnNewActive[1]` -- the value intended for a
+    ## barely-active fire (`numActive < nActiveCells1[1]`). That applied the *highest* spawn
+    ## probability to one of the most active states. See NEWS.
+    b[
+      numActive >= nActiveCells1[2] & size < sizeCutoffs[1],
+      pSpawnNewActive := spawnNewActive[4]
+    ]
+    b[
+      numActive < nActiveCells1[2] & size > sizeCutoffs[2],
+      pSpawnNewActive := spawnNewActive[3]
+    ]
+    set(b, NULL, "pNoNewSpawn", 1 - b$pSpawnNewActive)
+    set(b, NULL, c("numActive"), NULL)
+
+    ## spawnNewActive must be joined sent in here as list...
+    b <- b[a]
+    a <- SpaDES.tools::spread2(
+      landscape,
+      start = a,
+      spreadProb = spreadProb,
+      asRaster = FALSE,
+      exactSize = attr(a, "spreadState")$clusterDT$maxSize,
+      directions = 8L,
+      iterations = 1L,
+      maxRetriesPerID = maxRetriesPerID,
+      spreadProbRel = spreadProbRel,
+      plot.it = FALSE,
+      neighProbs = data.table::transpose(as.list(b[
+        state == "activeSource",
+        c("pNoNewSpawn", "pSpawnNewActive")
+      ])),
+      skipChecks = TRUE
+    )
+
+    if (!is.null(omitPixels)) {
+      ## ensure non-flammable pixels omitted from fire size calculations
+      for (i in a[pixels %in% omitPixels & state == "activeSource", ]$initialPixels) {
+        if (length(i)) {
+          attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
+        }
+      }
+    }
+
+    set(a, NULL, "order", seq_len(NROW(a)))
+    whActive <- attr(a, "spreadState")$whActive
+  }
+
+  return(a)
+}
+
+## the original burn function below is no longer used:
+#' @rdname landmine-burn
+landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
+    spawnNewActive = c(0.46, 0.2, 0.26, 0.11), sizeCutoffs = c(8e3, 2e4), spreadProbRel = 0.23) {
+  .Deprecated("landmine_burn1", "LandWebUtils")
+
+  a <- SpaDES.tools::spread(
+    landscape,
+    loci = startCells,
+    spreadProbRel = spreadProbRel,
+    persistence = 0,
+    neighProbs = c(1 - spawnNewActive[1], spawnNewActive[1]),
+    iterations = 1,
+    mask = NULL,
+    maxSize = fireSizes,
+    directions = 8,
+    returnIndices = TRUE,
+    id = TRUE,
+    plot.it = FALSE,
+    exactSizes = TRUE
+  )
+
+  while (sum(a$active) > 0) {
+    b <- a[, list(numActive = sum(active), size = .N), by = id]
+    ## This is undescribed in Andison -- NF >36 & FS >8,000 ha --
+    ## They look too circular, without this, so make this zero, no new spawn
+    set(b, NULL, "pSpawnNewActive", 0)
+    # set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
+    b[numActive < nActiveCells1[1], pSpawnNewActive := spawnNewActive[1]]
+    b[
+      numActive >= nActiveCells1[1] &
+        numActive < nActiveCells1[2] &
+        size < sizeCutoffs[2],
+      pSpawnNewActive := spawnNewActive[2]
+    ]
+    b[
+      numActive > nActiveCells1[2] & size < sizeCutoffs[1],
+      pSpawnNewActive := spawnNewActive[4]
+    ]
+    b[
+      numActive < nActiveCells1[2] & size > sizeCutoffs[2],
+      pSpawnNewActive := spawnNewActive[3]
+    ]
+    set(b, NULL, "pNoNewSpawn", 1 - b$pSpawnNewActive)
+
+    ## spawnNewActive must be joined sent in here as list...
+    b <- b[a]
+    a <- SpaDES.tools::spread(
+      landscape,
+      spreadProbRel = spreadProbRel,
+      spreadProb = spreadProb,
+      spreadState = a,
+      persistence = 0,
+      neighProbs = transpose(as.list(b[
+        active == TRUE,
+        c("pNoNewSpawn", "pSpawnNewActive")
+      ])),
+      iterations = 1,
+      quick = TRUE,
+      mask = NULL,
+      maxSize = fireSizes,
+      directions = 8,
+      returnIndices = TRUE,
+      id = TRUE,
+      plot.it = FALSE,
+      exactSizes = TRUE
+    )
+  }
+  return(a)
+}

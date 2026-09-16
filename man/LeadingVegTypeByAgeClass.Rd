@@ -16,13 +16,12 @@ LeadingVegTypeByAgeClass(
 }
 \arguments{
 \item{tsf}{A single filename, relative or absolute, pointing to a Time Since Fire raster.
-Can be any format that \code{raster} can use.}
+Can be any format that \code{terra} can use.}
 
 \item{vtm}{A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
-Can be any format that \code{raster} can use.}
+Can be any format that \code{terra} can use.}
 
-\item{poly}{A single \code{SpatialPolygonsDataFrame} object or a factor \code{RasterLayer}.
-This layer MUST have a column labelled \code{shinyLabel}}
+\item{poly}{A single \code{sf} object or a factor \code{SpatRaster}.}
 
 \item{ageClassCutOffs}{A numeric vector with the endpoints for the \code{ageClasses}.
 Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.}
@@ -30,13 +29,13 @@ Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.}
 \item{ageClasses}{A character vector with labels for age classes to bin the \code{tsf} times,
 e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.}
 
-\item{sppEquivCol}{TODO: description needed}
+\item{sppEquivCol}{Character giving the column name to use in \code{sppEquiv}.}
 
-\item{sppEquiv}{TODO: description needed}
+\item{sppEquiv}{Species equivalency table, e.g., derived from \code{LandR::sppEquivalencies_CA}.}
 }
 \value{
 A \code{data.table} with proportion of the pixels in each vegetation class,
-        for each given age class within each polygon.
+for each given age class within each polygon.
 }
 \description{
 This function is recursive.

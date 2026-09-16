@@ -13,27 +13,36 @@ LargePatches(
   ageClassCutOffs,
   ageClasses,
   sppEquivCol,
-  sppEquiv
+  sppEquiv,
+  crop2poly = FALSE
 )
 }
 \arguments{
-\item{tsf}{TODO: description needed}
+\item{tsf}{A single filename, relative or absolute, pointing to a Time Since Fire raster.
+Can be any format that \code{terra} can use.}
 
-\item{vtm}{TODO: description needed}
+\item{vtm}{A single filename, relative or absolute, pointing to a Vegetation Type Map raster.
+Can be any format that \code{terra} can use.}
 
-\item{poly}{TODO: description needed}
+\item{poly}{A single \code{sf} object or a factor \code{SpatRaster}.
+This layer MUST have a column labelled \code{shinyLabel}}
 
 \item{labelColumn}{TODO: description needed}
 
 \item{id}{TODO: description needed}
 
-\item{ageClassCutOffs}{TODO: description needed}
+\item{ageClassCutOffs}{A numeric vector with the endpoints for the \code{ageClasses}.
+Should be \code{length(ageClasses) + 1}. See \code{.ageClassCutOffs}.}
 
-\item{ageClasses}{TODO: description needed}
+\item{ageClasses}{A character vector with labels for age classes to bin the \code{tsf} times,
+e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.}
 
-\item{sppEquivCol}{TODO: description needed}
+\item{sppEquivCol}{Character giving the column name to use in \code{sppEquiv}.}
 
-\item{sppEquiv}{TODO: description needed}
+\item{sppEquiv}{Species equivalency table, e.g., derived from \code{LandR::sppEquivalencies_CA}.}
+
+\item{crop2poly}{logical indicating whether to crop/mask \code{vtm} and \code{tsf}
+rasters to \code{poly}. Default \code{FALSE} for backwards compatibility.}
 }
 \description{
 TODO: needs description
