@@ -39,6 +39,42 @@ landmine_known_species <- function() {
   )
 }
 
+#' LandMine's rate-of-spread table
+#'
+#' Rates of spread by stand age class and fuel type, from Table 3.2 of Andison
+#' (1996): the `ROSTable` that [landmine_fire_ros()] joins onto each pixel.
+#'
+#' @details
+#' Andison's `water`, `non-productive brush` and `non-productive black spruce`
+#' classes are omitted. His `young mixed wood = 6` is a typo for
+#' `young hardwood = 6`, and is entered as `immature_young` `decid`.
+#'
+#' `LandWeb_preamble` and `LandMine` each defined this table inline; both now call
+#' this. The table is the same for the `"default"` and `"burny"` `ROStype`s, which
+#' differ only in whether non-flammable pixels can spread fire.
+#'
+#' @return A `data.table` with columns `age` (age class), `leading` (fuel type)
+#'   and `ros` (integer rate of spread), one row per age class and fuel type.
+#'
+#' @seealso [landmine_known_species()] for the species behind each fuel type.
+#'
+#' @export
+#' @examples
+#' landmine_ros_table()
+landmine_ros_table <- function() {
+  data.table::data.table(
+    age = c(
+      "immature_young", "mature", "immature_young", "immature", "mature", "immature_young",
+      "immature_young", "mature", "young", "mature", "mature"
+    ),
+    leading = c(
+      "decid", "decid", "mixed", "pine", "mixed", "softwood",
+      "spruce", "pine", "pine", "softwood", "spruce"
+    ),
+    ros = c(6L, 9L, 12L, 14L, 17L, 18L, 20L, 21L, 22L, 27L, 30L)
+  )
+}
+
 #' Build the pixel-value to rate-of-spread lookup
 #'
 #' Maps each raster attribute table (RAT) entry of a vegetation type map onto a

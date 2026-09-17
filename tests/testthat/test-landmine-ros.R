@@ -175,6 +175,19 @@ test_that("both larch and poplar are 'decid', and all three firs are 'softwood'"
   expect_equal(unname(ks[c("Abie_spp", "Pseu_men", "Tsug_het")]), rep("softwood", 3L))
 })
 
+## ---- the ROSTable -------------------------------------------------------------------------------
+
+test_that("landmine_ros_table() is the table LandWeb_preamble and LandMine defined inline", {
+  ## `.ros_table()` is that inline definition, verbatim
+  expect_identical(as.data.frame(landmine_ros_table()), as.data.frame(.ros_table()))
+})
+
+test_that("landmine_ros_table() has one rate per age class and fuel type, for every fuel type", {
+  tbl <- landmine_ros_table()
+  expect_identical(anyDuplicated(tbl, by = c("age", "leading")), 0L)
+  expect_setequal(tbl$leading, c(unique(unname(landmine_known_species())), "mixed"))
+})
+
 ## ---- the core assignment ------------------------------------------------------------------------
 
 test_that("each vegetation type gets its own table rate at each age class", {
