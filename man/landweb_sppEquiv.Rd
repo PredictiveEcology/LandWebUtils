@@ -12,7 +12,8 @@ column, normally \code{LandR::sppEquivalencies_CA}. It is not modified.}
 }
 \value{
 A copy of \code{sppEquiv} restricted to the rows that map to a LandWeb
-species group, with a new \code{LandWeb} column.
+species group, with a new \code{LandWeb} column. It is an error for no row to
+map (see \code{\link[=landweb_require_species]{landweb_require_species()}}).
 }
 \description{
 Adds a \code{LandWeb} column to a \code{LandR}-style species equivalency table, giving

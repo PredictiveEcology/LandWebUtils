@@ -1,3 +1,8 @@
+# LandWebUtils 1.0.3.9037
+
+* new `landweb_require_species()`: stops when a species input handed between pipeline stages (`sppEquiv`, `speciesLayers`, `cohortData`) is empty, and otherwise returns it unchanged so it can wrap the reference inline. The upstream `Biomass_*` modules and `LandR` now treat a study area with no tree species as valid, skipping their work without error, so a broken species mapping would make a LandWeb run "succeed" with no vegetation dynamics.
+* `landweb_sppEquiv()` now errors when no row of the table maps to a LandWeb species group, instead of returning an empty table.
+
 # LandWebUtils 1.0.3.9036
 
 * new `landmine_ros_table()`: Andison's (1996) Table 3.2 rates of spread by age class and fuel type. `LandWeb_preamble` and `LandMine` each defined it inline; both now call this. It is tested identical to the inline table and to cover every fuel type `landmine_known_species()` produces, plus `mixed`.

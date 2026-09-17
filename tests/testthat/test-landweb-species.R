@@ -175,5 +175,26 @@ test_that("landweb_sppEquiv() rejects tables it cannot map", {
   expect_snapshot(error = TRUE, {
     landweb_sppEquiv(as.data.frame(lr_sppEquiv()))
     landweb_sppEquiv(lr_sppEquiv()[, !"SCANFI"])
+    landweb_sppEquiv(lr_sppEquiv()[!SCANFI %in% names(landweb_species_map())])
+  })
+})
+
+## landweb_require_species ---------------------------------------------------------------------------
+
+test_that("landweb_require_species() returns non-empty inputs unchanged", {
+  dt <- data.table::data.table(species = c("Pice_mar", "Popu_spp"))
+  r <- terra::rast(nrows = 2, ncols = 2, nlyrs = 2, vals = 1:8)
+  lst <- list(speciesLayers = r, other = NULL)
+  expect_identical(landweb_require_species(dt, "cohortData"), dt)
+  expect_identical(landweb_require_species(r, "speciesLayers"), r)
+  expect_identical(landweb_require_species(lst, "speciesLayers"), lst)
+})
+
+test_that("landweb_require_species() stops on an empty species input", {
+  expect_snapshot(error = TRUE, {
+    landweb_require_species(data.table::data.table(species = character(0)), "cohortData")
+    landweb_require_species(NULL, "sppEquiv")
+    landweb_require_species(list(speciesLayers = NULL), "speciesLayers")
+    landweb_require_species(list(other = 1), "speciesLayers")
   })
 })
