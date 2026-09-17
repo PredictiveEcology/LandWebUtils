@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9035</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9036</span>
       </span>
     </div>
 
@@ -53,6 +53,12 @@
       <small>Source: <a href="https://github.com/PredictiveEcology/LandWebUtils/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="1.0.3.9036" id="landwebutils-1039036">LandWebUtils 1.0.3.9036<a class="anchor" aria-label="anchor" href="#landwebutils-1039036"></a></h2>
+<ul><li>new <code><a href="../reference/landmine_ros_table.html">landmine_ros_table()</a></code>: Andison’s (1996) Table 3.2 rates of spread by age class and fuel type. <code>LandWeb_preamble</code> and <code>LandMine</code> each defined it inline; both now call this. It is tested identical to the inline table and to cover every fuel type <code><a href="../reference/landmine_known_species.html">landmine_known_species()</a></code> produces, plus <code>mixed</code>.</li>
+<li>new <code><a href="../reference/landweb_species_map.html">landweb_species_map()</a></code>: the single definition of which SCANFI species merge into each of LandWeb’s seven species groups, previously written out inline in <code>LandWeb_preamble</code> and again by hand in the LandWeb project’s SCANFI cover summary. A test checks that every group has a LandMine fuel type.</li>
+<li>new <code><a href="../reference/landweb_sppEquiv.html">landweb_sppEquiv()</a></code>, promoted from <code>LandWeb_preamble</code>‘s <code>InitSpecies()</code>: adds the <code>LandWeb</code> column to <code>LandR::sppEquivalencies_CA</code> and relabels the groups that merge species. It is tested identical to the module’s inline code on LandR’s real table, kept as a fixture so <code>LandR</code> stays out of the package’s dependencies, with one deliberate change: <strong><code>Abie_spp</code> is now labelled “Fir”</strong>. It had no group label, so each of its rows kept its own species’ name, and <code>Biomass_core</code>’s leading-vegetation maps, which read a group’s label from its first row, called the whole group (subalpine fir, western redcedar and western hemlock included) “Balsam fir”. Unlike the module, it copies its input rather than modifying the lazy-loaded <code>LandR</code> table by reference.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.3.9035" id="landwebutils-1039035">LandWebUtils 1.0.3.9035<a class="anchor" aria-label="anchor" href="#landwebutils-1039035"></a></h2>
 <ul><li>
