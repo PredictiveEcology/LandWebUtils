@@ -21,11 +21,15 @@ merge several species.
 }
 \details{
 Groups that merge species take a group label in \code{EN_generic_short},
-\code{EN_generic_full} and \code{Leading}: \code{Lari_spp}, \code{Pice_gla}, \code{Pinu_spp},
-\code{Popu_spp} and \code{Pseu_men}. \code{Pice_mar} holds one species, so its row keeps
-its own labels. \code{Abie_spp} rows also keep their own labels, so that group
-carries four different names (balsam fir, subalpine fir, western redcedar and
-western hemlock).
+\code{EN_generic_full} and \code{Leading}: \code{Abie_spp}, \code{Lari_spp}, \code{Pice_gla},
+\code{Pinu_spp}, \code{Popu_spp} and \code{Pseu_men}. \code{Abie_spp} is labelled \code{"Fir"},
+although western redcedar and western hemlock are merged into it too (see
+\code{\link[=landweb_species_map]{landweb_species_map()}}). \code{Pice_mar} holds one species, so its row keeps its
+own labels.
+
+Consumers such as \code{Biomass_core}'s leading-vegetation maps look a group's
+label up from its first row, so a group without a label would be named after
+whichever of its species comes first.
 }
 \seealso{
 \code{\link[=landweb_species_map]{landweb_species_map()}}

@@ -62,11 +62,15 @@ landweb_species_map <- function() {
 #'
 #' @details
 #' Groups that merge species take a group label in `EN_generic_short`,
-#' `EN_generic_full` and `Leading`: `Lari_spp`, `Pice_gla`, `Pinu_spp`,
-#' `Popu_spp` and `Pseu_men`. `Pice_mar` holds one species, so its row keeps
-#' its own labels. `Abie_spp` rows also keep their own labels, so that group
-#' carries four different names (balsam fir, subalpine fir, western redcedar and
-#' western hemlock).
+#' `EN_generic_full` and `Leading`: `Abie_spp`, `Lari_spp`, `Pice_gla`,
+#' `Pinu_spp`, `Popu_spp` and `Pseu_men`. `Abie_spp` is labelled `"Fir"`,
+#' although western redcedar and western hemlock are merged into it too (see
+#' [landweb_species_map()]). `Pice_mar` holds one species, so its row keeps its
+#' own labels.
+#'
+#' Consumers such as `Biomass_core`'s leading-vegetation maps look a group's
+#' label up from its first row, so a group without a label would be named after
+#' whichever of its species comes first.
 #'
 #' @param sppEquiv `data.table` species equivalency table with a `SCANFI`
 #'   column, normally `LandR::sppEquivalencies_CA`. It is not modified.
@@ -103,6 +107,11 @@ landweb_sppEquiv <- function(sppEquiv) {
 ## Labels for the LandWeb groups that merge several species.
 .landweb_group_labels <- function() {
   list(
+    Abie_spp = list(
+      EN_generic_full = "Fir",
+      EN_generic_short = "Fir",
+      Leading = "Fir leading"
+    ),
     Lari_spp = list(
       EN_generic_full = "Western Larch & Tamarack",
       EN_generic_short = "Larch & Tamarack",

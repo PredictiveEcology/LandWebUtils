@@ -109,10 +109,17 @@ test_that("every mapped SCANFI code exists in LandR's species table", {
 
 ## landweb_sppEquiv ---------------------------------------------------------------------------------
 
-test_that("landweb_sppEquiv() reproduces the preamble's inline table exactly", {
+test_that("landweb_sppEquiv() reproduces the preamble's inline table, plus the Abie_spp label", {
+  expected <- sppEquiv_inline_preamble_1.0.7(lr_sppEquiv())
+  ## the one deliberate change: 1.0.7 gave Abie_spp no group label
+  expected[LandWeb == "Abie_spp", `:=`(
+    EN_generic_full = "Fir",
+    EN_generic_short = "Fir",
+    Leading = "Fir leading"
+  )]
   expect_identical(
     as.data.frame(landweb_sppEquiv(lr_sppEquiv())),
-    as.data.frame(sppEquiv_inline_preamble_1.0.7(lr_sppEquiv()))
+    as.data.frame(expected)
   )
 })
 
@@ -124,7 +131,7 @@ test_that("landweb_sppEquiv() keeps one row per mapped species and drops the res
 
 test_that("landweb_sppEquiv() gives each merged group a single label", {
   out <- landweb_sppEquiv(lr_sppEquiv())
-  merged <- out[LandWeb %in% c("Lari_spp", "Pice_gla", "Pinu_spp", "Popu_spp", "Pseu_men")]
+  merged <- out[LandWeb %in% c("Abie_spp", "Lari_spp", "Pice_gla", "Pinu_spp", "Popu_spp", "Pseu_men")]
   nLabels <- merged[, .(
     short = data.table::uniqueN(EN_generic_short),
     full = data.table::uniqueN(EN_generic_full),
@@ -134,12 +141,18 @@ test_that("landweb_sppEquiv() gives each merged group a single label", {
   expect_identical(out[LandWeb == "Pinu_spp", unique(Leading)], "Pine leading")
 })
 
-test_that("landweb_sppEquiv() leaves Abie_spp with its species' own labels (pinned, not fixed)", {
+test_that("landweb_sppEquiv() labels Abie_spp as fir, cedar and hemlock included", {
   out <- landweb_sppEquiv(lr_sppEquiv())
-  expect_setequal(
-    out[LandWeb == "Abie_spp", EN_generic_full],
-    c("Balsam fir", "Subalpine fir", "Western redcedar", "Western hemlock")
-  )
+  expect_setequal(out[LandWeb == "Abie_spp", SCANFI], c("ABIE_BAL", "ABIE_LAS", "THUJ_PLI", "TSUG_HET"))
+  expect_identical(out[LandWeb == "Abie_spp", unique(Leading)], "Fir leading")
+})
+
+test_that("every group label maps back to exactly one LandWeb group", {
+  out <- landweb_sppEquiv(lr_sppEquiv())
+  for (col in c("EN_generic_short", "EN_generic_full", "Leading")) {
+    groupsPerLabel <- out[, .(n = data.table::uniqueN(LandWeb)), by = col]$n
+    expect_identical(unique(groupsPerLabel), 1L)
+  }
 })
 
 test_that("landweb_sppEquiv() does not modify its input", {
