@@ -76,7 +76,8 @@ landweb_species_map <- function() {
 #'   column, normally `LandR::sppEquivalencies_CA`. It is not modified.
 #'
 #' @return A copy of `sppEquiv` restricted to the rows that map to a LandWeb
-#'   species group, with a new `LandWeb` column.
+#'   species group, with a new `LandWeb` column. It is an error for no row to
+#'   map (see [landweb_require_species()]).
 #'
 #' @seealso [landweb_species_map()]
 #'
@@ -101,7 +102,8 @@ landweb_sppEquiv <- function(sppEquiv) {
     }
   }
 
-  out[!is.na(out[["LandWeb"]]), ]
+  out <- out[!is.na(out[["LandWeb"]]), ]
+  landweb_require_species(out, "sppEquiv")
 }
 
 ## Labels for the LandWeb groups that merge several species.
@@ -138,4 +140,44 @@ landweb_sppEquiv <- function(sppEquiv) {
       Leading = "Douglas fir leading"
     )
   )
+}
+
+#' Stop when a species input is empty
+#'
+#' Checks that a species input handed between LandWeb pipeline stages is not
+#' empty, and returns it unchanged so the check can wrap the reference inline.
+#'
+#' @details
+#' The upstream `Biomass_*` modules and `LandR` treat a study area with no tree
+#' species as valid: an empty species table, `NULL` species layers or an empty
+#' `cohortData` make them skip their work and finish without error. For
+#' LandWeb every study area is forested, so an empty species input can only
+#' mean a broken species mapping, and a run would otherwise "succeed" with no
+#' vegetation dynamics. This turns that into an error at the stage boundary.
+#'
+#' @param x the input to check: a `data.frame` (e.g. `sppEquiv`, `cohortData`),
+#'   a `SpatRaster` (e.g. `speciesLayers`), or a named list holding one of those
+#'   as element `name` (e.g. the result of `SpaDES.targets::sim_objects()`).
+#' @param name character; the object's name, used to find it in a list and in
+#'   the error message.
+#'
+#' @return `x`, unchanged.
+#'
+#' @export
+#' @examples
+#' landweb_require_species(data.frame(species = "Pice_mar"), "sppEquiv")
+landweb_require_species <- function(x, name) {
+  obj <- if (is.list(x) && !is.data.frame(x)) x[[name]] else x
+  empty <- is.null(obj) ||
+    (inherits(obj, "SpatRaster") && terra::nlyr(obj) == 0L) ||
+    (is.data.frame(obj) && nrow(obj) == 0L)
+  if (empty) {
+    stop(
+      "`", name, "` is empty: no tree species reached this stage. LandWeb study areas are ",
+      "forested, so this indicates a broken species mapping (e.g. `sppEquiv`/`sppEquivCol`), ",
+      "which the upstream modules would otherwise treat as a valid no-species run.",
+      call. = FALSE
+    )
+  }
+  x
 }
