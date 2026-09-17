@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9036</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9037</span>
       </span>
     </div>
 
@@ -53,6 +53,12 @@
       <small>Source: <a href="https://github.com/PredictiveEcology/LandWebUtils/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="1.0.3.9037" id="landwebutils-1039037">LandWebUtils 1.0.3.9037<a class="anchor" aria-label="anchor" href="#landwebutils-1039037"></a></h2>
+<ul><li>new <code><a href="../reference/landweb_require_species.html">landweb_require_species()</a></code>: stops when a species input handed between pipeline stages (<code>sppEquiv</code>, <code>speciesLayers</code>, <code>cohortData</code>) is empty, and otherwise returns it unchanged so it can wrap the reference inline. The upstream <code>Biomass_*</code> modules and <code>LandR</code> now treat a study area with no tree species as valid, skipping their work without error, so a broken species mapping would make a LandWeb run “succeed” with no vegetation dynamics.</li>
+<li>
+<code><a href="../reference/landweb_sppEquiv.html">landweb_sppEquiv()</a></code> now errors when no row of the table maps to a LandWeb species group, instead of returning an empty table.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.3.9036" id="landwebutils-1039036">LandWebUtils 1.0.3.9036<a class="anchor" aria-label="anchor" href="#landwebutils-1039036"></a></h2>
 <ul><li>new <code><a href="../reference/landmine_ros_table.html">landmine_ros_table()</a></code>: Andison’s (1996) Table 3.2 rates of spread by age class and fuel type. <code>LandWeb_preamble</code> and <code>LandMine</code> each defined it inline; both now call this. It is tested identical to the inline table and to cover every fuel type <code><a href="../reference/landmine_known_species.html">landmine_known_species()</a></code> produces, plus <code>mixed</code>.</li>
