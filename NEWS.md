@@ -1,3 +1,9 @@
+# LandWebUtils 1.0.3.9036
+
+* new `landmine_ros_table()`: Andison's (1996) Table 3.2 rates of spread by age class and fuel type. `LandWeb_preamble` and `LandMine` each defined it inline; both now call this. It is tested identical to the inline table and to cover every fuel type `landmine_known_species()` produces, plus `mixed`.
+* new `landweb_species_map()`: the single definition of which SCANFI species merge into each of LandWeb's seven species groups, previously written out inline in `LandWeb_preamble` and again by hand in the LandWeb project's SCANFI cover summary. A test checks that every group has a LandMine fuel type.
+* new `landweb_sppEquiv()`, promoted from `LandWeb_preamble`'s `InitSpecies()`: adds the `LandWeb` column to `LandR::sppEquivalencies_CA` and relabels the groups that merge species. It is tested identical to the module's inline code on LandR's real table, kept as a fixture so `LandR` stays out of the package's dependencies. Unlike the module, it copies its input rather than modifying the lazy-loaded `LandR` table by reference. `Abie_spp` still carries four species' labels (balsam fir, subalpine fir, western redcedar and western hemlock), since no group label was ever defined for it; that is pinned by a test rather than changed.
+
 # LandWebUtils 1.0.3.9035
 
 * **`polygonClean(type = "LandWeb")` now keeps fire-return intervals equal to `minFRI`**, dropping only those strictly below it, as `.cleanLandWebStudyArea()` has always documented. It used `<=`, which at the default of 40 also dropped every FRI-40 polygon -- 27 of them, 91,797 km2 of LTHFC v10, much of it NW Alberta. LandWeb v3 passes `minFRI = 25` and v10 has no FRI-25 polygons, so v3 runs are unaffected; anything using the default gains those polygons. These are the function's first tests.
