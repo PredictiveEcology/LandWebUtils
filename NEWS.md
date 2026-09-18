@@ -1,3 +1,9 @@
+# LandWebUtils 1.0.3.9038
+
+* `landmine_reburn_budget()` now threads fire identity: when `tooSmallByPoly` carries `fireID`, `attempt` and `targetSize`, they are returned as `fireIDs`/`attempts`/`targetSizes`, positionally paired with `fireSizesInPixels` by the same single `na.omit()`. A caller supplying no identity columns gets `NULL` and is unaffected.
+* new `landmine_attach_identity()`: joins fire identity onto the `clusterDT` a burn returns, keyed on the start cell (`spread2()` does not return clusters in the order start cells were handed to it). A burned cluster with no ignition record is an error rather than a silent `NA`, which would corrupt per-fire attainment while leaving `sum(size) == sum(maxSize)` intact.
+* new `landmine_fire_attainment()`: collapses a `fireSizes` table to one row per fire -- `burned`, `target`, `attempts`, `reached`. This is the only way to see a fire that fell short: `size == maxSize` holds on every recorded row by construction, so a shortfall cannot appear in a row-wise comparison. `by` must name every identifying column (`fireID` is issued per burn year, so a multi-year table needs `c("year", "fireID")`).
+
 # LandWebUtils 1.0.3.9037
 
 * new `landweb_require_species()`: stops when a species input handed between pipeline stages (`sppEquiv`, `speciesLayers`, `cohortData`) is empty, and otherwise returns it unchanged so it can wrap the reference inline. The upstream `Biomass_*` modules and `LandR` now treat a study area with no tree species as valid, skipping their work without error, so a broken species mapping would make a LandWeb run "succeed" with no vegetation dynamics.

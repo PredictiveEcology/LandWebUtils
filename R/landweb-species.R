@@ -37,7 +37,7 @@ landweb_species_map <- function() {
     LARI_LAR = "Lari_spp",
     LARI_OCC = "Lari_spp",
     PICE_ENG = "Pice_gla",
-    PICE_ENG_GLA = "Pice_gla", ## TODO: confirm merge with Pice_gla
+    PICE_ENG_GLA = "Pice_gla",
     PICE_GLA = "Pice_gla",
     PICE_MAR = "Pice_mar",
     PINU_BAN = "Pinu_spp",

@@ -335,7 +335,9 @@ landmine_ignition_budget <- function(fireReturnInterval, flammableMap, kBest,
 #' sizes, for both reburn phases.
 #'
 #' @param tooSmallByPoly a `data.table` of the fires that did not reach their target, joined to
-#'   their ignition zone: needs `polygonNumeric`, `maxSize`, and (optionally) `pixel`.
+#'   their ignition zone: needs `polygonNumeric`, `maxSize`, and (optionally) `pixel`. May also
+#'   carry the fire-identity columns `fireID`, `attempt` and `targetSize`, which are threaded
+#'   through to the returned vectors so a re-ignited fire stays linked to the one it replaces.
 #' @param friByPolygon the per-zone FRI vector from [landmine_ignition_budget()] -- ascending,
 #'   with a trailing `NA`. Its order **defines** the output order.
 #' @param remainingSize optional numeric; phase 2 passes the *remaining shortfall* per fire, which
@@ -352,6 +354,8 @@ landmine_ignition_budget <- function(fireReturnInterval, flammableMap, kBest,
 #'   (`maxSize` is `NA` where the join found no match) and the `NA`-FRI row, leaving
 #'   `fireSizesInPixels` paired **positionally** with the start cells the caller then draws
 #'   `by = polygonNumeric`. It would also silently drop a row if any other column went `NA`.
+#'   The identity vectors come from that **same** `na.omit()`, so they cannot drift out of step
+#'   with the sizes -- but an `NA` in any identity column would drop that fire entirely.
 #' * `remainingSize` is assigned **by position** onto the too-small rows; both descend from the
 #'   same `fa[tooSmall]` subset, so they agree -- but nothing enforces it.
 #'
@@ -361,8 +365,9 @@ landmine_ignition_budget <- function(fireReturnInterval, flammableMap, kBest,
 #' Unlike the inline code this replaces, the input table is **not** modified by reference.
 #'
 #' @return A list with `polysNeedMoreFires` (the joined table), `numFiresThisPeriod` (fires still
-#'   needed per zone, in `friByPolygon` order) and `fireSizesInPixels` (target sizes, positionally
-#'   paired with the start cells to be drawn).
+#'   needed per zone, in `friByPolygon` order), `fireSizesInPixels` (target sizes, positionally
+#'   paired with the start cells to be drawn), and `fireIDs`/`attempts`/`targetSizes` -- the
+#'   identity of those same fires, paired the same way, or `NULL` when the input carried none.
 #'
 #' @export
 #' @importFrom data.table as.data.table copy set
@@ -380,11 +385,115 @@ landmine_reburn_budget <- function(tooSmallByPoly, friByPolygon, remainingSize =
     data.table::set(out, NULL, "pixel", NULL)
   }
 
+  ## ONE na.omit feeds every positionally-paired output, so fire identity cannot drift out of
+  ## step with fire size. `$` yields NULL for an absent column, so a caller that supplies no
+  ## identity columns gets NULL back and is unaffected.
+  keep <- stats::na.omit(out)
+
   list(
     polysNeedMoreFires = out,
     numFiresThisPeriod = out[, N[1], by = "polygonNumeric"]$V1,
-    fireSizesInPixels = stats::na.omit(out)$maxSize
+    fireSizesInPixels = keep$maxSize,
+    fireIDs = keep$fireID,
+    attempts = keep$attempt,
+    targetSizes = keep$targetSize
   )
+}
+
+#' Attach fire identity to a burn result
+#'
+#' Joins `fireID`/`attempt`/`targetSize` onto the cluster table `spread2()` returns, keyed on
+#' the fire's start cell.
+#'
+#' @param fa the `clusterDT` from a burn -- needs `initialPixels`.
+#' @param idDT a `data.table` with `initialPixels`, `fireID`, `attempt` and `targetSize`, one
+#'   row per fire ignited this round.
+#'
+#' @details
+#' `spread2()` returns clusters in its own order, which is not the order start cells were
+#' handed to it, so identity must be joined rather than assigned by position. Row order of
+#' `fa` is preserved.
+#'
+#' Every burned cluster must match an ignited fire. An unmatched one would carry `NA` identity
+#' into `fireSizes`, silently corrupting per-fire attainment while leaving
+#' `sum(size) == sum(maxSize)` intact -- so nothing downstream would catch it. It is an error.
+#'
+#' @return `fa` with `fireID`, `attempt` and `targetSize` added.
+#'
+#' @export
+#' @importFrom data.table as.data.table copy
+#' @examples
+#' fa <- data.table::data.table(initialPixels = c(12L, 11L), size = c(10, 500))
+#' idDT <- data.table::data.table(
+#'   initialPixels = c(11L, 12L), fireID = c(7L, 3L),
+#'   attempt = c(1L, 2L), targetSize = c(500, 40)
+#' )
+#' landmine_attach_identity(fa, idDT)
+landmine_attach_identity <- function(fa, idDT) {
+  out <- data.table::copy(data.table::as.data.table(fa))
+  ids <- data.table::as.data.table(idDT)
+
+  cols <- c("fireID", "attempt", "targetSize")
+  out[ids, on = "initialPixels", (cols) := mget(paste0("i.", cols))]
+
+  orphan <- out[is.na(fireID), unique(initialPixels)]
+  if (length(orphan)) {
+    stop(
+      "burned cluster(s) with no ignition record, start cell(s): ",
+      paste(orphan, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  out[]
+}
+
+#' Per-fire target attainment from a LandMine `fireSizes` table
+#'
+#' Collapses the per-burn rows to one row per fire and reports whether that fire ever
+#' reached the target it was ignited for.
+#'
+#' @param fireSizes a `data.table` (or coercible) with `fireID`, `attempt`, `targetSize`,
+#'   `size` and `maxSize` -- i.e. `sim$fireSizes` from LandMine, row-bound across years.
+#' @param by character; the columns that identify one fire. `fireID` is issued per burn YEAR,
+#'   so it is unique only within a year: a table spanning years needs `c("year", "fireID")`,
+#'   and one spanning replicates `c("rep", "year", "fireID")`. Grouping too coarsely merges
+#'   unrelated fires and reports a target no single fire ever had.
+#'
+#' @details
+#' `size == maxSize` holds for **every** row by construction, because a fire that stalls is
+#' either discarded and retried at full target, or has its `maxSize` rewritten to the area
+#' that did burn while the shortfall is re-issued as new fires. So `maxSize` cannot express a
+#' shortfall, and attainment is only meaningful per `fireID` against `targetSize`: a fire is
+#' short only when it exhausted `maxReburns[2]` and was abandoned.
+#'
+#' `attempts` is the highest attempt index reached, so it answers "did this fire reach its
+#' target on the first try, or the fourth?".
+#'
+#' @return A `data.table` keyed by `fireID` with `burned` (pixels), `target` (pixels),
+#'   `attempts` and `reached`.
+#'
+#' @export
+#' @importFrom data.table as.data.table
+#' @examples
+#' fs <- data.table::data.table(
+#'   fireID = c(1L, 2L, 2L), attempt = c(1L, 3L, 4L),
+#'   targetSize = c(100, 200, 200), size = c(100, 60, 90), maxSize = c(100, 60, 90)
+#' )
+#' landmine_fire_attainment(fs)
+landmine_fire_attainment <- function(fireSizes, by = "fireID") {
+  dt <- data.table::as.data.table(fireSizes)
+  missing <- setdiff(c(by, "attempt", "targetSize", "size"), names(dt))
+  if (length(missing)) {
+    stop("`fireSizes` is missing: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  out <- dt[, list(
+    burned = sum(size),
+    target = targetSize[1L],
+    attempts = max(attempt)
+  ), by = by]
+  out[, reached := burned >= target]
+  out[]
 }
 
 #' Fit the truncated-Pareto shape for the fire-size distribution

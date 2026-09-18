@@ -8,7 +8,9 @@ landmine_reburn_budget(tooSmallByPoly, friByPolygon, remainingSize = NULL)
 }
 \arguments{
 \item{tooSmallByPoly}{a \code{data.table} of the fires that did not reach their target, joined to
-their ignition zone: needs \code{polygonNumeric}, \code{maxSize}, and (optionally) \code{pixel}.}
+their ignition zone: needs \code{polygonNumeric}, \code{maxSize}, and (optionally) \code{pixel}. May also
+carry the fire-identity columns \code{fireID}, \code{attempt} and \code{targetSize}, which are threaded
+through to the returned vectors so a re-ignited fire stays linked to the one it replaces.}
 
 \item{friByPolygon}{the per-zone FRI vector from \code{\link[=landmine_ignition_budget]{landmine_ignition_budget()}} -- ascending,
 with a trailing \code{NA}. Its order \strong{defines} the output order.}
@@ -18,8 +20,9 @@ replaces \code{maxSize}. Phase 1 leaves it \code{NULL}, keeping each fire's full
 }
 \value{
 A list with \code{polysNeedMoreFires} (the joined table), \code{numFiresThisPeriod} (fires still
-needed per zone, in \code{friByPolygon} order) and \code{fireSizesInPixels} (target sizes, positionally
-paired with the start cells to be drawn).
+needed per zone, in \code{friByPolygon} order), \code{fireSizesInPixels} (target sizes, positionally
+paired with the start cells to be drawn), and \code{fireIDs}/\code{attempts}/\code{targetSizes} -- the
+identity of those same fires, paired the same way, or \code{NULL} when the input carried none.
 }
 \description{
 After a burn round, decides how many fires each FRI zone still needs and at what target
@@ -36,6 +39,8 @@ ascending, and the trailing \code{NA} row is never reached because that table ha
 (\code{maxSize} is \code{NA} where the join found no match) and the \code{NA}-FRI row, leaving
 \code{fireSizesInPixels} paired \strong{positionally} with the start cells the caller then draws
 \code{by = polygonNumeric}. It would also silently drop a row if any other column went \code{NA}.
+The identity vectors come from that \strong{same} \code{na.omit()}, so they cannot drift out of step
+with the sizes -- but an \code{NA} in any identity column would drop that fire entirely.
 \item \code{remainingSize} is assigned \strong{by position} onto the too-small rows; both descend from the
 same \code{fa[tooSmall]} subset, so they agree -- but nothing enforces it.
 }
