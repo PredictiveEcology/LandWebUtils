@@ -479,3 +479,111 @@ test_that("a degenerate search interval is refused", {
   expect_error(landmine_estimate_kBest(1e6, topFireQuantile = 1), "topFireQuantile")
   expect_error(landmine_estimate_kBest(1e6, targetAreaShare = 0), "targetAreaShare")
 })
+
+# ---- landmine_reburn_budget: fire identity threading ------------------------------------
+
+test_that("fire identity columns travel with the fires, paired with fireSizesInPixels", {
+  ## Without this, a re-ignited fire has no link to the one it replaces, so "did this fire
+  ## reach its target on the 1st/2nd/3rd attempt" is unanswerable from the output.
+  tsbp <- data.table::data.table(
+    pixel = c(11L, 12L, 13L),
+    polygonNumeric = c(170, 30, 170),
+    maxSize = c(500, 10, 700),
+    fireID = c(7L, 3L, 9L),
+    attempt = c(1L, 2L, 1L),
+    targetSize = c(500, 40, 700)
+  )
+  fbp <- c(30, 170, NA)
+
+  out <- landmine_reburn_budget(tsbp, fbp)
+
+  ## zone-ascending order, same as fireSizesInPixels
+  expect_identical(out$fireSizesInPixels, c(10, 500, 700))
+  expect_identical(out$fireIDs, c(3L, 7L, 9L))
+  expect_identical(out$attempts, c(2L, 1L, 1L))
+  expect_identical(out$targetSizes, c(40, 500, 700))
+})
+
+# ---- landmine_fire_attainment -----------------------------------------------------------
+
+test_that("per-fire attainment separates a reached target from an abandoned one", {
+  ## The whole point of the identity columns: `size == maxSize` holds for EVERY row by
+  ## construction, so attainment can only be judged per fireID against targetSize.
+  fs <- data.table::data.table(
+    fireID     = c(1L,  2L,  2L,  3L),
+    attempt    = c(1L,  3L,  4L,  2L),
+    targetSize = c(100, 200, 200,  50),
+    size       = c(100,  60,  90,  50),
+    maxSize    = c(100,  60,  90,  50)   ## rewritten in phase 2 -- always equals size
+  )
+
+  att <- landmine_fire_attainment(fs)
+
+  expect_identical(att$fireID, c(1L, 2L, 3L))
+  expect_identical(att$burned, c(100, 150, 50))
+  expect_identical(att$target, c(100, 200, 50))
+  expect_identical(att$attempts, c(1L, 4L, 2L))
+  ## fire 2 exhausted its reburns 50 pixels short -- invisible in any size/maxSize comparison
+  expect_identical(att$reached, c(TRUE, FALSE, TRUE))
+})
+
+test_that("landmine_fire_attainment names the columns it is missing", {
+  ## Without this the failure is `object 'targetSize' not found` from inside a data.table
+  ## expression, which says nothing about what the caller got wrong.
+  fs <- data.table::data.table(fireID = 1L, size = 100) ## no attempt, no targetSize
+  expect_error(landmine_fire_attainment(fs), "attempt.*targetSize")
+})
+
+# ---- landmine_attach_identity -----------------------------------------------------------
+
+test_that("identity is attached to the burn result by start cell", {
+  ## `spread2()` returns clusters keyed by initialPixels, in its own order -- so identity has
+  ## to be JOINED back on, not assumed to be in the order it was handed out.
+  fa <- data.table::data.table(
+    initialPixels = c(13L, 11L, 12L),  ## deliberately not the order ids were issued
+    size = c(700, 500, 10), maxSize = c(700, 500, 10)
+  )
+  idDT <- data.table::data.table(
+    initialPixels = c(11L, 12L, 13L),
+    fireID = c(7L, 3L, 9L), attempt = c(1L, 2L, 1L), targetSize = c(500, 40, 700)
+  )
+
+  out <- landmine_attach_identity(fa, idDT)
+
+  expect_identical(out$initialPixels, c(13L, 11L, 12L)) ## row order preserved
+  expect_identical(out$fireID, c(9L, 7L, 3L))
+  expect_identical(out$attempt, c(1L, 1L, 2L))
+  expect_identical(out$targetSize, c(700, 500, 40))
+})
+
+test_that("landmine_attach_identity refuses to leave a fire without identity", {
+  ## A silent NA fireID would corrupt every per-fire attainment number downstream, and the
+  ## sum(size) == sum(maxSize) invariant would still hold -- so nothing else would catch it.
+  fa <- data.table::data.table(
+    initialPixels = c(11L, 99L), size = c(500, 10), maxSize = c(500, 10)
+  )
+  idDT <- data.table::data.table(
+    initialPixels = 11L, fireID = 7L, attempt = 1L, targetSize = 500
+  )
+  expect_error(landmine_attach_identity(fa, idDT), "99")
+})
+
+test_that("attainment does not pool the same fireID across years or replicates", {
+  ## fireID is issued per burn year, so it is only unique WITHIN a year. Grouping on it alone
+  ## would merge unrelated fires and report a target that no single fire ever had.
+  fs <- data.table::data.table(
+    rep        = c(1L, 1L, 2L),
+    year       = c(10L, 20L, 10L),
+    fireID     = c(1L,  1L,  1L),   ## same id, three different fires
+    attempt    = c(1L,  1L,  1L),
+    targetSize = c(100, 300, 700),
+    size       = c(100, 300, 700),
+    maxSize    = c(100, 300, 700)
+  )
+
+  att <- landmine_fire_attainment(fs, by = c("rep", "year", "fireID"))
+
+  expect_identical(nrow(att), 3L)
+  expect_identical(att$burned, c(100, 300, 700))
+  expect_true(all(att$reached))
+})
