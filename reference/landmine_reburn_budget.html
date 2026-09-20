@@ -24,7 +24,7 @@ sizes, for both reburn phases."><!-- mathjax --><script src="https://cdnjs.cloud
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9037</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9038</span>
       </span>
     </div>
 
@@ -70,7 +70,9 @@ sizes, for both reburn phases.</p>
 
 <dl><dt id="arg-toosmallbypoly">tooSmallByPoly<a class="anchor" aria-label="anchor" href="#arg-toosmallbypoly"></a></dt>
 <dd><p>a <code>data.table</code> of the fires that did not reach their target, joined to
-their ignition zone: needs <code>polygonNumeric</code>, <code>maxSize</code>, and (optionally) <code>pixel</code>.</p></dd>
+their ignition zone: needs <code>polygonNumeric</code>, <code>maxSize</code>, and (optionally) <code>pixel</code>. May also
+carry the fire-identity columns <code>fireID</code>, <code>attempt</code> and <code>targetSize</code>, which are threaded
+through to the returned vectors so a re-ignited fire stays linked to the one it replaces.</p></dd>
 
 
 <dt id="arg-fribypolygon">friByPolygon<a class="anchor" aria-label="anchor" href="#arg-fribypolygon"></a></dt>
@@ -86,8 +88,9 @@ replaces <code>maxSize</code>. Phase 1 leaves it <code>NULL</code>, keeping each
     <div id="value">
     <h2>Value</h2>
     <p>A list with <code>polysNeedMoreFires</code> (the joined table), <code>numFiresThisPeriod</code> (fires still
-needed per zone, in <code>friByPolygon</code> order) and <code>fireSizesInPixels</code> (target sizes, positionally
-paired with the start cells to be drawn).</p>
+needed per zone, in <code>friByPolygon</code> order), <code>fireSizesInPixels</code> (target sizes, positionally
+paired with the start cells to be drawn), and <code>fireIDs</code>/<code>attempts</code>/<code>targetSizes</code> – the
+identity of those same fires, paired the same way, or <code>NULL</code> when the input carried none.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -98,7 +101,9 @@ ascending, and the trailing <code>NA</code> row is never reached because that ta
 <li><p><code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit()</a></code> on the whole table is load-bearing: it drops both the zero-shortfall zones
 (<code>maxSize</code> is <code>NA</code> where the join found no match) and the <code>NA</code>-FRI row, leaving
 <code>fireSizesInPixels</code> paired <strong>positionally</strong> with the start cells the caller then draws
-<code>by = polygonNumeric</code>. It would also silently drop a row if any other column went <code>NA</code>.</p></li>
+<code>by = polygonNumeric</code>. It would also silently drop a row if any other column went <code>NA</code>.
+The identity vectors come from that <strong>same</strong> <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit()</a></code>, so they cannot drift out of step
+with the sizes – but an <code>NA</code> in any identity column would drop that fire entirely.</p></li>
 <li><p><code>remainingSize</code> is assigned <strong>by position</strong> onto the too-small rows; both descend from the
 same <code>fa[tooSmall]</code> subset, so they agree – but nothing enforces it.</p></li>
 </ul><p><code>remainingSize</code> can be <code>0</code> for a fire that burned exactly its target; the caller's
