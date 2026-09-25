@@ -10,7 +10,7 @@
 ## first gives distinctly-named units ("Central Mixedwood <tenure>") that then group correctly, and
 ## the same name-grouping tallies a subregion's disjoint parts within a tenure for free.
 
-utils::globalVariables("Name")
+utils::globalVariables(c("Name", ".env")) ## `.env`: the rlang pronoun, in eliminate_slivers(keep =)
 
 ## Dissolve the tenure layer to ONE geometry per tenure short name. A tenure can be several
 ## features in the v10 layer; crossing against a single part would report only that part.
@@ -45,6 +45,99 @@ utils::globalVariables("Name")
     return(list())
   }
   stats::setNames(lapply(seq_len(nrow(d)), function(i) d[i, "Name"]), d$Name)
+}
+
+## Merge reporting units smaller than `min_area_km2` into the neighbouring unit they share the
+## longest border with. A unit is all the features sharing a `Name`, since that is what the
+## nrvtools consumers report, so the threshold applies to a unit's total area and a large unit's
+## small detached pieces are left alone. The merge is `spatialutils::eliminate_slivers()` (the
+## ArcGIS Eliminate LENGTH rule), with every other unit protected via `keep`, so the neighbour keeps
+## its name. Without this, an edge sliver (e.g. 0.02 km2 of a BC zone along the Alberta border)
+## gets its own refCode, aggregate directory, NRV envelope and figures.
+##
+## A small unit with no neighbour to merge into is dropped, and so is a layer made up only of
+## small units (there is nothing to merge them into); both are reported in a message.
+.mergeSliverUnits <- function(v, min_area_km2 = 1, layer = "") {
+  if (is.null(v) || !is.finite(min_area_km2) || min_area_km2 <= 0) {
+    return(v)
+  }
+  if (!inherits(v, "SpatVector")) {
+    v <- terra::vect(v)
+  }
+  if (nrow(v) == 0L) {
+    return(v)
+  }
+  unitKm2 <- function(x) {
+    d <- data.frame(Name = as.character(x$Name), km2 = terra::expanse(x, unit = "km"))
+    d <- d[!is.na(d$Name), ]
+    if (!nrow(d)) {
+      return(stats::setNames(numeric(0), character(0)))
+    }
+    a <- stats::aggregate(km2 ~ Name, d, sum)
+    stats::setNames(a$km2, a$Name)
+  }
+  area <- unitKm2(v)
+  small <- names(area)[area < min_area_km2]
+  if (!length(small)) {
+    return(v)
+  }
+  if (length(small) == length(area)) {
+    message(
+      "Dropping reporting layer '",
+      layer,
+      "': every unit is < ",
+      min_area_km2,
+      " km^2 (",
+      paste(sprintf("%s [%.3f km2]", names(area), area), collapse = "; "),
+      ")"
+    )
+    return(NULL)
+  }
+
+  v <- spatialutils::eliminate_slivers(
+    v,
+    threshold = Inf,
+    keep = !(Name %in% .env$small),
+    explode = FALSE
+  )
+
+  ## a small unit sharing no border with any other unit survives the merge; drop it
+  left <- unitKm2(v)
+  isolated <- names(left)[left < min_area_km2]
+  if (length(isolated)) {
+    v <- v[!(as.character(v$Name) %in% isolated), ]
+  }
+  merged <- setdiff(small, isolated)
+  message(
+    "Reporting layer '",
+    layer,
+    "': ",
+    if (length(merged)) {
+      paste0(
+        "merged ",
+        length(merged),
+        " unit(s) < ",
+        min_area_km2,
+        " km^2 into the neighbour ",
+        "sharing the longest border (",
+        paste(merged, collapse = "; "),
+        ")"
+      )
+    },
+    if (length(merged) && length(isolated)) "; ",
+    if (length(isolated)) {
+      paste0(
+        "dropped ",
+        length(isolated),
+        " unit(s) < ",
+        min_area_km2,
+        " km^2 with no neighbour (",
+        paste(isolated, collapse = "; "),
+        ")"
+      )
+    }
+  )
+  v
 }
 
 ## Collapse a tenure token repeated in a crossed name down to its last occurrence
@@ -127,6 +220,10 @@ utils::globalVariables("Name")
 #' @param min_area_km2 numeric; tenures contributing less than this to the study area are
 #'   not crossed (default `1`). A neighbouring tenure that merely grazes the study-area
 #'   boundary would otherwise mint a full set of reporting units over a handful of pixels.
+#'   Crossed units (all features sharing a `Name`) smaller than this are merged into the
+#'   neighbouring unit of the same layer that they share the longest border with (see
+#'   `spatialutils::eliminate_slivers()`); a small unit with no neighbour, or a layer made up
+#'   only of small units, is dropped. `0` disables both.
 #'
 #' @return A named `list` of crossed layers (`SpatVector`s), ready to be appended to the
 #'   `reportingPolygons` input to `NRV_summary`. The tenure-crossed landbases are included
@@ -209,5 +306,6 @@ buildCrossedReportingPolygons <- function(
     }
   }
 
-  out
+  out <- Map(.mergeSliverUnits, out, min_area_km2 = min_area_km2, layer = names(out))
+  out[!vapply(out, is.null, logical(1))]
 }

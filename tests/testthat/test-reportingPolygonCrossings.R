@@ -238,3 +238,70 @@ test_that("only the study area's OWN tenures are crossed when `members` is given
   ))
   expect_setequal(names(out2), c("T1 SUB", "T2 SUB"))
 })
+
+## Sliver units: A and B are 8 m^2; S (1.5 m^2) shares a 2 m border with A and a 1 m border with
+## B, so it belongs to A. A also has a tiny detached piece (A's TOTAL is large, so it stays), and I
+## is a small unit touching nothing.
+##
+##   y=4 +-------+
+##       |   B   +--+ y=3
+##   y=2 +-------+ S|
+##       |   A   |  |
+##   y=0 +-------+--+
+##      x=0      4  4.5
+.toySliverLayer <- function() {
+  v <- terra::vect(c(
+    "POLYGON ((0 0, 4 0, 4 2, 0 2, 0 0))",                 ## A
+    "POLYGON ((10 10, 10.1 10, 10.1 10.1, 10 10.1, 10 10))", ## A, detached 0.01 m^2 piece
+    "POLYGON ((0 2, 4 2, 4 4, 0 4, 0 2))",                 ## B
+    "POLYGON ((4 0, 4.5 0, 4.5 3, 4 3, 4 0))",             ## S
+    "POLYGON ((20 20, 21 20, 21 21, 20 21, 20 20))"        ## I
+  ))
+  v$Name <- c("A", "A", "B", "S", "I")
+  terra::crs(v) <- "EPSG:3857"
+  v
+}
+
+test_that("sliver units merge into the neighbour sharing the longest border", {
+  v <- .toySliverLayer()
+  before <- .areaByName(v)
+  ## 3 m^2: between the small units (S, I, A's detached piece) and the real ones (A, B)
+  expect_message(out <- .mergeSliverUnits(v, min_area_km2 = 3e-6, layer = "toy"), "merged 1")
+
+  after <- .areaByName(out)
+  expect_setequal(names(after), c("A", "B")) ## S merged away, I dropped
+  expect_equal(after[["A"]], before[["A"]] + before[["S"]], tolerance = 1e-9)
+  expect_equal(after[["B"]], before[["B"]], tolerance = 1e-9)
+  ## the only area lost is the isolated unit's
+  expect_equal(sum(after), sum(before) - before[["I"]], tolerance = 1e-9)
+})
+
+test_that("a large unit's small detached piece is not treated as a sliver", {
+  v <- .toySliverLayer()
+  out <- suppressMessages(.mergeSliverUnits(v, min_area_km2 = 3e-6))
+  ## A keeps its 0.01 m^2 piece at (10, 10): the threshold applies to the unit, not the part
+  pieces <- terra::disagg(out[out$Name == "A"])
+  expect_true(any(abs(terra::expanse(pieces, transform = FALSE) - 0.01) < 1e-9))
+})
+
+test_that("a layer made up only of small units is dropped; no units below the threshold is a no-op", {
+  v <- .toySliverLayer()
+  expect_message(
+    expect_null(.mergeSliverUnits(v, min_area_km2 = 1, layer = "toy")),
+    "Dropping reporting layer 'toy'"
+  )
+  expect_identical(.mergeSliverUnits(v, min_area_km2 = 1e-12), v)
+  expect_identical(.mergeSliverUnits(v, min_area_km2 = 0), v)
+})
+
+test_that("buildCrossedReportingPolygons applies the sliver rule to crossed units", {
+  ## each toy tenure is 16 m^2 and each crossed unit 8 m^2; at 10 m^2 the tenures are kept but
+  ## every crossed unit is a sliver, so each crossed layer is dropped whole
+  polys <- list(FMA = .toyTenures(), SUB = .toySubregions())
+  msgs <- testthat::capture_messages(
+    out <- buildCrossedReportingPolygons(polys, layers = .toyLayers(), min_area_km2 = 1e-5)
+  )
+  expect_match(msgs, "Dropping reporting layer 'T1 SUB'", all = FALSE)
+  expect_match(msgs, "Dropping reporting layer 'T2 SUB'", all = FALSE)
+  expect_length(out, 0L)
+})

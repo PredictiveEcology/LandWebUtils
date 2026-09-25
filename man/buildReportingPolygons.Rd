@@ -8,7 +8,8 @@ buildReportingPolygons(
   studyArea,
   destinationPath,
   targetCRS = LandWebCRS,
-  layers = reportingPolygonLayers()
+  layers = reportingPolygonLayers(),
+  min_area_km2 = 1
 )
 }
 \arguments{
@@ -19,6 +20,12 @@ buildReportingPolygons(
 \item{targetCRS}{Target CRS (default \link{LandWebCRS}).}
 
 \item{layers}{Candidate-layer table (default \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}}).}
+
+\item{min_area_km2}{numeric; reporting units (all features sharing a \code{Name}) smaller than this
+within the study area are merged into the neighbouring unit of the same layer that they share
+the longest border with (see \code{spatialutils::eliminate_slivers()}), so an edge sliver does not
+become a reporting unit of its own. A small unit with no neighbour, or a layer made up only of
+small units, is dropped. Default \code{1}; \code{0} disables it.}
 }
 \value{
 A named \code{list} of \code{SpatVector}s, one per intersecting layer.

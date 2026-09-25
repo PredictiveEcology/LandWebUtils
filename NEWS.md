@@ -1,3 +1,7 @@
+# LandWebUtils 1.0.3.9039
+
+* `buildReportingPolygons()` and `buildCrossedReportingPolygons()` now merge reporting units smaller than `min_area_km2` (default 1 km^2; all features sharing a `Name` count as one unit) into the neighbouring unit of the same layer that they share the longest border with, via `spatialutils::eliminate_slivers()`. Edge slivers were becoming reporting units of their own, each with an NRV envelope and figures: WesternAlbertaUpland had 7 crossed units under 1 km^2, down to 0.02 km^2 of a BC biogeoclimatic zone along the Alberta border. A small unit with no neighbour, or a layer made up only of small units, is dropped with a message. `buildReportingPolygons()` gains the `min_area_km2` argument; `0` disables the step in both.
+
 # LandWebUtils 1.0.3.9038
 
 * `landmine_reburn_budget()` now threads fire identity: when `tooSmallByPoly` carries `fireID`, `attempt` and `targetSize`, they are returned as `fireIDs`/`attempts`/`targetSizes`, positionally paired with `fireSizesInPixels` by the same single `na.omit()`. A caller supplying no identity columns gets `NULL` and is unaffected.

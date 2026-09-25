@@ -403,6 +403,11 @@ reportingPolygonLayers <- function() {
 #' @param destinationPath Directory for downloads/extraction.
 #' @param targetCRS Target CRS (default [LandWebCRS]).
 #' @param layers Candidate-layer table (default [reportingPolygonLayers()]).
+#' @param min_area_km2 numeric; reporting units (all features sharing a `Name`) smaller than this
+#'   within the study area are merged into the neighbouring unit of the same layer that they share
+#'   the longest border with (see `spatialutils::eliminate_slivers()`), so an edge sliver does not
+#'   become a reporting unit of its own. A small unit with no neighbour, or a layer made up only of
+#'   small units, is dropped. Default `1`; `0` disables it.
 #'
 #' @return A named `list` of `SpatVector`s, one per intersecting layer.
 #' @export
@@ -410,7 +415,8 @@ buildReportingPolygons <- function(
   studyArea,
   destinationPath,
   targetCRS = LandWebCRS,
-  layers = reportingPolygonLayers()
+  layers = reportingPolygonLayers(),
+  min_area_km2 = 1
 ) {
   if (!inherits(studyArea, "SpatVector")) {
     studyArea <- terra::vect(studyArea)
@@ -458,7 +464,9 @@ buildReportingPolygons <- function(
 
   names(out) <- layers$NAME_SHORT
   out <- out[!vapply(out, is.null, logical(1))]
-  .mergeLayerSources(out)
+  out <- .mergeLayerSources(out)
+  out <- Map(.mergeSliverUnits, out, min_area_km2 = min_area_km2, layer = names(out))
+  out[!vapply(out, is.null, logical(1))]
 }
 
 ## Merge the built sources that make up one reporting layer (rows sharing a `NAME_SHORT`).
