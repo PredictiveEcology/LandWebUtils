@@ -32,7 +32,11 @@ default) crosses every tenure present.}
 
 \item{min_area_km2}{numeric; tenures contributing less than this to the study area are
 not crossed (default \code{1}). A neighbouring tenure that merely grazes the study-area
-boundary would otherwise mint a full set of reporting units over a handful of pixels.}
+boundary would otherwise mint a full set of reporting units over a handful of pixels.
+Crossed units (all features sharing a \code{Name}) smaller than this are merged into the
+neighbouring unit of the same layer that they share the longest border with (see
+\code{spatialutils::eliminate_slivers()}); a small unit with no neighbour, or a layer made up
+only of small units, is dropped. \code{0} disables both.}
 }
 \value{
 A named \code{list} of crossed layers (\code{SpatVector}s), ready to be appended to the
