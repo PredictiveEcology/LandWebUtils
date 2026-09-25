@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9038</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9039</span>
       </span>
     </div>
 
@@ -53,6 +53,11 @@
       <small>Source: <a href="https://github.com/PredictiveEcology/LandWebUtils/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="1.0.3.9039" id="landwebutils-1039039">LandWebUtils 1.0.3.9039<a class="anchor" aria-label="anchor" href="#landwebutils-1039039"></a></h2>
+<ul><li>
+<code><a href="../reference/buildReportingPolygons.html">buildReportingPolygons()</a></code> and <code><a href="../reference/buildCrossedReportingPolygons.html">buildCrossedReportingPolygons()</a></code> now merge reporting units smaller than <code>min_area_km2</code> (default 1 km^2; all features sharing a <code>Name</code> count as one unit) into the neighbouring unit of the same layer that they share the longest border with, via <code><a href="https://rdrr.io/pkg/spatialutils/man/eliminate_slivers.html" class="external-link">spatialutils::eliminate_slivers()</a></code>. Edge slivers were becoming reporting units of their own, each with an NRV envelope and figures: WesternAlbertaUpland had 7 crossed units under 1 km^2, down to 0.02 km^2 of a BC biogeoclimatic zone along the Alberta border. A small unit with no neighbour, or a layer made up only of small units, is dropped with a message. <code><a href="../reference/buildReportingPolygons.html">buildReportingPolygons()</a></code> gains the <code>min_area_km2</code> argument; <code>0</code> disables the step in both.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.3.9038" id="landwebutils-1039038">LandWebUtils 1.0.3.9038<a class="anchor" aria-label="anchor" href="#landwebutils-1039038"></a></h2>
 <ul><li>

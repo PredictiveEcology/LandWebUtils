@@ -34,7 +34,7 @@ here, and are merged in separately."><!-- mathjax --><script src="https://cdnjs.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9038</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9039</span>
       </span>
     </div>
 
@@ -85,7 +85,8 @@ here, and are merged in separately.</p>
 <span>  <span class="va">studyArea</span>,</span>
 <span>  <span class="va">destinationPath</span>,</span>
 <span>  targetCRS <span class="op">=</span> <span class="va">LandWebCRS</span>,</span>
-<span>  layers <span class="op">=</span> <span class="fu"><a href="reportingPolygonLayers.html">reportingPolygonLayers</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="reportingPolygonLayers.html">reportingPolygonLayers</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  min_area_km2 <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,6 +108,14 @@ here, and are merged in separately.</p>
 
 <dt id="arg-layers">layers<a class="anchor" aria-label="anchor" href="#arg-layers"></a></dt>
 <dd><p>Candidate-layer table (default <code><a href="reportingPolygonLayers.html">reportingPolygonLayers()</a></code>).</p></dd>
+
+
+<dt id="arg-min-area-km-">min_area_km2<a class="anchor" aria-label="anchor" href="#arg-min-area-km-"></a></dt>
+<dd><p>numeric; reporting units (all features sharing a <code>Name</code>) smaller than this
+within the study area are merged into the neighbouring unit of the same layer that they share
+the longest border with (see <code><a href="https://rdrr.io/pkg/spatialutils/man/eliminate_slivers.html" class="external-link">spatialutils::eliminate_slivers()</a></code>), so an edge sliver does not
+become a reporting unit of its own. A small unit with no neighbour, or a layer made up only of
+small units, is dropped. Default <code>1</code>; <code>0</code> disables it.</p></dd>
 
 </dl></div>
     <div id="value">

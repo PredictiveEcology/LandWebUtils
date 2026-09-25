@@ -26,7 +26,7 @@ with:"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathj
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9038</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9039</span>
       </span>
     </div>
 
@@ -106,7 +106,11 @@ default) crosses every tenure present.</p></dd>
 <dt id="arg-min-area-km-">min_area_km2<a class="anchor" aria-label="anchor" href="#arg-min-area-km-"></a></dt>
 <dd><p>numeric; tenures contributing less than this to the study area are
 not crossed (default <code>1</code>). A neighbouring tenure that merely grazes the study-area
-boundary would otherwise mint a full set of reporting units over a handful of pixels.</p></dd>
+boundary would otherwise mint a full set of reporting units over a handful of pixels.
+Crossed units (all features sharing a <code>Name</code>) smaller than this are merged into the
+neighbouring unit of the same layer that they share the longest border with (see
+<code><a href="https://rdrr.io/pkg/spatialutils/man/eliminate_slivers.html" class="external-link">spatialutils::eliminate_slivers()</a></code>); a small unit with no neighbour, or a layer made up
+only of small units, is dropped. <code>0</code> disables both.</p></dd>
 
 </dl></div>
     <div id="value">
