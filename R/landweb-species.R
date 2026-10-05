@@ -72,12 +72,30 @@ landweb_species_map <- function() {
 #' label up from its first row, so a group without a label would be named after
 #' whichever of its species comes first.
 #'
-#' @param sppEquiv `data.table` species equivalency table with a `SCANFI`
-#'   column, normally `LandR::sppEquivalencies_CA`. It is not modified.
+#' A row without a SCANFI code is kept when another row of the same species
+#' (the same `LandR` code) maps, and joins that row's group. `LandR` lists some
+#' species under a generic name as well as by variety, and gives only one of
+#' them a SCANFI code: the generic *Pinus contorta* row has none, while var.
+#' *latifolia* and var. *contorta* do. `Biomass_speciesParameters` assigns PSP
+#' trees to groups by their `Latin_full` in this table and discards trees whose
+#' name is missing, and the NFI records lodgepole pine as *Pinus contorta* and
+#' black cottonwood as *Populus trichocarpa*. Without these rows neither
+#' contributed to the growth curves fitted for `Pinu_spp` and `Popu_spp`. A row
+#' with a SCANFI code that LandWeb does not use (coastal Douglas-fir,
+#' `PSEU_MEN_MEN`) stays out.
+#'
+#' These rows add no SCANFI layer, and they come after the rows mapped by SCANFI
+#' code, so the first row of each group is unchanged. One with no `colorHex`
+#' takes the colour of its species' mapped row: `LandR::sppColors()` uses the
+#' table's colours only when every row has one.
+#'
+#' @param sppEquiv `data.table` species equivalency table with `SCANFI` and
+#'   `LandR` columns, normally `LandR::sppEquivalencies_CA`. It is not modified.
 #'
 #' @return A copy of `sppEquiv` restricted to the rows that map to a LandWeb
-#'   species group, with a new `LandWeb` column. It is an error for no row to
-#'   map (see [landweb_require_species()]).
+#'   species group, by SCANFI code or through their species (see Details), with
+#'   a new `LandWeb` column. Rows mapped by SCANFI code come first. It is an
+#'   error for no row to map (see [landweb_require_species()]).
 #'
 #' @seealso [landweb_species_map()]
 #'
@@ -89,10 +107,31 @@ landweb_sppEquiv <- function(sppEquiv) {
   if (!"SCANFI" %in% names(sppEquiv)) {
     stop("`sppEquiv` has no `SCANFI` column to map species from.", call. = FALSE)
   }
+  if (!"LandR" %in% names(sppEquiv)) {
+    stop("`sppEquiv` has no `LandR` column to match species by.", call. = FALSE)
+  }
 
   out <- data.table::copy(sppEquiv)
   groups <- unname(landweb_species_map()[out[["SCANFI"]]])
+  mapped <- which(!is.na(groups))
+
+  ## rows with no SCANFI code, for a species that has a mapped row (e.g. generic Pinus contorta)
+  spp <- out[["LandR"]]
+  noCode <- is.na(out[["SCANFI"]]) | !nzchar(out[["SCANFI"]])
+  sameSpp <- which(noCode & !is.na(spp) & nzchar(spp) & spp %in% spp[mapped])
+  donor <- mapped[match(spp[sameSpp], spp[mapped])]
+  groups[sameSpp] <- groups[donor]
   data.table::set(out, j = "LandWeb", value = groups)
+
+  if ("colorHex" %in% names(out)) {
+    noColour <- is.na(out[["colorHex"]][sameSpp]) | !nzchar(out[["colorHex"]][sameSpp])
+    data.table::set(
+      out,
+      i = sameSpp[noColour],
+      j = "colorHex",
+      value = out[["colorHex"]][donor[noColour]]
+    )
+  }
 
   labels <- .landweb_group_labels()
   for (grp in names(labels)) {
@@ -102,7 +141,7 @@ landweb_sppEquiv <- function(sppEquiv) {
     }
   }
 
-  out <- out[!is.na(out[["LandWeb"]]), ]
+  out <- out[c(mapped, sameSpp), ]
   landweb_require_species(out, "sppEquiv")
 }
 

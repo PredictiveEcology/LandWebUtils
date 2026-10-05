@@ -1,10 +1,10 @@
 ## Fixtures -----------------------------------------------------------------------------------------
 
-## `LandR::sppEquivalencies_CA` (LandR 1.2.0.9007): every row, with the columns the LandWeb groups
-## read or relabel.
+## `LandR::sppEquivalencies_CA` (LandR 1.2.0.9047, the version LandWeb pins): every row, with the
+## columns `landweb_sppEquiv()` reads or relabels. Missing values are "", as in LandR's own table.
 lr_sppEquiv <- function() {
   data.table::fread(
-    test_path("fixtures", "sppEquivalencies_CA_LandR-1.2.0.9007.csv"),
+    test_path("fixtures", "sppEquivalencies_CA_LandR-1.2.0.9047.csv"),
     colClasses = "character", na.strings = NULL
   )
 }
@@ -107,6 +107,13 @@ test_that("every mapped SCANFI code exists in LandR's species table", {
   expect_in(names(landweb_species_map()), lr_sppEquiv()$SCANFI)
 })
 
+test_that("each species with a mapped SCANFI code maps to one LandWeb group", {
+  ## landweb_sppEquiv() gives a species' rows without a SCANFI code the group of its first mapped row
+  map <- landweb_species_map()
+  coded <- lr_sppEquiv()[SCANFI %in% names(map)][, LandWeb := map[SCANFI]]
+  expect_identical(unique(coded[, .(n = data.table::uniqueN(LandWeb)), by = LandR]$n), 1L)
+})
+
 ## landweb_sppEquiv ---------------------------------------------------------------------------------
 
 test_that("landweb_sppEquiv() reproduces the preamble's inline table, plus the Abie_spp label", {
@@ -117,16 +124,60 @@ test_that("landweb_sppEquiv() reproduces the preamble's inline table, plus the A
     EN_generic_short = "Fir",
     Leading = "Fir leading"
   )]
+  ## the rows mapped by SCANFI code come first; those after them are matched by species
   expect_identical(
-    as.data.frame(landweb_sppEquiv(lr_sppEquiv())),
+    as.data.frame(landweb_sppEquiv(lr_sppEquiv())[seq_len(nrow(expected))]),
     as.data.frame(expected)
   )
 })
 
-test_that("landweb_sppEquiv() keeps one row per mapped species and drops the rest", {
+test_that("landweb_sppEquiv() keeps one row per SCANFI species, and that species' other names", {
   out <- landweb_sppEquiv(lr_sppEquiv())
-  expect_setequal(out$SCANFI, names(landweb_species_map()))
-  expect_identical(out$LandWeb, unname(landweb_species_map()[out$SCANFI]))
+  coded <- out[nzchar(SCANFI)]
+  expect_setequal(coded$SCANFI, names(landweb_species_map()))
+  expect_identical(coded$LandWeb, unname(landweb_species_map()[coded$SCANFI]))
+  expect_identical(
+    as.data.frame(out[!nzchar(SCANFI), .(Latin_full, LandR, LandWeb)]),
+    data.frame(
+      Latin_full = c("Pinus contorta", "Populus balsamifera v. balsamifera", "Populus trichocarpa"),
+      LandR = c("Pinu_con", "Popu_bal", "Popu_bal"),
+      LandWeb = c("Pinu_spp", "Popu_spp", "Popu_spp")
+    )
+  )
+})
+
+test_that("landweb_sppEquiv() maps the NFI names for lodgepole pine and black cottonwood", {
+  ## Biomass_speciesParameters drops PSP trees whose `Latin_full` is not in sppEquiv
+  out <- landweb_sppEquiv(lr_sppEquiv())
+  expect_identical(out[Latin_full == "Pinus contorta", LandWeb], "Pinu_spp")
+  expect_identical(out[Latin_full == "Populus trichocarpa", LandWeb], "Popu_spp")
+  expect_identical(out[Latin_full == "Pinus contorta", Leading], "Pine leading")
+  ## not a LandWeb species; a SCANFI layer LandWeb does not use
+  expect_false(any(startsWith(out$Latin_full, "Fraxinus")))
+  expect_false("Pseudotsuga menziesii var. menziesii" %in% out$Latin_full)
+})
+
+test_that("rows matched by species leave each group's first row and the colours as they were", {
+  out <- landweb_sppEquiv(lr_sppEquiv())
+  expect_true(all(nzchar(out[!duplicated(LandWeb), SCANFI])))
+  ## LandR::sppColors() uses the table's colours only when no row lacks one
+  expect_false(any(is.na(out$colorHex) | !nzchar(out$colorHex)))
+  expect_identical(
+    out[Latin_full == "Pinus contorta", colorHex],
+    out[SCANFI == "PINU_CON_LAT", colorHex]
+  )
+})
+
+test_that("landweb_sppEquiv() treats an NA SCANFI code or colour like an empty one", {
+  input <- lr_sppEquiv()
+  for (col in names(input)) {
+    data.table::set(input, i = which(input[[col]] == ""), j = col, value = NA_character_)
+  }
+  out <- landweb_sppEquiv(input)
+  ref <- landweb_sppEquiv(lr_sppEquiv())
+  expect_identical(out$Latin_full, ref$Latin_full)
+  expect_identical(out$LandWeb, ref$LandWeb)
+  expect_identical(out$colorHex, ref$colorHex)
 })
 
 test_that("landweb_sppEquiv() gives each merged group a single label", {
@@ -169,6 +220,10 @@ test_that("landweb_sppEquiv() overwrites an existing LandWeb column", {
     as.data.frame(landweb_sppEquiv(input)),
     as.data.frame(landweb_sppEquiv(lr_sppEquiv()))
   )
+})
+
+test_that("landweb_sppEquiv() needs a LandR column to match species by", {
+  expect_error(landweb_sppEquiv(lr_sppEquiv()[, !"LandR"]), "no `LandR` column")
 })
 
 test_that("landweb_sppEquiv() rejects tables it cannot map", {

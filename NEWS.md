@@ -1,3 +1,9 @@
+# LandWebUtils (development version)
+
+## Bug fixes
+
+* `landweb_sppEquiv()` now keeps a row that has no SCANFI code when another row of the same species (`LandR` code) maps, and puts it in that row's group. With LandR 1.2.0.9047 these are *Pinus contorta*, *Populus trichocarpa* and *Populus balsamifera* v. *balsamifera*. `Biomass_speciesParameters` assigns PSP trees to groups by `Latin_full` through `sppEquiv` and drops trees it cannot match, and the NFI records lodgepole pine as *Pinus contorta* and black cottonwood as *Populus trichocarpa*. Neither species was used to fit growth curves, and on WesternAlbertaUpland `Pinu_spp` had too few plots to fit and was given averaged traits. The added rows have no SCANFI code and come after the mapped rows, so species layers and each group's labels and colours are unchanged. *Pinus contorta*'s missing `colorHex` is copied from its species' mapped row, because one blank colour makes `LandR::sppColors()` drop the standard colours for a generic palette. Their `LANDIS_traits` codes add no traits: `PINU.CON` is not in LandR's default trait table, and `POPU.BAL` is already in `Popu_spp`. The input now needs a `LandR` column.
+
 # LandWebUtils 1.0.3.9039
 
 * `buildReportingPolygons()` and `buildCrossedReportingPolygons()` now merge reporting units smaller than `min_area_km2` (default 1 km^2; all features sharing a `Name` count as one unit) into the neighbouring unit of the same layer that they share the longest border with, via `spatialutils::eliminate_slivers()`. Edge slivers were becoming reporting units of their own, each with an NRV envelope and figures: WesternAlbertaUpland had 7 crossed units under 1 km^2, down to 0.02 km^2 of a BC biogeoclimatic zone along the Alberta border. A small unit with no neighbour, or a layer made up only of small units, is dropped with a message. `buildReportingPolygons()` gains the `min_area_km2` argument; `0` disables the step in both.

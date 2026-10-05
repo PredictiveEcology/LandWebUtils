@@ -7,13 +7,14 @@
 landweb_sppEquiv(sppEquiv)
 }
 \arguments{
-\item{sppEquiv}{\code{data.table} species equivalency table with a \code{SCANFI}
-column, normally \code{LandR::sppEquivalencies_CA}. It is not modified.}
+\item{sppEquiv}{\code{data.table} species equivalency table with \code{SCANFI} and
+\code{LandR} columns, normally \code{LandR::sppEquivalencies_CA}. It is not modified.}
 }
 \value{
 A copy of \code{sppEquiv} restricted to the rows that map to a LandWeb
-species group, with a new \code{LandWeb} column. It is an error for no row to
-map (see \code{\link[=landweb_require_species]{landweb_require_species()}}).
+species group, by SCANFI code or through their species (see Details), with
+a new \code{LandWeb} column. Rows mapped by SCANFI code come first. It is an
+error for no row to map (see \code{\link[=landweb_require_species]{landweb_require_species()}}).
 }
 \description{
 Adds a \code{LandWeb} column to a \code{LandR}-style species equivalency table, giving
@@ -31,6 +32,23 @@ own labels.
 Consumers such as \code{Biomass_core}'s leading-vegetation maps look a group's
 label up from its first row, so a group without a label would be named after
 whichever of its species comes first.
+
+A row without a SCANFI code is kept when another row of the same species
+(the same \code{LandR} code) maps, and joins that row's group. \code{LandR} lists some
+species under a generic name as well as by variety, and gives only one of
+them a SCANFI code: the generic \emph{Pinus contorta} row has none, while var.
+\emph{latifolia} and var. \emph{contorta} do. \code{Biomass_speciesParameters} assigns PSP
+trees to groups by their \code{Latin_full} in this table and discards trees whose
+name is missing, and the NFI records lodgepole pine as \emph{Pinus contorta} and
+black cottonwood as \emph{Populus trichocarpa}. Without these rows neither
+contributed to the growth curves fitted for \code{Pinu_spp} and \code{Popu_spp}. A row
+with a SCANFI code that LandWeb does not use (coastal Douglas-fir,
+\code{PSEU_MEN_MEN}) stays out.
+
+These rows add no SCANFI layer, and they come after the rows mapped by SCANFI
+code, so the first row of each group is unchanged. One with no \code{colorHex}
+takes the colour of its species' mapped row: \code{LandR::sppColors()} uses the
+table's colours only when every row has one.
 }
 \seealso{
 \code{\link[=landweb_species_map]{landweb_species_map()}}
