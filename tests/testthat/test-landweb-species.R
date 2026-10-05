@@ -234,6 +234,18 @@ test_that("landweb_sppEquiv() rejects tables it cannot map", {
   })
 })
 
+test_that("generic Pinus contorta takes var. latifolia's row, not the first variety", {
+  input <- lr_sppEquiv()
+  ## shore pine comes first in LandR's table, so a first-match donor would be var. contorta
+  expect_lt(which(input$SCANFI == "PINU_CON_CON"), which(input$SCANFI == "PINU_CON_LAT"))
+  input[SCANFI == "PINU_CON_CON", colorHex := "#111111"]
+  input[SCANFI == "PINU_CON_LAT", colorHex := "#222222"]
+  input[Latin_full == "Pinus contorta", colorHex := ""]
+  out <- landweb_sppEquiv(input)
+  expect_identical(out[Latin_full == "Pinus contorta", colorHex], "#222222")
+  expect_identical(out[Latin_full == "Pinus contorta", LandWeb], "Pinu_spp")
+})
+
 ## landweb_require_species ---------------------------------------------------------------------------
 
 test_that("landweb_require_species() returns non-empty inputs unchanged", {
