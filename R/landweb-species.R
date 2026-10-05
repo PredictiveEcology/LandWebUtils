@@ -76,7 +76,9 @@ landweb_species_map <- function() {
 #' (the same `LandR` code) maps, and joins that row's group. `LandR` lists some
 #' species under a generic name as well as by variety, and gives only one of
 #' them a SCANFI code: the generic *Pinus contorta* row has none, while var.
-#' *latifolia* and var. *contorta* do. `Biomass_speciesParameters` assigns PSP
+#' *latifolia* and var. *contorta* do. Generic *Pinus contorta* takes its group
+#' and colour from var. *latifolia* (`PINU_CON_LAT`, interior lodgepole pine), not
+#' from whichever variety comes first. `Biomass_speciesParameters` assigns PSP
 #' trees to groups by their `Latin_full` in this table and discards trees whose
 #' name is missing, and the NFI records lodgepole pine as *Pinus contorta* and
 #' black cottonwood as *Populus trichocarpa*. Without these rows neither
@@ -120,6 +122,10 @@ landweb_sppEquiv <- function(sppEquiv) {
   noCode <- is.na(out[["SCANFI"]]) | !nzchar(out[["SCANFI"]])
   sameSpp <- which(noCode & !is.na(spp) & nzchar(spp) & spp %in% spp[mapped])
   donor <- mapped[match(spp[sameSpp], spp[mapped])]
+  ## where a species has several mapped varieties, the one LandWeb means
+  code <- unname(.landweb_generic_donor()[spp[sameSpp]])
+  pref <- ifelse(is.na(code), NA_integer_, match(code, out[["SCANFI"]]))
+  donor[!is.na(pref)] <- pref[!is.na(pref)]
   groups[sameSpp] <- groups[donor]
   data.table::set(out, j = "LandWeb", value = groups)
 
@@ -143,6 +149,12 @@ landweb_sppEquiv <- function(sppEquiv) {
 
   out <- out[c(mapped, sameSpp), ]
   landweb_require_species(out, "sppEquiv")
+}
+
+## SCANFI code of the variety a generic (no-SCANFI-code) row stands for, by `LandR` code: the
+## NFI records interior lodgepole pine as plain *Pinus contorta*.
+.landweb_generic_donor <- function() {
+  c(Pinu_con = "PINU_CON_LAT")
 }
 
 ## Labels for the LandWeb groups that merge several species.

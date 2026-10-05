@@ -37,7 +37,9 @@ A row without a SCANFI code is kept when another row of the same species
 (the same \code{LandR} code) maps, and joins that row's group. \code{LandR} lists some
 species under a generic name as well as by variety, and gives only one of
 them a SCANFI code: the generic \emph{Pinus contorta} row has none, while var.
-\emph{latifolia} and var. \emph{contorta} do. \code{Biomass_speciesParameters} assigns PSP
+\emph{latifolia} and var. \emph{contorta} do. Generic \emph{Pinus contorta} takes its group
+and colour from var. \emph{latifolia} (\code{PINU_CON_LAT}, interior lodgepole pine), not
+from whichever variety comes first. \code{Biomass_speciesParameters} assigns PSP
 trees to groups by their \code{Latin_full} in this table and discards trees whose
 name is missing, and the NFI records lodgepole pine as \emph{Pinus contorta} and
 black cottonwood as \emph{Populus trichocarpa}. Without these rows neither
