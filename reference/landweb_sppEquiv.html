@@ -25,7 +25,7 @@ merge several species."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9039</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9040</span>
       </span>
     </div>
 
@@ -71,15 +71,16 @@ merge several species.</p>
 
 
 <dl><dt id="arg-sppequiv">sppEquiv<a class="anchor" aria-label="anchor" href="#arg-sppequiv"></a></dt>
-<dd><p><code>data.table</code> species equivalency table with a <code>SCANFI</code>
-column, normally <code>LandR::sppEquivalencies_CA</code>. It is not modified.</p></dd>
+<dd><p><code>data.table</code> species equivalency table with <code>SCANFI</code> and
+<code>LandR</code> columns, normally <code>LandR::sppEquivalencies_CA</code>. It is not modified.</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
     <p>A copy of <code>sppEquiv</code> restricted to the rows that map to a LandWeb
-species group, with a new <code>LandWeb</code> column. It is an error for no row to
-map (see <code><a href="landweb_require_species.html">landweb_require_species()</a></code>).</p>
+species group, by SCANFI code or through their species (see Details), with
+a new <code>LandWeb</code> column. Rows mapped by SCANFI code come first. It is an
+error for no row to map (see <code><a href="landweb_require_species.html">landweb_require_species()</a></code>).</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -92,6 +93,21 @@ own labels.</p>
 <p>Consumers such as <code>Biomass_core</code>'s leading-vegetation maps look a group's
 label up from its first row, so a group without a label would be named after
 whichever of its species comes first.</p>
+<p>A row without a SCANFI code is kept when another row of the same species
+(the same <code>LandR</code> code) maps, and joins that row's group. <code>LandR</code> lists some
+species under a generic name as well as by variety, and gives only one of
+them a SCANFI code: the generic <em>Pinus contorta</em> row has none, while var.
+<em>latifolia</em> and var. <em>contorta</em> do. <code>Biomass_speciesParameters</code> assigns PSP
+trees to groups by their <code>Latin_full</code> in this table and discards trees whose
+name is missing, and the NFI records lodgepole pine as <em>Pinus contorta</em> and
+black cottonwood as <em>Populus trichocarpa</em>. Without these rows neither
+contributed to the growth curves fitted for <code>Pinu_spp</code> and <code>Popu_spp</code>. A row
+with a SCANFI code that LandWeb does not use (coastal Douglas-fir,
+<code>PSEU_MEN_MEN</code>) stays out.</p>
+<p>These rows add no SCANFI layer, and they come after the rows mapped by SCANFI
+code, so the first row of each group is unchanged. One with no <code>colorHex</code>
+takes the colour of its species' mapped row: <code>LandR::sppColors()</code> uses the
+table's colours only when every row has one.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
