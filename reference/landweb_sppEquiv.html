@@ -25,7 +25,7 @@ merge several species."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9040</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9041</span>
       </span>
     </div>
 
@@ -97,7 +97,9 @@ whichever of its species comes first.</p>
 (the same <code>LandR</code> code) maps, and joins that row's group. <code>LandR</code> lists some
 species under a generic name as well as by variety, and gives only one of
 them a SCANFI code: the generic <em>Pinus contorta</em> row has none, while var.
-<em>latifolia</em> and var. <em>contorta</em> do. <code>Biomass_speciesParameters</code> assigns PSP
+<em>latifolia</em> and var. <em>contorta</em> do. Generic <em>Pinus contorta</em> takes its group
+and colour from var. <em>latifolia</em> (<code>PINU_CON_LAT</code>, interior lodgepole pine), not
+from whichever variety comes first. <code>Biomass_speciesParameters</code> assigns PSP
 trees to groups by their <code>Latin_full</code> in this table and discards trees whose
 name is missing, and the NFI records lodgepole pine as <em>Pinus contorta</em> and
 black cottonwood as <em>Populus trichocarpa</em>. Without these rows neither
