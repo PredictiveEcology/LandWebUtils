@@ -1,3 +1,5 @@
+utils::globalVariables(c("code", "cover", "nCodes", "total", "LandWeb"))
+
 ## The LandWeb species groups lifted out of LandWeb_preamble's `InitSpecies()`, so the mapping and
 ## its labels have one tested definition rather than an inline table reachable only through a
 ## preamble run. The LandWeb project's SCANFI cover summary kept a hand copy of the same map.
@@ -155,6 +157,87 @@ landweb_sppEquiv <- function(sppEquiv) {
 ## NFI records interior lodgepole pine as plain *Pinus contorta*.
 .landweb_generic_donor <- function() {
   c(Pinu_con = "PINU_CON_LAT")
+}
+
+#' Total SCANFI cover of each member species in a study area
+#'
+#' Sums the per-species SCANFI cover layers that the speciesData stage writes for
+#' a study area (`SCANFI_spsCC_<CODE>_<year>_...tif`), one value per SCANFI code.
+#'
+#' @param dir directory holding the `SCANFI_spsCC_*.tif` layers.
+#'
+#' @return A named numeric vector of total cover (summed cover percent over the
+#'   layer's cells); names are SCANFI codes. It is an error for `dir` to hold no
+#'   such layer.
+#'
+#' @seealso [landweb_dominant_sppEquiv()]
+#'
+#' @export
+landweb_member_cover <- function(dir) {
+  files <- list.files(dir, pattern = "^SCANFI_spsCC_.+_[0-9]{4}_.*\\.tif$", full.names = TRUE)
+  if (!length(files)) {
+    stop("No SCANFI_spsCC_*.tif species cover layers in `", dir, "`.", call. = FALSE)
+  }
+  codes <- sub("^SCANFI_spsCC_(.+?)_[0-9]{4}_.*$", "\\1", basename(files))
+  cover <- vapply(files, function(f) {
+    terra::global(terra::rast(f), "sum", na.rm = TRUE)[[1]]
+  }, numeric(1))
+  stats::setNames(unname(cover), codes)
+}
+
+#' Give each merged LandWeb species group its dominant member's traits
+#'
+#' Where a LandWeb species group merges several species, keeps only the trait
+#' code (`LANDIS_traits`) of the member with the most cover, and blanks the
+#' others, so that `LandR::prepSpeciesTable()` and `LandR::speciesTableUpdate()`
+#' take the group's traits from that one member.
+#'
+#' @details
+#' Both LandR functions give a group the minimum of each numeric trait across its
+#' members' `LANDIS_traits` codes. For LandWeb's `Pice_gla` (white, Engelmann and
+#' hybrid spruce) that meant Engelmann spruce's 30 m effective seed dispersal for a
+#' group that is mostly white spruce (100 m). A member's cover is summed over the
+#' rows that share its `LANDIS_traits` code (the hybrid spruce shares Engelmann
+#' spruce's), so rows with the dominant code keep it. A group with one trait code,
+#' or with no cover at all in the study area, is left unchanged. Rows without a
+#' SCANFI code (see [landweb_sppEquiv()]) contribute no cover, and keep their code
+#' only if it is the dominant one.
+#'
+#' @param sppEquiv `data.table` from [landweb_sppEquiv()], with `SCANFI`,
+#'   `LANDIS_traits` and `LandWeb` columns. It is not modified.
+#' @param cover named numeric vector of total cover by SCANFI code, as from
+#'   [landweb_member_cover()].
+#'
+#' @return A copy of `sppEquiv` with the non-dominant members' `LANDIS_traits` set
+#'   to `NA`. Attribute `"dominant"` is a `data.table` of each group's dominant
+#'   trait code and its share of the group's cover.
+#'
+#' @export
+landweb_dominant_sppEquiv <- function(sppEquiv, cover) {
+  need <- c("SCANFI", "LANDIS_traits", "LandWeb")
+  miss <- setdiff(need, names(sppEquiv))
+  if (length(miss)) {
+    stop("`sppEquiv` lacks column(s) ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  }
+  out <- data.table::copy(data.table::as.data.table(sppEquiv))
+  rowCover <- unname(cover[out[["SCANFI"]]])
+  rowCover[is.na(rowCover)] <- 0
+  codeCover <- data.table::data.table(LandWeb = out[["LandWeb"]], code = out[["LANDIS_traits"]], cover = rowCover)
+  codeCover <- codeCover[!is.na(code) & nzchar(code), list(cover = sum(cover)), by = c("LandWeb", "code")]
+  dominant <- codeCover[, list(
+    code = code[which.max(cover)],
+    share = if (sum(cover) > 0) max(cover) / sum(cover) else NA_real_,
+    nCodes = .N,
+    total = sum(cover)
+  ), by = "LandWeb"]
+  dominant <- dominant[nCodes > 1 & total > 0]
+  for (i in seq_len(nrow(dominant))) {
+    rows <- which(out[["LandWeb"]] == dominant$LandWeb[i] &
+                    !is.na(out[["LANDIS_traits"]]) & out[["LANDIS_traits"]] != dominant$code[i])
+    data.table::set(out, i = rows, j = "LANDIS_traits", value = NA_character_)
+  }
+  data.table::setattr(out, "dominant", dominant[, list(LandWeb, code, share)])
+  out
 }
 
 ## Labels for the LandWeb groups that merge several species.
