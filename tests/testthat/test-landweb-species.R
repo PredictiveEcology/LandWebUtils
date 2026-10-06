@@ -246,6 +246,63 @@ test_that("generic Pinus contorta takes var. latifolia's row, not the first vari
   expect_identical(out[Latin_full == "Pinus contorta", LandWeb], "Pinu_spp")
 })
 
+## landweb_dominant_sppEquiv / landweb_member_cover --------------------------------------------------
+
+## cover by SCANFI code, shaped like WesternAlbertaUpland's (percent of each group's cover)
+wauCover <- c(ABIE_LAS = 77.5, ABIE_BAL = 22.1, THUJ_PLI = 0.3, TSUG_HET = 0.1, LARI_LAR = 99.7,
+              LARI_OCC = 0.3, PICE_GLA = 83, PICE_ENG = 14.7, PICE_ENG_GLA = 2.3, PICE_MAR = 100,
+              PINU_CON_LAT = 92.5, PINU_BAN = 7.5, PINU_CON_CON = 0, POPU_TRE = 82.7, POPU_BAL = 11.7,
+              BETU_PAP = 5.7, PSEU_MEN = 74, PSEU_MEN_GLA = 26)
+
+test_that("landweb_dominant_sppEquiv() keeps only the dominant member's trait code in each group", {
+  se <- landweb_sppEquiv(lr_sppEquiv())
+  out <- landweb_dominant_sppEquiv(se, wauCover)
+  kept <- out[!is.na(LANDIS_traits) & nzchar(LANDIS_traits), unique(LANDIS_traits), by = LandWeb]
+  expect_identical(kept[LandWeb == "Pice_gla", V1], "PICE.GLA")
+  expect_identical(kept[LandWeb == "Pinu_spp", V1], "PINU.CON.LAT")
+  expect_identical(kept[LandWeb == "Abie_spp", V1], "ABIE.LAS")
+  expect_identical(kept[LandWeb == "Popu_spp", V1], "POPU.TRE")
+  expect_identical(kept[LandWeb == "Lari_spp", V1], "LARI.LAR")
+  ## a single-code group is untouched
+  expect_identical(out[LandWeb == "Pice_mar", LANDIS_traits], se[LandWeb == "Pice_mar", LANDIS_traits])
+  ## only LANDIS_traits changes, and the input is not modified
+  rest <- out[, !"LANDIS_traits"]
+  data.table::setattr(rest, "dominant", NULL)
+  expect_identical(rest, se[, !"LANDIS_traits"])
+  expect_false(anyNA(se$LANDIS_traits[nzchar(se$SCANFI)]))
+  dom <- attr(out, "dominant")
+  expect_equal(dom[LandWeb == "Pice_gla", share], 0.83)
+})
+
+test_that("rows sharing the dominant trait code keep it (hybrid spruce shares Engelmann's)", {
+  se <- landweb_sppEquiv(lr_sppEquiv())
+  cover <- c(PICE_ENG = 40, PICE_ENG_GLA = 30, PICE_GLA = 50)
+  out <- landweb_dominant_sppEquiv(se, cover)
+  ## Engelmann + hybrid (PICE.ENG) = 70 > white spruce (PICE.GLA) = 50
+  expect_identical(out[SCANFI %in% c("PICE_ENG", "PICE_ENG_GLA"), LANDIS_traits], c("PICE.ENG", "PICE.ENG"))
+  expect_true(is.na(out[SCANFI == "PICE_GLA", LANDIS_traits]))
+})
+
+test_that("a group with no cover in the study area is left unchanged", {
+  se <- landweb_sppEquiv(lr_sppEquiv())
+  out <- landweb_dominant_sppEquiv(se, c(PICE_MAR = 10))
+  expect_identical(out$LANDIS_traits, se$LANDIS_traits)
+  expect_identical(nrow(attr(out, "dominant")), 0L)
+})
+
+test_that("landweb_member_cover() sums each member's cover layer, keyed by SCANFI code", {
+  dir <- withr::local_tempdir()
+  r <- terra::rast(nrows = 2, ncols = 2, vals = c(10, 20, NA, 30))
+  terra::writeRaster(r, file.path(dir, "SCANFI_spsCC_PICE_GLA_2020_v2_20260119_4px_SA.tif"))
+  terra::writeRaster(r * 2, file.path(dir, "SCANFI_spsCC_PICE_ENG_GLA_2020_v2_20260119_4px_SA.tif"))
+  terra::writeRaster(r, file.path(dir, "SCANFI_Pice_gla_4px.tif")) ## merged layer: not a member
+  cov <- landweb_member_cover(dir)
+  expect_identical(sort(names(cov)), c("PICE_ENG_GLA", "PICE_GLA"))
+  expect_equal(cov[["PICE_GLA"]], 60)
+  expect_equal(cov[["PICE_ENG_GLA"]], 120)
+  expect_error(landweb_member_cover(withr::local_tempdir()), "No SCANFI_spsCC")
+})
+
 ## landweb_require_species ---------------------------------------------------------------------------
 
 test_that("landweb_require_species() returns non-empty inputs unchanged", {
