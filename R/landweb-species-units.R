@@ -105,6 +105,13 @@ landweb_species_sppEquiv <- function(sppEquiv) {
 #' cover: the other members' `LANDIS_traits` codes are blanked (see [landweb_dominant_sppEquiv()]),
 #' and hybrid rows take their parent's code.
 #'
+#' A species unit's growth curve is fitted on that species' permanent sample plot trees only; a group
+#' unit's on all its members'. `Biomass_speciesParameters` assigns plot trees to units by `Latin_full`,
+#' so the rows of a species unit's merged minor members (hybrid spruce included), and of species in
+#' `neverSplit`, have it blanked: their trees still count in plot biomass but do not shape the curve.
+#' On WesternAlbertaUpland, merged Engelmann and hybrid spruce plots from the montane ecozone made white
+#' spruce's pooled curve unidentifiable.
+#'
 #' @param sppEquiv `data.table` from [landweb_species_sppEquiv()].
 #' @param layers `SpatRaster` of percent cover, one layer per `LandWeb` code: the speciesData stage's
 #'   `speciesLayers` for the study area.
@@ -246,6 +253,17 @@ landweb_species_units <- function(
   domOf <- stats::setNames(dom[["dominant"]], dom[["unit"]])
   notDominant <- !is.na(rowUnit) & rowSpecies != domOf[rowUnit]
   data.table::set(eq, i = which(notDominant), j = "LANDIS_traits", value = NA_character_)
+  ## whose plot trees shape the unit's growth curve: Biomass_speciesParameters assigns PSP trees to a
+  ## unit by `Latin_full`, and counts trees it cannot assign only as plot biomass. A species unit is
+  ## fitted on its own species' trees, a group unit on all its members'; merged minor members of a
+  ## species unit (hybrid spruce included) and species in `neverSplit` are never fitted.
+  kindOf <- stats::setNames(dom[["kind"]], dom[["unit"]])
+  ownSpecies <- eq[["LandWeb"]] ## before the hybrid joins its parent
+  notFitted <- !is.na(rowUnit) &
+    (ownSpecies %in% neverSplit | (kindOf[rowUnit] %in% "species" & ownSpecies != rowUnit))
+  if ("Latin_full" %in% names(eq)) {
+    data.table::set(eq, i = which(notFitted), j = "Latin_full", value = NA_character_)
+  }
   data.table::set(eq, j = "LandWeb", value = rowUnit)
   eq <- eq[!is.na(rowUnit)]
 

@@ -1,5 +1,7 @@
 # LandWebUtils (development version)
 
+* `landweb_species_units()` now fits a species unit's growth curve on that species' own plot trees (1.0.3.9046): merged minor members (hybrid spruce included) and western redcedar and western hemlock get a blank `Latin_full`, so `Biomass_speciesParameters` counts their trees only in plot biomass. A group unit still pools its members. On WesternAlbertaUpland, Engelmann and hybrid spruce plots from the montane ecozone had made white spruce's pooled curve unidentifiable.
+
 * New `sppEquiv_groups()` and `recode_cohorts()` (1.0.3.9045) group a simulation's species for a vegetation-type map: the group of each simulated code, the one-row-per-group table `LandR::vegTypeMapGenerator()` takes, and the cohorts recoded to their groups. They stop on a code in two groups or a group of both conifers and broadleaves, which the map would get wrong without an error.
 * New `landmine_fuel_types()` and a `fuelTypes` argument to `landmine_fire_ros()`: LandMine can type fuel from the leading reporting group, looking each map label up in an explicit table instead of matching species names. Larch, a spruce fuel with black spruce there, no longer falls through to the mature-spruce rate at every age. Without `fuelTypes` the function is unchanged.
 

@@ -1,4 +1,4 @@
-utils::globalVariables(c("code", "cover", "dominant", "eligible", "LandWeb", "nCodes", "species", "total", "unit"))
+utils::globalVariables(c("code", "cover", "dominant", "eligible", "LandWeb", "nCodes", "share", "species", "total", "unit"))
 
 ## The LandWeb species groups lifted out of LandWeb_preamble's `InitSpecies()`, so the mapping and
 ## its labels have one tested definition rather than an inline table reachable only through a

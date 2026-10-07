@@ -185,6 +185,20 @@ test_that("a unit takes its dominant member's traits, labels and colour", {
   )
 })
 
+test_that("a species unit is fitted on its own species' plot trees, a group unit on all its members'", {
+  res <- landweb_species_units(landweb_species_sppEquiv(lr_table_units()), units_layers(), threshold = 1)
+  eq <- res$sppEquiv
+  fitted <- function(scanfi) eq[SCANFI %in% scanfi, Latin_full]
+  ## white spruce unit: white spruce rows keep their name; merged Engelmann and hybrid rows do not
+  expect_identical(fitted("PICE_GLA"), "Picea glauca")
+  expect_true(all(is.na(fitted(c("PICE_ENG", "PICE_ENG_GLA")))))
+  ## the firs' group unit pools both firs; cedar, never split, is not fitted
+  expect_false(anyNA(fitted(c("ABIE_BAL", "ABIE_LAS"))))
+  expect_true(is.na(fitted("THUJ_PLI")))
+  ## a species unit's own varieties and generic rows stay fitted
+  expect_false(anyNA(eq[LandWeb == "Pinu_con", Latin_full]))
+})
+
 test_that("a lower threshold splits more species; cedar joins the largest fir", {
   res <- landweb_species_units(
     landweb_species_sppEquiv(lr_table_units()),

@@ -71,6 +71,13 @@ A unit is named by its species' code, or by its group's code when it holds sever
 takes its labels and colour from that species or group, and the traits of its member with most
 cover: the other members' \code{LANDIS_traits} codes are blanked (see \code{\link[=landweb_dominant_sppEquiv]{landweb_dominant_sppEquiv()}}),
 and hybrid rows take their parent's code.
+
+A species unit's growth curve is fitted on that species' permanent sample plot trees only; a group
+unit's on all its members'. \code{Biomass_speciesParameters} assigns plot trees to units by \code{Latin_full},
+so the rows of a species unit's merged minor members (hybrid spruce included), and of species in
+\code{neverSplit}, have it blanked: their trees still count in plot biomass but do not shape the curve.
+On WesternAlbertaUpland, merged Engelmann and hybrid spruce plots from the montane ecozone made white
+spruce's pooled curve unidentifiable.
 }
 \seealso{
 \code{\link[=landweb_sum_layers]{landweb_sum_layers()}}
