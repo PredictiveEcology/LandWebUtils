@@ -13,7 +13,8 @@
 #' keeps its own code, `Pice_eng_gla`; [landweb_species_units()] puts it with whichever parent has more
 #' cover in the study area.
 #'
-#' Every row of *Pinus contorta* -- shore pine, var. *latifolia* and the generic row -- takes interior
+#' Every row of a species carries the labels and colour of its first row, so LandR names it the same
+#' way whichever row it looks up. Every row of *Pinus contorta* -- shore pine, var. *latifolia* and the generic row -- takes interior
 #' lodgepole pine's (`PINU_CON_LAT`) labels, colour and `LANDIS_traits` code. LandR lists shore pine
 #' first, so its labels would otherwise name the species, and shore pine's trait code has no rows for
 #' the ecozones LandWeb reads. Western larch shares tamarack's colour in LandR and gets its own here,
@@ -48,15 +49,15 @@ landweb_species_sppEquiv <- function(sppEquiv) {
     value = ifelse(is.na(rows$groups), NA_character_, out[["LandR"]])
   )
 
-  ## one variety speaks for a species listed under several
+  ## one row speaks for a species listed under several: its first mapped row, or for Pinus contorta
+  ## interior lodgepole pine's, whose trait code it also takes
   ref <- .landweb_generic_donor()
-  for (sp in names(ref)) {
-    from <- match(ref[[sp]], out[["SCANFI"]])
+  labelCols <- intersect(c("EN_generic_short", "EN_generic_full", "Leading", "colorHex"), names(out))
+  for (sp in unique(out[["LandR"]][keep])) {
     to <- keep[out[["LandR"]][keep] %in% sp]
-    for (col in intersect(
-      c("EN_generic_short", "EN_generic_full", "Leading", "colorHex", "LANDIS_traits"),
-      names(out)
-    )) {
+    from <- if (sp %in% names(ref)) match(ref[[sp]], out[["SCANFI"]]) else to[1L]
+    cols <- if (sp %in% names(ref)) c(labelCols, intersect("LANDIS_traits", names(out))) else labelCols
+    for (col in cols) {
       data.table::set(out, i = to, j = col, value = out[[col]][from])
     }
   }

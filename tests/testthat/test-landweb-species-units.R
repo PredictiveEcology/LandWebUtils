@@ -91,6 +91,14 @@ test_that("every Pinus contorta row speaks for interior lodgepole pine", {
   expect_identical(unique(pc[["LANDIS_traits"]]), "PINU.CON.LAT")
 })
 
+test_that("every row of a species carries the same labels and colour", {
+  sp <- landweb_species_sppEquiv(lr_table_units())
+  perSpecies <- unique(sp[, list(LandWeb, EN_generic_short, EN_generic_full, Leading, colorHex)])
+  expect_identical(anyDuplicated(perSpecies[["LandWeb"]]), 0L)
+  expect_identical(perSpecies[LandWeb == "Popu_bal", EN_generic_short], "Ba poplar") ## not "Bl ctnwood"
+  expect_identical(perSpecies[LandWeb == "Pseu_men", EN_generic_short], "Doug-fir")
+})
+
 test_that("every species has its own colour", {
   sp <- landweb_species_sppEquiv(lr_table_units())
   perSpecies <- unique(sp[, list(LandWeb, colorHex)])

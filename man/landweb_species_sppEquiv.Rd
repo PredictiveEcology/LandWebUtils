@@ -25,7 +25,8 @@ The rows are those \code{\link[=landweb_sppEquiv]{landweb_sppEquiv()}} keeps, in
 keeps its own code, \code{Pice_eng_gla}; \code{\link[=landweb_species_units]{landweb_species_units()}} puts it with whichever parent has more
 cover in the study area.
 
-Every row of \emph{Pinus contorta} -- shore pine, var. \emph{latifolia} and the generic row -- takes interior
+Every row of a species carries the labels and colour of its first row, so LandR names it the same
+way whichever row it looks up. Every row of \emph{Pinus contorta} -- shore pine, var. \emph{latifolia} and the generic row -- takes interior
 lodgepole pine's (\code{PINU_CON_LAT}) labels, colour and \code{LANDIS_traits} code. LandR lists shore pine
 first, so its labels would otherwise name the species, and shore pine's trait code has no rows for
 the ecozones LandWeb reads. Western larch shares tamarack's colour in LandR and gets its own here,
