@@ -9,10 +9,11 @@ landmine_fire_ros(
   rstTimeSinceFire,
   flammableMap,
   ROSTable,
-  sppEquiv,
-  sppEquivCol,
+  sppEquiv = NULL,
+  sppEquivCol = NULL,
   ROSother,
   knownSpecies = landmine_known_species(),
+  fuelTypes = NULL,
   ROStype = c("default", "burny"),
   ageCutoffs = c(young = 40, immature = 120),
   youngFilter = c("always", "legacy"),
@@ -34,17 +35,23 @@ values may be \code{"mature"}, \code{"immature"}, \code{"young"}, or compound ve
 \code{"immature_young"} where two classes share one rate.}
 
 \item{sppEquiv}{\code{data.table} of species equivalencies, with (at least) columns
-\code{LandMine}, \code{LandWeb}, and \code{sppEquivCol}.}
+\code{LandMine}, \code{LandWeb}, and \code{sppEquivCol}. Not used with \code{fuelTypes}.}
 
 \item{sppEquivCol}{character; the \code{sppEquiv} column whose values appear as the
-labels of \code{vegTypeMap}'s attribute table.}
+labels of \code{vegTypeMap}'s attribute table. Not used with \code{fuelTypes}.}
 
 \item{ROSother}{integer; the rate of spread for flammable pixels that are not
 forested (grassland, lichen, shrub). Must lie within the range of
 \code{ROSTable$ros} and within 5\% of mature spruce.}
 
 \item{knownSpecies}{named character vector mapping species codes to fuel types;
-defaults to \code{\link[=landmine_known_species]{landmine_known_species()}}.}
+defaults to \code{\link[=landmine_known_species]{landmine_known_species()}}. Not used with \code{fuelTypes}.}
+
+\item{fuelTypes}{named character vector giving the fuel type of each label of
+\code{vegTypeMap}'s attribute table, e.g. \code{\link[=landmine_fuel_types]{landmine_fuel_types()}} for a map of reporting
+groups. When given, labels are looked up in it directly instead of being matched to
+species names, and \code{sppEquiv}, \code{sppEquivCol} and \code{knownSpecies} are not used. It is an
+error for a label to have no fuel type.}
 
 \item{ROStype}{character; \code{"default"} leaves non-flammable pixels as \code{NA},
 \code{"burny"} gives them the young-deciduous rate so that fire can cross
@@ -124,6 +131,8 @@ typed \code{softwood}, while \code{knownSpecies} calls larch \code{decid}; the t
 finds no match, and larch also falls through to \code{ROSother}. It is not swept up by the
 fix above because the pattern-derived value would override the authoritative mapping,
 which is the wrong direction. Larch is 3 pixels on WesternAlbertaUpland. A test pins
-the behaviour so a future change is deliberate.
+the behaviour so a future change is deliberate. With \code{fuelTypes} the labels are mapped
+explicitly, so neither defect can arise there: larch is a spruce fuel within its
+reporting group, and \code{"Mixed"} is listed.
 }
 
