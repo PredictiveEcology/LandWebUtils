@@ -25,7 +25,7 @@ fills the remaining flammable and non-flammable pixels with their defaults."><!-
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9042</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9046</span>
       </span>
     </div>
 
@@ -68,10 +68,11 @@ fills the remaining flammable and non-flammable pixels with their defaults.</p>
 <span>  <span class="va">rstTimeSinceFire</span>,</span>
 <span>  <span class="va">flammableMap</span>,</span>
 <span>  <span class="va">ROSTable</span>,</span>
-<span>  <span class="va">sppEquiv</span>,</span>
-<span>  <span class="va">sppEquivCol</span>,</span>
+<span>  sppEquiv <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sppEquivCol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">ROSother</span>,</span>
 <span>  knownSpecies <span class="op">=</span> <span class="fu"><a href="landmine_known_species.html">landmine_known_species</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  fuelTypes <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ROStype <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"default"</span>, <span class="st">"burny"</span><span class="op">)</span>,</span>
 <span>  ageCutoffs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>young <span class="op">=</span> <span class="fl">40</span>, immature <span class="op">=</span> <span class="fl">120</span><span class="op">)</span>,</span>
 <span>  youngFilter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"always"</span>, <span class="st">"legacy"</span><span class="op">)</span>,</span>
@@ -106,12 +107,12 @@ values may be <code>"mature"</code>, <code>"immature"</code>, <code>"young"</cod
 
 <dt id="arg-sppequiv">sppEquiv<a class="anchor" aria-label="anchor" href="#arg-sppequiv"></a></dt>
 <dd><p><code>data.table</code> of species equivalencies, with (at least) columns
-<code>LandMine</code>, <code>LandWeb</code>, and <code>sppEquivCol</code>.</p></dd>
+<code>LandMine</code>, <code>LandWeb</code>, and <code>sppEquivCol</code>. Not used with <code>fuelTypes</code>.</p></dd>
 
 
 <dt id="arg-sppequivcol">sppEquivCol<a class="anchor" aria-label="anchor" href="#arg-sppequivcol"></a></dt>
 <dd><p>character; the <code>sppEquiv</code> column whose values appear as the
-labels of <code>vegTypeMap</code>'s attribute table.</p></dd>
+labels of <code>vegTypeMap</code>'s attribute table. Not used with <code>fuelTypes</code>.</p></dd>
 
 
 <dt id="arg-rosother">ROSother<a class="anchor" aria-label="anchor" href="#arg-rosother"></a></dt>
@@ -122,7 +123,15 @@ forested (grassland, lichen, shrub). Must lie within the range of
 
 <dt id="arg-knownspecies">knownSpecies<a class="anchor" aria-label="anchor" href="#arg-knownspecies"></a></dt>
 <dd><p>named character vector mapping species codes to fuel types;
-defaults to <code><a href="landmine_known_species.html">landmine_known_species()</a></code>.</p></dd>
+defaults to <code><a href="landmine_known_species.html">landmine_known_species()</a></code>. Not used with <code>fuelTypes</code>.</p></dd>
+
+
+<dt id="arg-fueltypes">fuelTypes<a class="anchor" aria-label="anchor" href="#arg-fueltypes"></a></dt>
+<dd><p>named character vector giving the fuel type of each label of
+<code>vegTypeMap</code>'s attribute table, e.g. <code><a href="landmine_fuel_types.html">landmine_fuel_types()</a></code> for a map of reporting
+groups. When given, labels are looked up in it directly instead of being matched to
+species names, and <code>sppEquiv</code>, <code>sppEquivCol</code> and <code>knownSpecies</code> are not used. It is an
+error for a label to have no fuel type.</p></dd>
 
 
 <dt id="arg-rostype">ROStype<a class="anchor" aria-label="anchor" href="#arg-rostype"></a></dt>
@@ -204,7 +213,9 @@ typed <code>softwood</code>, while <code>knownSpecies</code> calls larch <code>d
 finds no match, and larch also falls through to <code>ROSother</code>. It is not swept up by the
 fix above because the pattern-derived value would override the authoritative mapping,
 which is the wrong direction. Larch is 3 pixels on WesternAlbertaUpland. A test pins
-the behaviour so a future change is deliberate.</p>
+the behaviour so a future change is deliberate. With <code>fuelTypes</code> the labels are mapped
+explicitly, so neither defect can arise there: larch is a spruce fuel within its
+reporting group, and <code>"Mixed"</code> is listed.</p>
     </div>
 
   </div>

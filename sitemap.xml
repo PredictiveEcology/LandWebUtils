@@ -39,6 +39,7 @@
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_fri_metrics.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_fri_summary.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_fri_verdict.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landmine_fuel_types.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_ignition_budget.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_known_species.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_optim_burnFun.html</loc></url>
@@ -62,11 +63,18 @@
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_reburn_ceiling.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_ros_table.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landmine_sizes_to_pixels.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_add_report_column.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landweb_dominant_sppEquiv.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landweb_member_cover.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_report_colours.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_report_groups.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_report_map.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landweb_require_species.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landweb_species_map.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_species_sppEquiv.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_species_units.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/landweb_sppEquiv.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/landweb_sum_layers.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/lcc2020_classes.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/lcc2020_remap_table.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/loadCASFRI.html</loc></url>
@@ -77,6 +85,7 @@
 <url><loc>http://LandWeb.predictiveecology.org/reference/prepSpeciesLayers_CASFRI.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/prepStudyArea.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/rasterListByPoly.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/recode_cohorts.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/refCodeFor.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/reportingPolygonLayers.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/runBoxPlotsVegCover.html</loc></url>
@@ -84,6 +93,7 @@
 <url><loc>http://LandWeb.predictiveecology.org/reference/runHistsVegCover.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/shortNameFor.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/simfiles.html</loc></url>
+<url><loc>http://LandWeb.predictiveecology.org/reference/sppEquiv_groups.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/studyAreaCrosswalk.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/tenureShortNames.html</loc></url>
 <url><loc>http://LandWeb.predictiveecology.org/reference/validateShortNames.html</loc></url>
