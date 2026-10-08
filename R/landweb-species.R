@@ -1,4 +1,4 @@
-utils::globalVariables(c("code", "cover", "nCodes", "total", "LandWeb"))
+utils::globalVariables(c("code", "cover", "dominant", "eligible", "LandWeb", "nCodes", "share", "species", "total", "unit"))
 
 ## The LandWeb species groups lifted out of LandWeb_preamble's `InitSpecies()`, so the mapping and
 ## its labels have one tested definition rather than an inline table reachable only through a
@@ -116,20 +116,11 @@ landweb_sppEquiv <- function(sppEquiv) {
   }
 
   out <- data.table::copy(sppEquiv)
-  groups <- unname(landweb_species_map()[out[["SCANFI"]]])
-  mapped <- which(!is.na(groups))
-
-  ## rows with no SCANFI code, for a species that has a mapped row (e.g. generic Pinus contorta)
-  spp <- out[["LandR"]]
-  noCode <- is.na(out[["SCANFI"]]) | !nzchar(out[["SCANFI"]])
-  sameSpp <- which(noCode & !is.na(spp) & nzchar(spp) & spp %in% spp[mapped])
-  donor <- mapped[match(spp[sameSpp], spp[mapped])]
-  ## where a species has several mapped varieties, the one LandWeb means
-  code <- unname(.landweb_generic_donor()[spp[sameSpp]])
-  pref <- ifelse(is.na(code), NA_integer_, match(code, out[["SCANFI"]]))
-  donor[!is.na(pref)] <- pref[!is.na(pref)]
-  groups[sameSpp] <- groups[donor]
-  data.table::set(out, j = "LandWeb", value = groups)
+  rows <- .landweb_mapped_rows(out)
+  mapped <- rows$mapped
+  sameSpp <- rows$sameSpp
+  donor <- rows$donor
+  data.table::set(out, j = "LandWeb", value = rows$groups)
 
   if ("colorHex" %in% names(out)) {
     noColour <- is.na(out[["colorHex"]][sameSpp]) | !nzchar(out[["colorHex"]][sameSpp])
@@ -151,6 +142,24 @@ landweb_sppEquiv <- function(sppEquiv) {
 
   out <- out[c(mapped, sameSpp), ]
   landweb_require_species(out, "sppEquiv")
+}
+
+## Rows of `out` that map to a LandWeb group: by SCANFI code (`mapped`), and rows without a SCANFI code
+## for a species that has a mapped row (`sameSpp`, e.g. generic Pinus contorta), each with the row it
+## takes its group and colour from (`donor`). `groups` is every row's group, NA where none.
+.landweb_mapped_rows <- function(out) {
+  groups <- unname(landweb_species_map()[out[["SCANFI"]]])
+  mapped <- which(!is.na(groups))
+  spp <- out[["LandR"]]
+  noCode <- is.na(out[["SCANFI"]]) | !nzchar(out[["SCANFI"]])
+  sameSpp <- which(noCode & !is.na(spp) & nzchar(spp) & spp %in% spp[mapped])
+  donor <- mapped[match(spp[sameSpp], spp[mapped])]
+  ## where a species has several mapped varieties, the one LandWeb means
+  code <- unname(.landweb_generic_donor()[spp[sameSpp]])
+  pref <- ifelse(is.na(code), NA_integer_, match(code, out[["SCANFI"]]))
+  donor[!is.na(pref)] <- pref[!is.na(pref)]
+  groups[sameSpp] <- groups[donor]
+  list(groups = groups, mapped = mapped, sameSpp = sameSpp, donor = donor)
 }
 
 ## SCANFI code of the variety a generic (no-SCANFI-code) row stands for, by `LandR` code: the

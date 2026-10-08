@@ -39,6 +39,40 @@ landmine_known_species <- function() {
   )
 }
 
+#' Reporting group to fuel type, for LandMine
+#'
+#' The LandMine fuel type of each LandWeb reporting group ([landweb_report_groups()]) and of
+#' `"Mixed"`. With species simulated separately, LandMine types fuel from the leading reporting
+#' group: biomass is summed within a group before the leading type is decided, as for the merged
+#' groups before.
+#'
+#' @details
+#' White spruce and black spruce (with the larches) are spruce fuels, pines are pine, the true firs
+#' and Douglas-fir are softwood, and broadleaves are deciduous. For the merged groups LandWeb
+#' simulated before, this matches [landmine_known_species()], except for larch: that table calls it
+#' deciduous, but larch never reached that rate (see [landmine_fire_ros()]) and was given the
+#' mature-spruce rate at every age. It is now a spruce fuel, with black spruce.
+#'
+#' @return A named character vector; names are reporting-group codes and `"Mixed"`, values are fuel
+#'   types of [landmine_ros_table()].
+#'
+#' @seealso [landmine_fire_ros()], whose `fuelTypes` takes it.
+#'
+#' @export
+#' @examples
+#' landmine_fuel_types()[["Bl_Spruce"]] ## "spruce"
+landmine_fuel_types <- function() {
+  c(
+    Wh_Spruce = "spruce",
+    Bl_Spruce = "spruce",
+    Pine = "pine",
+    Fir = "softwood",
+    Doug_fir = "softwood",
+    Decid = "decid",
+    Mixed = "mixed"
+  )
+}
+
 #' LandMine's rate-of-spread table
 #'
 #' Rates of spread by stand age class and fuel type, from Table 3.2 of Andison
@@ -173,15 +207,48 @@ landmine_ros_table <- function() {
   sppEquiv <- sppEquiv[, c("leading", "age", "ros", "pixelValue")]
   sppEquiv <- unique(sppEquiv, by = c("age", "leading", "pixelValue"))
 
-  ## a compound age label such as "immature_young" is claimed by the OLDEST class it names, so the
-  ## order of these three assignments is load-bearing.
-  sppEquiv[, used := "no"]
-  sppEquiv[(used == "no") & grepl("(^|_)mature", age), used := "mature"]
-  sppEquiv[(used == "no") & grepl("(^|_)immature", age), used := "immature"]
-  sppEquiv[(used == "no") & grepl("(^|_)young", age), used := "young"]
-  data.table::setkeyv(sppEquiv, "used")
+  .ros_classify_age(sppEquiv)
+}
 
-  sppEquiv
+## Which age class (`used`) each lookup row serves, keyed on it. A compound age label such as
+## "immature_young" is claimed by the OLDEST class it names, so the order of these three assignments
+## is load-bearing.
+.ros_classify_age <- function(lookup) {
+  lookup[, used := "no"]
+  lookup[(used == "no") & grepl("(^|_)mature", age), used := "mature"]
+  lookup[(used == "no") & grepl("(^|_)immature", age), used := "immature"]
+  lookup[(used == "no") & grepl("(^|_)young", age), used := "young"]
+  data.table::setkeyv(lookup, "used")
+  lookup
+}
+
+## The lookup of .ros_lookup(), built from the attribute table's LABELS through an explicit label ->
+## fuel type map (`fuelTypes`, e.g. landmine_fuel_types()), rather than by matching species names.
+.ros_lookup_fuel <- function(vegTypes, ROSTable, fuelTypes) {
+  labels <- as.character(vegTypes[[2]])
+  fuel <- unname(fuelTypes[labels])
+  if (anyNA(fuel)) {
+    stop(
+      "No LandMine fuel type for vegetation type(s): ",
+      paste(unique(labels[is.na(fuel)]), collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
+  noRate <- setdiff(unique(fuel), ROSTable[["leading"]])
+  if (length(noRate)) {
+    stop(
+      "`ROSTable` has no rate of spread for fuel type(s): ",
+      paste(noRate, collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
+  lookup <- data.table::data.table(leading = fuel, pixelValue = vegTypes[[1]])
+  lookup <- lookup[ROSTable, on = "leading", allow.cartesian = TRUE, nomatch = NULL]
+  lookup <- lookup[, c("leading", "age", "ros", "pixelValue")]
+  lookup <- unique(lookup, by = c("age", "leading", "pixelValue"))
+  .ros_classify_age(lookup)
 }
 
 #' Build the three age-class masks
@@ -306,14 +373,19 @@ landmine_ros_table <- function() {
 #'   values may be `"mature"`, `"immature"`, `"young"`, or compound versions such as
 #'   `"immature_young"` where two classes share one rate.
 #' @param sppEquiv `data.table` of species equivalencies, with (at least) columns
-#'   `LandMine`, `LandWeb`, and `sppEquivCol`.
+#'   `LandMine`, `LandWeb`, and `sppEquivCol`. Not used with `fuelTypes`.
 #' @param sppEquivCol character; the `sppEquiv` column whose values appear as the
-#'   labels of `vegTypeMap`'s attribute table.
+#'   labels of `vegTypeMap`'s attribute table. Not used with `fuelTypes`.
 #' @param ROSother integer; the rate of spread for flammable pixels that are not
 #'   forested (grassland, lichen, shrub). Must lie within the range of
 #'   `ROSTable$ros` and within 5% of mature spruce.
 #' @param knownSpecies named character vector mapping species codes to fuel types;
-#'   defaults to [landmine_known_species()].
+#'   defaults to [landmine_known_species()]. Not used with `fuelTypes`.
+#' @param fuelTypes named character vector giving the fuel type of each label of
+#'   `vegTypeMap`'s attribute table, e.g. [landmine_fuel_types()] for a map of reporting
+#'   groups. When given, labels are looked up in it directly instead of being matched to
+#'   species names, and `sppEquiv`, `sppEquivCol` and `knownSpecies` are not used. It is an
+#'   error for a label to have no fuel type.
 #' @param ROStype character; `"default"` leaves non-flammable pixels as `NA`,
 #'   `"burny"` gives them the young-deciduous rate so that fire can cross
 #'   discontinuous fuels.
@@ -382,7 +454,9 @@ landmine_ros_table <- function() {
 #' finds no match, and larch also falls through to `ROSother`. It is not swept up by the
 #' fix above because the pattern-derived value would override the authoritative mapping,
 #' which is the wrong direction. Larch is 3 pixels on WesternAlbertaUpland. A test pins
-#' the behaviour so a future change is deliberate.
+#' the behaviour so a future change is deliberate. With `fuelTypes` the labels are mapped
+#' explicitly, so neither defect can arise there: larch is a spruce fuel within its
+#' reporting group, and `"Mixed"` is listed.
 #'
 #' @return An integer vector of rates of spread, one element per pixel of
 #'   `vegTypeMap`.
@@ -392,8 +466,9 @@ landmine_ros_table <- function() {
 #' @importFrom SpaDES.tools inRange
 #' @importFrom terra levels ncell values
 landmine_fire_ros <- function(vegTypeMap, rstTimeSinceFire, flammableMap, ROSTable,
-                              sppEquiv, sppEquivCol, ROSother,
+                              sppEquiv = NULL, sppEquivCol = NULL, ROSother,
                               knownSpecies = landmine_known_species(),
+                              fuelTypes = NULL,
                               ROStype = c("default", "burny"),
                               ageCutoffs = c(young = 40, immature = 120),
                               youngFilter = c("always", "legacy"),
@@ -421,7 +496,14 @@ landmine_fire_ros <- function(vegTypeMap, rstTimeSinceFire, flammableMap, ROSTab
   tsf <- .as_cell_vector(rstTimeSinceFire, nCells, "rstTimeSinceFire")
   flammable <- .as_cell_vector(flammableMap, nCells, "flammableMap")
 
-  lookup <- .ros_lookup(vegTypes, sppEquiv, sppEquivCol, ROSTable, knownSpecies)
+  lookup <- if (is.null(fuelTypes)) {
+    if (is.null(sppEquiv) || is.null(sppEquivCol)) {
+      stop("Give `fuelTypes`, or `sppEquiv` and `sppEquivCol`.", call. = FALSE)
+    }
+    .ros_lookup(vegTypes, sppEquiv, sppEquivCol, ROSTable, knownSpecies)
+  } else {
+    .ros_lookup_fuel(vegTypes, ROSTable, fuelTypes)
+  }
 
   if (isTRUE(assertions)) {
     .ros_check_rat(vegTypes)

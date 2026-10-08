@@ -514,3 +514,72 @@ test_that("the lookup does not modify the caller's sppEquiv by reference", {
   .ros_call(f)
   expect_identical(f$sppEquiv, before)
 })
+
+## ---- fuel from reporting groups (fuelTypes) -------------------------------------------------------
+
+test_that("landmine_fuel_types() gives every reporting group and Mixed a fuel type in the table", {
+  ft <- landmine_fuel_types()
+  expect_setequal(names(ft), c(landweb_report_groups()[["code"]], "Mixed"))
+  expect_true(all(ft %in% landmine_ros_table()[["leading"]]))
+  expect_identical(
+    unname(ft[c("Wh_Spruce", "Bl_Spruce", "Pine", "Fir", "Doug_fir", "Decid", "Mixed")]),
+    c("spruce", "spruce", "pine", "softwood", "softwood", "decid", "mixed")
+  )
+})
+
+test_that("with fuelTypes, each reporting group gets its fuel's table rate at each age", {
+  ## time since fire 10, 60, 200, 900 per type: young, immature, mature, mature
+  f <- .ros_fixture(labels = c("Bl_Spruce", "Pine", "Decid", "Fir", "Mixed", "Wh_Spruce", "Doug_fir"))
+  ros <- landmine_fire_ros(
+    vegTypeMap = f$vegTypeMap, rstTimeSinceFire = f$tsf, flammableMap = f$flammable,
+    ROSTable = f$ROSTable, ROSother = 30L, fuelTypes = landmine_fuel_types()
+  )
+  expect_identical(ros, c(
+    20L, 20L, 30L, 30L, ## Bl_Spruce: spruce (larch now with it, no longer 30 at every age)
+    22L, 14L, 21L, 21L, ## Pine
+    6L, 6L, 9L, 9L, ## Decid
+    18L, 18L, 27L, 27L, ## Fir: softwood
+    12L, 12L, 17L, 17L, ## Mixed
+    20L, 20L, 30L, 30L, ## Wh_Spruce: spruce
+    18L, 18L, 27L, 27L ## Doug_fir: softwood
+  ))
+})
+
+test_that("with fuelTypes, a vegetation type with no fuel type is named in the error", {
+  f <- .ros_fixture(labels = c("Pine", "Larch"))
+  expect_error(
+    landmine_fire_ros(
+      vegTypeMap = f$vegTypeMap, rstTimeSinceFire = f$tsf, flammableMap = f$flammable,
+      ROSTable = f$ROSTable, ROSother = 30L, fuelTypes = landmine_fuel_types()
+    ),
+    "No LandMine fuel type for vegetation type\\(s\\): Larch"
+  )
+})
+
+test_that("without fuelTypes, sppEquiv and sppEquivCol are required", {
+  f <- .ros_fixture()
+  expect_error(
+    landmine_fire_ros(
+      vegTypeMap = f$vegTypeMap, rstTimeSinceFire = f$tsf, flammableMap = f$flammable,
+      ROSTable = f$ROSTable, ROSother = 30L
+    ),
+    "Give `fuelTypes`"
+  )
+})
+
+test_that("with fuelTypes, the result does not depend on the attribute table's row order", {
+  labels <- c("Pine", "Decid", "Bl_Spruce", "Mixed")
+  f <- .ros_fixture(labels = labels)
+  ros <- landmine_fire_ros(
+    vegTypeMap = f$vegTypeMap, rstTimeSinceFire = f$tsf, flammableMap = f$flammable,
+    ROSTable = f$ROSTable, ROSother = 30L, fuelTypes = landmine_fuel_types()
+  )
+  shuffled <- f$vegTypeMap
+  levels(shuffled) <- data.frame(ID = rev(seq_along(labels)), Species = rev(labels))
+  ros2 <- landmine_fire_ros(
+    vegTypeMap = shuffled, rstTimeSinceFire = f$tsf, flammableMap = f$flammable,
+    ROSTable = f$ROSTable, ROSother = 30L, fuelTypes = landmine_fuel_types()
+  )
+  expect_identical(ros2, ros)
+})
+
