@@ -14,12 +14,14 @@
 
   stopifnot(any(c("LTHFC", "LTHRC") %in% names(poly)))
 
-  ## Apparently, sometimes it is LTHFC, sometimes LTHRC; use LTHFC
-  if (isTRUE("LTHRC" %in% names(poly))) {
-    poly <- dplyr::rename(poly, LTHFC = "LTHRC")
+  ## Apparently, sometimes it is LTHFC, sometimes LTHRC. Renamed with names<-, which sf and terra both
+  ## support: dplyr::rename() on a SpatVector needs tidyterra loaded to find its method.
+  nms <- names(poly)
+  if (all(c("LTHFC", "LTHRC") %in% nms)) {
+    stop("the polygons have both an LTHFC and an LTHRC column", call. = FALSE)
   }
-
-  poly <- dplyr::rename(poly, fireReturnInterval = "LTHFC")
+  nms[nms %in% c("LTHFC", "LTHRC")] <- "fireReturnInterval"
+  names(poly) <- nms
 
   ## fires with Fire Return Interval 30 years are not correctly simulated; remove.
   ## Strictly BELOW `minFRI`, as documented: this was `<=`, which at the default of 40 also dropped
