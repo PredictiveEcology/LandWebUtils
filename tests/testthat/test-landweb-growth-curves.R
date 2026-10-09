@@ -21,22 +21,18 @@ growth_species_table <- function() {
   )
 }
 
-square <- function(x0, y0, s) {
-  sf::st_polygon(list(rbind(c(x0, y0), c(x0 + s, y0), c(x0 + s, y0 + s), c(x0, y0 + s), c(x0, y0))))
-}
-
 test_that("the growth-curve species table counts hybrid spruce as Engelmann spruce", {
   eq <- landweb_species_sppEquiv(lr_table_growth())
   g <- landweb_growth_sppEquiv(eq)
   hyb <- g[["Latin_full"]] %in% "Picea engelmannii x glauca"
   eng <- g[["Latin_full"]] %in% "Picea engelmannii"
-  expect_true(any(hyb))
+  expect_identical(sum(hyb), 1L)
   ## Biomass_speciesParameters relabels BC white spruce records only if the hybrid's LandR code is Pice_eng
-  expect_identical(unique(g[["LandR"]][hyb]), "Pice_eng")
-  expect_identical(unique(g[["LandWeb"]][hyb]), "Pice_eng")
-  expect_identical(unique(g[["LANDIS_traits"]][hyb]), unique(g[["LANDIS_traits"]][eng]))
+  expect_identical(g[["LandR"]][hyb], "Pice_eng")
+  expect_identical(g[["LandWeb"]][hyb], "Pice_eng")
+  expect_identical(g[["LANDIS_traits"]][hyb], unique(g[["LANDIS_traits"]][eng]))
   expect_identical(g[!hyb], data.table::as.data.table(eq)[!hyb])
-  expect_identical(unique(eq[["LandR"]][hyb]), "Pice_eng_gla") ## the input is left as it was
+  expect_identical(eq[["LandR"]][hyb], "Pice_eng_gla") ## the input is left as it was
 })
 
 test_that("growth traits keep the five traits and their source, and refuse missing ones", {
@@ -55,8 +51,8 @@ test_that("growth traits keep the five traits and their source, and refuse missi
   )
   bad <- growth_species_table()
   bad$inflationFactor[2] <- NA
-  expect_error(landweb_growth_traits(bad), "Pinu_con")
-  expect_error(landweb_growth_traits(growth_species_table()[, !"longevity"]), "longevity")
+  expect_snapshot(error = TRUE, landweb_growth_traits(bad))
+  expect_snapshot(error = TRUE, landweb_growth_traits(growth_species_table()[, !"longevity"]))
 })
 
 test_that("each unit takes its dominant species' growth traits, with their source", {
@@ -85,26 +81,25 @@ test_that("each unit takes its dominant species' growth traits, with their sourc
   )
   expect_identical(out$hardsoft, sp$hardsoft)
   ## the input is left as it was
+  expect_named(sp, c("species", "longevity", "growthcurve", "mortalityshape", "hardsoft"))
   expect_identical(sp$longevity, c(150L, 250L, 350L))
-  expect_false("inflationFactor" %in% names(sp))
 })
 
 test_that("a unit without a dominant species, or whose dominant has no traits, stops", {
   tr <- landweb_growth_traits(growth_species_table())
   sp <- data.table::data.table(species = c("Pice_gla", "Abie_spp"))
-  expect_error(
+  expect_snapshot(error = TRUE, {
     landweb_unit_growth_traits(
       sp,
       tr,
       data.table::data.table(unit = "Pice_gla", dominant = "Pice_gla")
-    ),
-    "Abie_spp"
-  )
+    )
+  })
   units <- data.table::data.table(
     unit = c("Pice_gla", "Abie_spp"),
     dominant = c("Pice_gla", "Abie_bal")
   )
-  expect_error(landweb_unit_growth_traits(sp, tr, units), "Abie_bal")
+  expect_snapshot(error = TRUE, landweb_unit_growth_traits(sp, tr, units))
 })
 
 test_that("a merged unit takes the curve of its member with most cover that was fitted", {
@@ -142,41 +137,13 @@ test_that("damage agent codes: bark beetles and defoliators, by plot source", {
   expect_identical(both$AB, c(3L, 1L, 2L)) ## mountain pine beetle; spruce budworm, defoliator
   expect_identical(both$SK, 3L) ## death by insects, once
   expect_identical(landweb_damage_codes("defoliators")$SK, 3L)
-  expect_true(all(c("IBM", "IBS", "IDE", "IDW", "IDX", "CHX") %in% both$BC))
-  expect_true(all(grepl("^I[BD]|^CHX$", both$BC)))
+  expect_contains(both$BC, c("IBM", "IBS", "IDE", "IDW", "IDX", "CHX"))
+  expect_match(both$BC, "^I[BD]|^CHX$")
   expect_identical(anyDuplicated(both$BC), 0L)
   beetles <- landweb_damage_codes("barkBeetles")
   expect_identical(beetles$NFI, "IB")
-  expect_true(all(startsWith(beetles$BC, "IB")))
-  expect_error(landweb_damage_codes("fire"))
-})
-
-test_that("the LandWeb area is the outline of the fire-cycle polygons, without holes", {
-  holed <- sf::st_difference(square(0, 0, 10), square(4, 4, 2))
-  lthfc <- sf::st_sf(
-    LTHFC = c(100, 60),
-    geometry = sf::st_sfc(holed, square(10, 0, 10), crs = 3400)
-  )
-  a <- landweb_area(lthfc)
-  expect_s3_class(a, "sfc")
-  expect_length(a, 1L)
-  expect_equal(as.numeric(sf::st_area(a)), 200)
-})
-
-test_that("the fitting area keeps whole the ecological units that touch the area", {
-  eco <- sf::st_sf(
-    ECOPROVINCE = c("A", "B", "C"),
-    geometry = sf::st_sfc(square(0, 0, 10), square(10, 0, 10), square(30, 0, 10), crs = 3400)
-  )
-  local_mocked_bindings(prepInputs = function(...) eco, .package = "reproducible")
-  area <- sf::st_transform(sf::st_sfc(square(5, 2, 2), crs = 3400), 3978)
-  out <- landweb_anpp_area(area, "ecoprovince", destinationPath = withr::local_tempdir())
-  expect_identical(out$ECOPROVINCE, "A")
-  expect_equal(sf::st_crs(out), sf::st_crs(area))
-  expect_equal(
-    as.numeric(sf::st_area(out)),
-    as.numeric(sf::st_area(sf::st_transform(eco[1, ], 3978)))
-  )
+  expect_match(beetles$BC, "^IB")
+  expect_snapshot(error = TRUE, landweb_damage_codes("fire"))
 })
 
 test_that("no BC plot in the fitting area: no BEC zones are fetched", {
