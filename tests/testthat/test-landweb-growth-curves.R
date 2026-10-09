@@ -135,6 +135,19 @@ test_that("a merged unit takes the curve of its member with most cover that was 
   )
 })
 
+test_that("damage agent codes: bark beetles and defoliators, by plot source", {
+  both <- landweb_damage_codes()
+  expect_named(both, c("BC", "NFI"))
+  expect_identical(both$NFI, c("IB", "ID"))
+  expect_true(all(c("IBM", "IBS", "IDE", "IDW", "IDX", "CHX") %in% both$BC))
+  expect_true(all(grepl("^I[BD]|^CHX$", both$BC)))
+  expect_identical(anyDuplicated(both$BC), 0L)
+  beetles <- landweb_damage_codes("barkBeetles")
+  expect_identical(beetles$NFI, "IB")
+  expect_true(all(startsWith(beetles$BC, "IB")))
+  expect_error(landweb_damage_codes("fire"))
+})
+
 test_that("the LandWeb area is the outline of the fire-cycle polygons, without holes", {
   holed <- sf::st_difference(square(0, 0, 10), square(4, 4, 2))
   lthfc <- sf::st_sf(

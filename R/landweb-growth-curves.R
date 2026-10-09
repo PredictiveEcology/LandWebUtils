@@ -165,3 +165,59 @@ landweb_bec_zones <- function(PSPgis, PSPmeasure, area) {
     bcdata::select("ZONE") |>
     bcdata::collect()
 }
+
+#' Damage agent codes to exclude from growth-curve plots, by plot source
+#'
+#' LandWeb simulates neither bark beetles nor defoliators, so a growth curve fitted on trees they
+#' damaged would read their damage as growth and senescence. BC and the NFI code damage agents alike: a
+#' leading `I` for insects, then `B` for bark beetles and `D` for defoliators; BC lists each species
+#' (`IBM` mountain pine beetle, `IDE` spruce budworm, ...) and the budworm genus as `CHX`. The BC codes
+#' are those of BC's damage agent table as PSPclean reads it (`BCForestry_DamageAgentCodes.csv`).
+#'
+#' @param agents damage agent classes: any of `"barkBeetles"` and `"defoliators"`.
+#'
+#' @return list of character vectors named `BC` and `NFI`, for `PSPclean::getPSP()`'s
+#'   `codesToExclude`.
+#'
+#' @export
+landweb_damage_codes <- function(agents = c("barkBeetles", "defoliators")) {
+  agents <- match.arg(agents, several.ok = TRUE)
+  codes <- list(
+    barkBeetles = list(
+      BC = c("IB", "IBB", "IBD", "IBI", "IBM", "IBP", "IBS", "IBT", "IBW"),
+      NFI = "IB"
+    ),
+    defoliators = list(
+      BC = c(
+        "ID",
+        "IDA",
+        "IDB",
+        "IDC",
+        "IDD",
+        "IDE",
+        "IDF",
+        "IDG",
+        "IDH",
+        "IDI",
+        "IDL",
+        "IDM",
+        "IDN",
+        "IDP",
+        "IDR",
+        "IDS",
+        "IDT",
+        "IDU",
+        "IDV",
+        "IDW",
+        "IDX",
+        "IDZ",
+        "CHX"
+      ),
+      NFI = "ID"
+    )
+  )[agents]
+  list(
+    BC = unlist(lapply(codes, `[[`, "BC"), use.names = FALSE),
+    NFI = unlist(lapply(codes, `[[`, "NFI"), use.names = FALSE)
+  )
+}
