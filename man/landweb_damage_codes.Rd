@@ -10,7 +10,7 @@ landweb_damage_codes(agents = c("barkBeetles", "defoliators"))
 \item{agents}{damage agent classes: any of \code{"barkBeetles"} and \code{"defoliators"}.}
 }
 \value{
-list of character vectors named \code{BC} and \code{NFI}, for \code{PSPclean::getPSP()}'s
+list named by plot source (\code{BC}, \code{AB}, \code{SK}, \code{NFI}), for \code{PSPclean::getPSP()}'s
 \code{codesToExclude}.
 }
 \description{
@@ -19,4 +19,7 @@ damaged would read their damage as growth and senescence. BC and the NFI code da
 leading \code{I} for insects, then \code{B} for bark beetles and \code{D} for defoliators; BC lists each species
 (\code{IBM} mountain pine beetle, \code{IDE} spruce budworm, ...) and the budworm genus as \code{CHX}. The BC codes
 are those of BC's damage agent table as PSPclean reads it (\code{BCForestry_DamageAgentCodes.csv}).
+Alberta records damage causes as numbers (1 spruce budworm, 2 defoliator, 3 mountain pine beetle);
+Saskatchewan records only the cause of a tree's death, with all insects as 3, so either class
+excludes every tree that insects killed there.
 }

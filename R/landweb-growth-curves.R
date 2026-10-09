@@ -173,10 +173,13 @@ landweb_bec_zones <- function(PSPgis, PSPmeasure, area) {
 #' leading `I` for insects, then `B` for bark beetles and `D` for defoliators; BC lists each species
 #' (`IBM` mountain pine beetle, `IDE` spruce budworm, ...) and the budworm genus as `CHX`. The BC codes
 #' are those of BC's damage agent table as PSPclean reads it (`BCForestry_DamageAgentCodes.csv`).
+#' Alberta records damage causes as numbers (1 spruce budworm, 2 defoliator, 3 mountain pine beetle);
+#' Saskatchewan records only the cause of a tree's death, with all insects as 3, so either class
+#' excludes every tree that insects killed there.
 #'
 #' @param agents damage agent classes: any of `"barkBeetles"` and `"defoliators"`.
 #'
-#' @return list of character vectors named `BC` and `NFI`, for `PSPclean::getPSP()`'s
+#' @return list named by plot source (`BC`, `AB`, `SK`, `NFI`), for `PSPclean::getPSP()`'s
 #'   `codesToExclude`.
 #'
 #' @export
@@ -185,6 +188,8 @@ landweb_damage_codes <- function(agents = c("barkBeetles", "defoliators")) {
   codes <- list(
     barkBeetles = list(
       BC = c("IB", "IBB", "IBD", "IBI", "IBM", "IBP", "IBS", "IBT", "IBW"),
+      AB = 3L,
+      SK = 3L,
       NFI = "IB"
     ),
     defoliators = list(
@@ -213,11 +218,14 @@ landweb_damage_codes <- function(agents = c("barkBeetles", "defoliators")) {
         "IDZ",
         "CHX"
       ),
+      AB = c(1L, 2L),
+      SK = 3L,
       NFI = "ID"
     )
   )[agents]
-  list(
-    BC = unlist(lapply(codes, `[[`, "BC"), use.names = FALSE),
-    NFI = unlist(lapply(codes, `[[`, "NFI"), use.names = FALSE)
+  sources <- c("BC", "AB", "SK", "NFI")
+  stats::setNames(
+    lapply(sources, function(src) unique(unlist(lapply(codes, `[[`, src), use.names = FALSE))),
+    sources
   )
 }

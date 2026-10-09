@@ -137,8 +137,11 @@ test_that("a merged unit takes the curve of its member with most cover that was 
 
 test_that("damage agent codes: bark beetles and defoliators, by plot source", {
   both <- landweb_damage_codes()
-  expect_named(both, c("BC", "NFI"))
+  expect_named(both, c("BC", "AB", "SK", "NFI"))
   expect_identical(both$NFI, c("IB", "ID"))
+  expect_identical(both$AB, c(3L, 1L, 2L)) ## mountain pine beetle; spruce budworm, defoliator
+  expect_identical(both$SK, 3L) ## death by insects, once
+  expect_identical(landweb_damage_codes("defoliators")$SK, 3L)
   expect_true(all(c("IBM", "IBS", "IDE", "IDW", "IDX", "CHX") %in% both$BC))
   expect_true(all(grepl("^I[BD]|^CHX$", both$BC)))
   expect_identical(anyDuplicated(both$BC), 0L)
