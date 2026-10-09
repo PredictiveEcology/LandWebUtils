@@ -107,6 +107,34 @@ test_that("a unit without a dominant species, or whose dominant has no traits, s
   expect_error(landweb_unit_growth_traits(sp, tr, units), "Abie_bal")
 })
 
+test_that("a merged unit takes the curve of its member with most cover that was fitted", {
+  firs <- data.table::data.table(
+    species = c("Abie_bal", "Abie_las"),
+    growthcurve = c(0.72, 0.68),
+    mortalityshape = c(23L, 21L),
+    mANPPproportion = c(5.48, 4.915),
+    inflationFactor = c(1.012, 1.041),
+    longevity = c(200L, 236L),
+    growthCurveSource = c("imputed", "estimated")
+  )
+  tr <- data.table::rbindlist(list(landweb_growth_traits(growth_species_table()), firs))
+  units <- data.table::data.table(
+    unit = c("Abie_spp", "Lari_lar"),
+    dominant = c("Abie_bal", "Lari_lar"),
+    ranked = list(c("Abie_bal", "Abie_las", "Thuj_pli"), "Lari_lar")
+  )
+  sp <- data.table::data.table(species = c("Abie_spp", "Lari_lar"))
+  out <- landweb_unit_growth_traits(sp, tr, units)
+  ## balsam fir leads by cover but was not fitted; tamarack has no fitted member, so keeps its mean
+  expect_identical(out$growthTraitSource, c("estimated (Abie_las)", "imputed (Lari_lar)"))
+  expect_identical(out$longevity, c(236L, 350L))
+  ## without the ranking, the dominant member's traits
+  expect_identical(
+    landweb_unit_growth_traits(sp, tr, units[, !"ranked"])$growthTraitSource,
+    c("imputed (Abie_bal)", "imputed (Lari_lar)")
+  )
+})
+
 test_that("the LandWeb area is the outline of the fire-cycle polygons, without holes", {
   holed <- sf::st_difference(square(0, 0, 10), square(4, 4, 2))
   lthfc <- sf::st_sf(

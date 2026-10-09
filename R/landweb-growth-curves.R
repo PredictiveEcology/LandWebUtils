@@ -66,11 +66,15 @@ landweb_growth_traits <- function(species) {
   out[]
 }
 
-#' Give each simulated unit the growth-curve traits of its dominant species
+#' Give each simulated unit the growth-curve traits of a member species
 #'
-#' Each unit of a study area takes the traits of the member with most cover (as it takes that member's
-#' LANDIS-II traits), from the shared fit. The traits' source is recorded in `growthTraitSource`, e.g.
-#' `"estimated (Pinu_con)"`. Apply the result to `speciesEcoregion` with
+#' Each unit of a study area takes, from the shared fit, the traits of its member with most cover among
+#' those whose curve was fitted (`growthCurveSource` `"estimated"`); a unit none of whose members was
+#' fitted takes its dominant member's traits, which are then hardwood or softwood means. Members follow
+#' the unit's `ranked` order (species in `neverSplit` last); without it, the dominant member is used. A
+#' merged fir unit dominated by unfitted balsam fir thus takes subalpine fir's fitted curve rather than
+#' the conifer mean. The traits' source is recorded in `growthTraitSource`, e.g.
+#' `"estimated (Abie_las)"`. Apply the result to `speciesEcoregion` with
 #' `LandR::modifySpeciesAndSpeciesEcoregionTable()`.
 #'
 #' @param species a study area's species table (one row per unit), from data preparation.
@@ -84,7 +88,21 @@ landweb_unit_growth_traits <- function(species, traits, units) {
   sp <- data.table::copy(data.table::as.data.table(species))
   tr <- data.table::as.data.table(traits)
   dominantOf <- stats::setNames(units[["dominant"]], units[["unit"]])
-  src <- unname(dominantOf[as.character(sp[["species"]])])
+  ranked <- if ("ranked" %in% names(units)) {
+    stats::setNames(units[["ranked"]], units[["unit"]])
+  } else {
+    stats::setNames(as.list(units[["dominant"]]), units[["unit"]])
+  }
+  fitted <- tr[["species"]][tr[["growthCurveSource"]] %in% "estimated"]
+  src <- vapply(
+    as.character(sp[["species"]]),
+    function(u) {
+      firstFitted <- intersect(ranked[[u]], fitted)
+      if (length(firstFitted)) firstFitted[[1L]] else unname(dominantOf[u])
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
   if (anyNA(src)) {
     stop(
       "no dominant species for unit(s): ",

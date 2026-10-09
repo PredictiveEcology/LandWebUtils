@@ -39,7 +39,9 @@ species are removed;
 \item \code{sppColorVectReport}: named colours of the reporting groups present and \code{"Mixed"};
 \item \code{layerMap}: named character vector, each layer of \code{layers} to its unit (\code{NA}: dropped), for
 \code{\link[=landweb_sum_layers]{landweb_sum_layers()}};
-\item \code{units}: \code{data.table} of each unit's members, dominant member and share (percent);
+\item \code{units}: \code{data.table} of each unit's members, dominant member and share (percent), and \code{ranked},
+a list column of its members in the order it takes growth-curve traits from (most cover first,
+species in \code{neverSplit} last; see \code{\link[=landweb_unit_growth_traits]{landweb_unit_growth_traits()}});
 \item \code{hybridParent}: the species hybrid spruce joined.
 }
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/landweb-growth-curves.R
 \name{landweb_unit_growth_traits}
 \alias{landweb_unit_growth_traits}
-\title{Give each simulated unit the growth-curve traits of its dominant species}
+\title{Give each simulated unit the growth-curve traits of a member species}
 \usage{
 landweb_unit_growth_traits(species, traits, units)
 }
@@ -17,8 +17,12 @@ landweb_unit_growth_traits(species, traits, units)
 A copy of \code{species} with the traits set.
 }
 \description{
-Each unit of a study area takes the traits of the member with most cover (as it takes that member's
-LANDIS-II traits), from the shared fit. The traits' source is recorded in \code{growthTraitSource}, e.g.
-\code{"estimated (Pinu_con)"}. Apply the result to \code{speciesEcoregion} with
+Each unit of a study area takes, from the shared fit, the traits of its member with most cover among
+those whose curve was fitted (\code{growthCurveSource} \code{"estimated"}); a unit none of whose members was
+fitted takes its dominant member's traits, which are then hardwood or softwood means. Members follow
+the unit's \code{ranked} order (species in \code{neverSplit} last); without it, the dominant member is used. A
+merged fir unit dominated by unfitted balsam fir thus takes subalpine fir's fitted curve rather than
+the conifer mean. The traits' source is recorded in \code{growthTraitSource}, e.g.
+\code{"estimated (Abie_las)"}. Apply the result to \code{speciesEcoregion} with
 \code{LandR::modifySpeciesAndSpeciesEcoregionTable()}.
 }
