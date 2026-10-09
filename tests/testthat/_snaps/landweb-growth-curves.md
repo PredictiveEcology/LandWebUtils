@@ -39,3 +39,19 @@
       Error in `match.arg()`:
       ! 'arg' should be one of "barkBeetles", "defoliators"
 
+# a bootstrap stops when no plot lies in the fitting area
+
+    Code
+      landweb_resample_psp(psp_fixture(), far, seed = 1L)
+    Condition
+      Error:
+      ! no plot lies inside the fitting area
+
+# trait frequencies count each species' trait sets over the refits
+
+    Code
+      landweb_growth_trait_frequency(refits[, !"resample"], tr)
+    Condition
+      Error:
+      ! the refits' traits have no resample
+

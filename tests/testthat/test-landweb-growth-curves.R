@@ -146,6 +146,93 @@ test_that("damage agent codes: bark beetles and defoliators, by plot source", {
   expect_snapshot(error = TRUE, landweb_damage_codes("fire"))
 })
 
+## plots p1-p4 inside a 10-degree square, p5 outside; two measurements per plot, three trees each
+psp_fixture <- function() {
+  ids <- paste0("p", 1:5)
+  plot <- data.table::data.table(
+    OrigPlotID1 = rep(ids, each = 2),
+    MeasureID = paste0(rep(ids, each = 2), c("_m1", "_m2")),
+    MeasureYear = rep(c(2000, 2010), 5),
+    source = "NFI"
+  )
+  measure <- plot[rep(seq_len(nrow(plot)), each = 3)]
+  measure[["TreeNumber"]] <- rep(1:3, nrow(plot))
+  gis <- sf::st_as_sf(
+    data.table::data.table(
+      OrigPlotID1 = ids,
+      baseSA = 50,
+      x = c(1, 2, 3, 4, 20),
+      y = c(1, 2, 3, 4, 20)
+    ),
+    coords = c("x", "y"),
+    crs = 4326
+  )
+  list(PSPmeasure = measure, PSPplot = plot, PSPgis = gis)
+}
+psp_area <- function() sf::st_transform(sf::st_sfc(square(0, 0, 10), crs = 4326), 3857)
+
+test_that("a bootstrap draws as many whole plots as lie in the fitting area, and only those", {
+  out <- landweb_resample_psp(psp_fixture(), psp_area(), seed = 1L)
+  drawn <- sub("_r[0-9]+$", "", out$PSPgis$OrigPlotID1)
+  expect_length(drawn, 4L)
+  expect_in(drawn, paste0("p", 1:4))
+  expect_identical(anyDuplicated(out$PSPgis$OrigPlotID1), 0L)
+  expect_identical(anyDuplicated(out$PSPplot$MeasureID), 0L)
+  expect_identical(nrow(out$PSPplot), 8L)
+  expect_identical(nrow(out$PSPmeasure), 24L)
+  expect_setequal(out$PSPmeasure$OrigPlotID1, out$PSPgis$OrigPlotID1)
+  expect_setequal(out$PSPplot$OrigPlotID1, out$PSPgis$OrigPlotID1)
+  ## Biomass_speciesParameters subsets and keys the locations as a data.table
+  expect_s3_class(out$PSPgis, "sf")
+  expect_s3_class(out$PSPgis, "data.table")
+  area <- sf::st_as_sf(sf::st_transform(psp_area(), 4326))
+  expect_identical(nrow(data.table::setkeyv(out$PSPgis[area, ], "OrigPlotID1")), 4L)
+})
+
+test_that("a plot drawn twice becomes two plots, each with all its measurements", {
+  psp <- psp_fixture()
+  for (s in 1:50) {
+    out <- landweb_resample_psp(psp, psp_area(), seed = s)
+    counts <- table(sub("_r[0-9]+$", "", out$PSPgis$OrigPlotID1))
+    if (any(counts == 2L)) break
+  }
+  twice <- names(counts)[counts == 2L][1L]
+  copies <- out$PSPplot[startsWith(out$PSPplot$OrigPlotID1, paste0(twice, "_r"))]
+  expect_setequal(copies$OrigPlotID1, paste0(twice, c("_r1", "_r2")))
+  expect_setequal(copies$MeasureID, paste0(twice, c("_m1_r1", "_m2_r1", "_m1_r2", "_m2_r2")))
+})
+
+test_that("a bootstrap is reproducible from its seed and leaves the global seed alone", {
+  withr::local_seed(42)
+  before <- get(".Random.seed", envir = globalenv())
+  a <- landweb_resample_psp(psp_fixture(), psp_area(), seed = 7L)
+  expect_identical(get(".Random.seed", envir = globalenv()), before)
+  expect_identical(landweb_resample_psp(psp_fixture(), psp_area(), seed = 7L), a)
+})
+
+test_that("a bootstrap stops when no plot lies in the fitting area", {
+  far <- sf::st_sfc(square(50, 50, 1), crs = 4326)
+  expect_snapshot(error = TRUE, landweb_resample_psp(psp_fixture(), far, seed = 1L))
+})
+
+test_that("trait frequencies count each species' trait sets over the refits", {
+  tr <- landweb_growth_traits(growth_species_table())
+  alt <- data.table::copy(tr)
+  alt$growthcurve[alt$species == "Pice_gla"] <- 0.8
+  refits <- data.table::rbindlist(list(
+    cbind(resample = 1L, tr),
+    cbind(resample = 2L, tr),
+    cbind(resample = 3L, alt)
+  ))
+  out <- landweb_growth_trait_frequency(refits, tr)
+  expect_identical(out$species, c("Lari_lar", "Pice_gla", "Pice_gla", "Pinu_con"))
+  expect_identical(out$growthcurve[out$species == "Pice_gla"], c(0.68, 0.8))
+  expect_identical(out$n, c(3L, 2L, 1L, 3L))
+  expect_equal(out$share, c(3, 2, 1, 3) / 3)
+  expect_identical(out$fullFit, c(TRUE, TRUE, FALSE, TRUE))
+  expect_snapshot(error = TRUE, landweb_growth_trait_frequency(refits[, !"resample"], tr))
+})
+
 test_that("no BC plot in the fitting area: no BEC zones are fetched", {
   skip_if_not_installed("bcdata")
   gis <- sf::st_sf(

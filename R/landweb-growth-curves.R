@@ -229,3 +229,76 @@ landweb_damage_codes <- function(agents = c("barkBeetles", "defoliators")) {
     sources
   )
 }
+
+#' Resample the plots of a growth-curve fit, whole plots with replacement
+#'
+#' A bootstrap sample of the plots inside the fitting area, for refitting the shared growth curves to
+#' see how much the fitted traits depend on which plots happen to have been measured. As many plots as
+#' lie inside `area` are drawn with replacement, each with all its measurements and trees. A plot drawn
+#' more than once is copied, and each copy's plot and measurement IDs get a suffix (`_r1`, `_r2`, ...),
+#' so that `Biomass_speciesParameters` counts the copies as separate plots. `area` selects plots as the
+#' module does (`PSPgis[studyAreaANPP, ]`), so plots the fit would not use are not drawn.
+#'
+#' @param psp list with `PSPmeasure`, `PSPplot` and `PSPgis`, from `PSPclean::getPSP()`.
+#' @param area the fitting area (`sf` or `sfc`), given to `Biomass_speciesParameters` as
+#'   `studyAreaANPP`.
+#' @param seed integer seed for the draw. The global random number generator is left as it was.
+#'
+#' @return `psp`, with the drawn plots only.
+#'
+#' @export
+landweb_resample_psp <- function(psp, area, seed) {
+  gis <- psp[["PSPgis"]]
+  area <- sf::st_transform(sf::st_as_sf(area), sf::st_crs(gis))
+  inside <- unique(gis[area, ][["OrigPlotID1"]])
+  if (length(inside) == 0L) {
+    stop("no plot lies inside the fitting area", call. = FALSE)
+  }
+  draw <- withr::with_seed(seed, inside[sample.int(length(inside), replace = TRUE)])
+  suffix <- paste0("_r", stats::ave(seq_along(draw), draw, FUN = seq_along))
+  resampleRows <- function(x) {
+    rows <- split(seq_len(nrow(x)), x[["OrigPlotID1"]])[draw]
+    out <- x[unlist(rows, use.names = FALSE), ]
+    copyOfRow <- rep(suffix, lengths(rows))
+    for (cl in intersect(c("OrigPlotID1", "MeasureID"), names(out))) {
+      data.table::set(out, j = cl, value = paste0(out[[cl]], copyOfRow))
+    }
+    out
+  }
+  psp[["PSPmeasure"]] <- resampleRows(data.table::as.data.table(psp[["PSPmeasure"]]))
+  psp[["PSPplot"]] <- resampleRows(data.table::as.data.table(psp[["PSPplot"]]))
+  psp[["PSPgis"]] <- resampleRows(gis)
+  psp
+}
+
+#' How often refits on resampled plots chose each species' growth-curve traits
+#'
+#' Summarises the refits of the shared growth curves on bootstrap samples of plots
+#' ([landweb_resample_psp()]): for each species, each distinct set of the five traits a growth curve
+#' sets, with how many refits chose it and whether the fit to all plots chose it too.
+#'
+#' @param resampled `data.table` of [landweb_growth_traits()] from every refit, with the refit's number
+#'   in `resample`.
+#' @param fitted [landweb_growth_traits()] of the fit to all plots.
+#'
+#' @return `data.table` with one row per species and set of traits: `species`, the five traits,
+#'   `growthCurveSource`, `n` (refits that chose the set), `share` (`n` over all refits) and `fullFit`
+#'   (`TRUE` for the set the fit to all plots chose). Sorted by species, then by decreasing `n`.
+#'
+#' @export
+landweb_growth_trait_frequency <- function(resampled, fitted) {
+  rs <- data.table::as.data.table(resampled)
+  keys <- c("species", growthTraitCols, "growthCurveSource")
+  miss <- setdiff(c("resample", keys), names(rs))
+  if (length(miss)) {
+    stop("the refits' traits have no ", paste(miss, collapse = ", "), call. = FALSE)
+  }
+  out <- rs[, list(n = .N), by = keys]
+  data.table::set(out, j = "share", value = out[["n"]] / data.table::uniqueN(rs[["resample"]]))
+  full <- unique(data.table::as.data.table(fitted)[, keys, with = FALSE])
+  data.table::set(full, j = "fullFit", value = TRUE)
+  out <- merge(out, full, by = keys, all.x = TRUE, sort = FALSE)
+  data.table::set(out, i = which(is.na(out[["fullFit"]])), j = "fullFit", value = FALSE)
+  data.table::setorderv(out, c("species", "n"), order = c(1L, -1L))
+  out[]
+}
