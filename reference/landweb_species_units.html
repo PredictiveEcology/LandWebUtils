@@ -26,7 +26,7 @@ each simulated unit."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9046</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9048</span>
       </span>
     </div>
 
@@ -115,7 +115,9 @@ species are removed;</p></li>
 <li><p><code>sppColorVectReport</code>: named colours of the reporting groups present and <code>"Mixed"</code>;</p></li>
 <li><p><code>layerMap</code>: named character vector, each layer of <code>layers</code> to its unit (<code>NA</code>: dropped), for
 <code><a href="landweb_sum_layers.html">landweb_sum_layers()</a></code>;</p></li>
-<li><p><code>units</code>: <code>data.table</code> of each unit's members, dominant member and share (percent);</p></li>
+<li><p><code>units</code>: <code>data.table</code> of each unit's members, dominant member and share (percent), and <code>ranked</code>,
+a list column of its members in the order it takes growth-curve traits from (most cover first,
+species in <code>neverSplit</code> last; see <code><a href="landweb_unit_growth_traits.html">landweb_unit_growth_traits()</a></code>);</p></li>
 <li><p><code>hybridParent</code>: the species hybrid spruce joined.</p></li>
 </ul></div>
     <div id="details">
