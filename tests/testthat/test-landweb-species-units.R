@@ -261,3 +261,11 @@ test_that("landweb_sum_layers() sums each unit's layers and keeps NA cells", {
     "drops every layer"
   )
 })
+
+test_that("units rank their members by cover, species never split on their own last", {
+  res <- landweb_species_units(landweb_species_sppEquiv(lr_table_units()), units_layers(), threshold = 1)
+  u <- res$units
+  ## balsam fir 80, subalpine fir 60, western redcedar 20 (never split): the fir group's remainder
+  expect_identical(u$ranked[[match("Abie_spp", u$unit)]], c("Abie_bal", "Abie_las", "Thuj_pli"))
+  expect_identical(vapply(u$ranked, `[[`, "", 1L), u$dominant)
+})

@@ -45,3 +45,14 @@ test_that("polygonClean() dispatches on type and rejects what it does not know",
   expect_snapshot(error = TRUE, polygonClean(x))
   expect_snapshot(error = TRUE, polygonClean(x, type = "other"))
 })
+
+test_that(".cleanLandWebStudyArea() renames without dplyr, so a SpatVector needs no tidyterra", {
+  ## dplyr::rename() on a SpatVector dispatches to tidyterra's method, registered only once tidyterra
+  ## is loaded: a caller that had not loaded it (a pipeline target) stopped with UseMethod("rename").
+  local_mocked_bindings(rename = function(...) stop("dplyr::rename() was called"), .package = "dplyr")
+  v <- terra::vect(lthfc_sf(c(25, 40, 55), col = "LTHRC"))
+  out <- .cleanLandWebStudyArea(v, minFRI = 40)
+  expect_s4_class(out, "SpatVector")
+  expect_identical(out$fireReturnInterval, c(NA, 40, 55))
+  expect_identical(.cleanLandWebStudyArea(lthfc_sf(c(25, 40)), minFRI = 40)$fireReturnInterval, c(NA, 40))
+})

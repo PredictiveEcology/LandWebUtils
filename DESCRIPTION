@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.0.3.9046
+Version: 1.0.3.9048
 Date: 2026-08-17
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
@@ -26,6 +26,7 @@ Imports:
     graphics,
     grDevices,
     map,
+    nngeo,
     methods,
     pemisc,
     purrr,
@@ -43,13 +44,14 @@ Imports:
     withr,
     workflowtools
 Suggests:
+    bcdata,
     covr,
     DEoptim,
     landscapemetrics,
     parallel,
     parallelly,
     patchwork,
-    testthat (>= 3.0.0),
+    testthat (>= 3.1.9),
     tidyterra,
     VGAM
 Remotes:
@@ -82,6 +84,8 @@ Collate:
     'landmine-plot.R'
     'landmine-ros.R'
     'landmine.R'
+    'landweb-area.R'
+    'landweb-growth-curves.R'
     'landweb-reporting.R'
     'landweb-species-units.R'
     'landweb-species.R'

@@ -130,7 +130,9 @@ landweb_species_sppEquiv <- function(sppEquiv) {
 #'   - `sppColorVectReport`: named colours of the reporting groups present and `"Mixed"`;
 #'   - `layerMap`: named character vector, each layer of `layers` to its unit (`NA`: dropped), for
 #'     [landweb_sum_layers()];
-#'   - `units`: `data.table` of each unit's members, dominant member and share (percent);
+#'   - `units`: `data.table` of each unit's members, dominant member and share (percent), and `ranked`,
+#'     a list column of its members in the order it takes growth-curve traits from (most cover first,
+#'     species in `neverSplit` last; see [landweb_unit_growth_traits()]);
 #'   - `hybridParent`: the species hybrid spruce joined.
 #'
 #' @seealso [landweb_sum_layers()]
@@ -231,7 +233,9 @@ landweb_species_units <- function(
         species[eligible][which.max(cover[eligible])]
       } else {
         species[which.max(cover)]
-      }
+      },
+      ## the order a unit takes growth-curve traits in: most cover first, species in neverSplit last
+      ranked = list(species[order(!eligible, -cover)])
     ),
     by = "unit"
   ]
