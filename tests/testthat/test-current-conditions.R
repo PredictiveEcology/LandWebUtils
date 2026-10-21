@@ -59,7 +59,7 @@ as_int_df <- function(x) {
   as.data.frame(lapply(as.data.frame(x), as.integer))
 }
 
-test_that("lcc2020_remap_table() reproduces the preamble's inline remap exactly", {
+test_that("lcc2020_remap_table() is the preamble's inline remap, with LCC 2020 non-vegetated last", {
   scanfi <- c(20L, 30L, 40L, 50L, 80L, 81L, 100L, 210L, 220L, 230L, 240L)
   legend <- c(1L, 2L, 5L, 6L, 8L, 10:19)
   withr::local_seed(20260916)
@@ -67,9 +67,12 @@ test_that("lcc2020_remap_table() reproduces the preamble's inline remap exactly"
     lcc <- sort(sample(scanfi, sample(1:length(scanfi), 1)))
     cc <- sample(c(legend, NA_integer_), sample(1:30, 1), replace = TRUE)
     replace <- sample(c(scanfi, 99L), sample(0:3, 1))
+    ## the one change since 1.0.6: barren, water and snow/ice are NA even where LCC is replaced
+    expected <- remap_inline_preamble_1.0.6(lcc, cc, replace)
+    expected[CC %in% c(16L, 18L, 19L), newLCC := NA_integer_]
     expect_identical(
       as_int_df(lcc2020_remap_table(lcc, cc, replace)),
-      as_int_df(remap_inline_preamble_1.0.6(lcc, cc, replace))
+      as_int_df(expected)
     )
   }
 })
@@ -88,7 +91,8 @@ test_that("lcc2020_remap_table() applies its rules in order", {
   expect_identical(lookup(210L, 18L), NA_integer_) ## water CC drops the pixel
   expect_identical(lookup(210L, 17L), 99L) ## urban CC -> reclassify
   expect_identical(lookup(NA, 1L), 99L) ## CC forest where LCC has nothing
-  expect_identical(lookup(240L, 1L), 99L) ## treeClassesToReplace wins over everything
+  expect_identical(lookup(240L, 1L), 99L) ## treeClassesToReplace wins over all but the next rule
+  expect_identical(lookup(240L, 18L), NA_integer_) ## LCC 2020 water is non-vegetated, even on 240
   ## Rule 1 (LCC 20 -> NA) is overwritten by rule 2 for missing/cropland CC -- kept for v2 fidelity.
   expect_identical(lookup(20L, NA), 20L)
   expect_identical(lookup(20L, 15L), 20L)

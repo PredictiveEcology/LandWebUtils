@@ -45,7 +45,8 @@ lcc2020_classes <- function() {
 #' Builds the `remapTable` that `LandR::overlayLCCs()` uses to decide, for every combination of a
 #' simulation land-cover code (`LCC`, SCANFI-derived) and a current-condition LCC 2020 code (`CC`),
 #' which code the pixel ends up with. Promoted verbatim from `LandWeb_preamble`, which mirrors
-#' LandWeb v2's rule ordering with LCC 2020 codes substituted for v2's CC 0-5.
+#' LandWeb v2's rule ordering with LCC 2020 codes substituted for v2's CC 0-5, except that the
+#' non-flammable rule now comes last (see Details).
 #'
 #' @param lccClasses integer vector of the simulation land-cover codes present (`NA` is added).
 #' @param ccClasses integer vector of the LCC 2020 codes present; `NA`s are dropped, then `NA` is
@@ -58,19 +59,23 @@ lcc2020_classes <- function() {
 #'
 #' 1. `LCC` 0, 20, 30 -> `NA`;
 #' 2. `CC` missing or cropland -> keep `LCC`;
-#' 3. `CC` non-flammable (barren/water/snow-ice) -> `NA`;
-#' 4. `CC` forest, shrub/grass/moss or wetland -> keep `LCC`;
-#' 5. `LCC` missing but `CC` forest -> 99;
-#' 6. `CC` urban -> 99;
-#' 7. `LCC` in `treeClassesToReplace` -> 99.
+#' 3. `CC` forest, shrub/grass/moss or wetland -> keep `LCC`;
+#' 4. `LCC` missing but `CC` forest -> 99;
+#' 5. `CC` urban -> 99;
+#' 6. `LCC` in `treeClassesToReplace` -> 99;
+#' 7. `CC` non-flammable (barren/water/snow-ice) -> `NA`.
+#'
+#' Rule 7 was rule 3 until 1.0.3.9049. It only interacts with rule 6: forest land without trees
+#' (`treeClassesToReplace`, e.g. 240) on what LCC 2020 calls barren, water or snow/ice was
+#' reclassified to a neighbouring forest class, and is now non-vegetated.
 #'
 #' `CC` does **not** override the simulation's forest determination: every `CC` class except
 #' barren/water/snow-ice defers to `LCC`, so LCC 2020 calling a treed wetland "wetland" does not
 #' strip forest from the simulation.
 #'
-#' Note that rule 1 is overwritten by rules 2-6 for **every** code in the LCC 2020 legend, so it only
-#' takes effect for a `CC` value outside that legend. It is kept for fidelity with v2 rather than
-#' removed, and the behaviour is pinned by a test.
+#' Note that rule 1 is overwritten by rules 2, 3, 5 and 7 for **every** code in the LCC 2020 legend,
+#' so it only takes effect for a `CC` value outside that legend. It is kept for fidelity with v2
+#' rather than removed, and the behaviour is pinned by a test.
 #'
 #' @return A `data.table` with integer columns `LCC`, `CC` and `newLCC`, one row per combination.
 #'
@@ -90,11 +95,11 @@ lcc2020_remap_table <- function(lccClasses, ccClasses, treeClassesToReplace,
     data.table::as.data.table()
   remapDT[LCC %in% c(0L, 20L, 30L), newLCC := NA_integer_]
   remapDT[is.na(CC) | CC %in% classes$cropland, newLCC := LCC]
-  remapDT[CC %in% classes$nonFlammable, newLCC := NA_integer_]
   remapDT[CC %in% c(classes$forest, classes$shrubGrassMoss, classes$wetland), newLCC := LCC]
   remapDT[is.na(LCC) & CC %in% classes$forest, newLCC := 99L]
   remapDT[CC %in% classes$urban, newLCC := 99L]
   remapDT[LCC %in% treeClassesToReplace, newLCC := 99L]
+  remapDT[CC %in% classes$nonFlammable, newLCC := NA_integer_]
   remapDT[]
 }
 
