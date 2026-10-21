@@ -28,27 +28,32 @@ A \code{data.table} with integer columns \code{LCC}, \code{CC} and \code{newLCC}
 Builds the \code{remapTable} that \code{LandR::overlayLCCs()} uses to decide, for every combination of a
 simulation land-cover code (\code{LCC}, SCANFI-derived) and a current-condition LCC 2020 code (\code{CC}),
 which code the pixel ends up with. Promoted verbatim from \code{LandWeb_preamble}, which mirrors
-LandWeb v2's rule ordering with LCC 2020 codes substituted for v2's CC 0-5.
+LandWeb v2's rule ordering with LCC 2020 codes substituted for v2's CC 0-5, except that the
+non-flammable rule now comes last (see Details).
 }
 \details{
 \strong{Rule order matters: later rules overwrite earlier ones.} In order:
 \enumerate{
 \item \code{LCC} 0, 20, 30 -> \code{NA};
 \item \code{CC} missing or cropland -> keep \code{LCC};
-\item \code{CC} non-flammable (barren/water/snow-ice) -> \code{NA};
 \item \code{CC} forest, shrub/grass/moss or wetland -> keep \code{LCC};
 \item \code{LCC} missing but \code{CC} forest -> 99;
 \item \code{CC} urban -> 99;
-\item \code{LCC} in \code{treeClassesToReplace} -> 99.
+\item \code{LCC} in \code{treeClassesToReplace} -> 99;
+\item \code{CC} non-flammable (barren/water/snow-ice) -> \code{NA}.
 }
+
+Rule 7 was rule 3 until 1.0.3.9049. It only interacts with rule 6: forest land without trees
+(\code{treeClassesToReplace}, e.g. 240) on what LCC 2020 calls barren, water or snow/ice was
+reclassified to a neighbouring forest class, and is now non-vegetated.
 
 \code{CC} does \strong{not} override the simulation's forest determination: every \code{CC} class except
 barren/water/snow-ice defers to \code{LCC}, so LCC 2020 calling a treed wetland "wetland" does not
 strip forest from the simulation.
 
-Note that rule 1 is overwritten by rules 2-6 for \strong{every} code in the LCC 2020 legend, so it only
-takes effect for a \code{CC} value outside that legend. It is kept for fidelity with v2 rather than
-removed, and the behaviour is pinned by a test.
+Note that rule 1 is overwritten by rules 2, 3, 5 and 7 for \strong{every} code in the LCC 2020 legend,
+so it only takes effect for a \code{CC} value outside that legend. It is kept for fidelity with v2
+rather than removed, and the behaviour is pinned by a test.
 }
 \examples{
 lcc2020_remap_table(
