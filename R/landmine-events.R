@@ -1,4 +1,7 @@
-utils::globalVariables(c("maxSize", "N", "nFires", "polygonNumeric"))
+utils::globalVariables(c(
+  "attempt", "burned", "fireID", "maxSize", "N", "nFires", "polygonNumeric", "reached", "target",
+  "targetSize"
+))
 
 ## Pure helpers extracted from the LandMine module's event code, so they can be unit-tested.
 ## The module has no working test suite (its `tests/` are the untouched SpaDES stub), so every
