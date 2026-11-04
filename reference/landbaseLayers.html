@@ -28,7 +28,7 @@ Tolko.R, SundreFP.R, Manning.R).'><!-- mathjax --><script src="https://cdnjs.clo
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9049</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9050</span>
       </span>
     </div>
 
@@ -83,12 +83,14 @@ the per-study-area landbase processing formerly hard-coded across the
 <code>tenure</code> holds that tenure's curated short name (<code><a href="tenureShortNames.html">tenureShortNames()</a></code>):
 <code><a href="buildLandbasePolygons.html">buildLandbasePolygons()</a></code> fetches a source <strong>only</strong> when its tenure is present
 in the study area, avoiding the download of large (multi-GB) coverages that
-could not intersect it anyway. <code>status_col</code> is the source attribute holding the
+could not intersect it anyway. A coverage is assigned to the tenure it lies
+in, which need not be the company in its <code>key</code>: it is crossed only with that
+tenure, so one assigned to a tenure it does not overlap yields no reporting
+unit. <code>status_col</code> is the source attribute holding the
 landbase status; <code>layer</code> names the layer for multi-layer File Geodatabases
-(<code>NA</code> = the source's only/first layer). <code>NAME_SHORT</code> discriminates a tenure's
-several coverages (West Fraser's three CLS supply blocks); it need only be
-unique <strong>within</strong> a tenure, since the reporting-unit name is
-<code>"&lt;tenure&gt; &lt;NAME_SHORT&gt;"</code>.</p>
+(<code>NA</code> = the source's only/first layer). <code>NAME_SHORT</code> names the coverage within
+its tenure; it need only be unique <strong>within</strong> a tenure, since the
+reporting-unit name is <code>"&lt;tenure&gt; &lt;NAME_SHORT&gt;"</code>.</p>
     </div>
     <div id="note">
     <h2>Note</h2>
