@@ -23,12 +23,14 @@ A landbase coverage belongs to \strong{one tenure} (not every tenure has one), s
 \code{tenure} holds that tenure's curated short name (\code{\link[=tenureShortNames]{tenureShortNames()}}):
 \code{\link[=buildLandbasePolygons]{buildLandbasePolygons()}} fetches a source \strong{only} when its tenure is present
 in the study area, avoiding the download of large (multi-GB) coverages that
-could not intersect it anyway. \code{status_col} is the source attribute holding the
+could not intersect it anyway. A coverage is assigned to the tenure it lies
+in, which need not be the company in its \code{key}: it is crossed only with that
+tenure, so one assigned to a tenure it does not overlap yields no reporting
+unit. \code{status_col} is the source attribute holding the
 landbase status; \code{layer} names the layer for multi-layer File Geodatabases
-(\code{NA} = the source's only/first layer). \code{NAME_SHORT} discriminates a tenure's
-several coverages (West Fraser's three CLS supply blocks); it need only be
-unique \strong{within} a tenure, since the reporting-unit name is
-\code{"<tenure> <NAME_SHORT>"}.
+(\code{NA} = the source's only/first layer). \code{NAME_SHORT} names the coverage within
+its tenure; it need only be unique \strong{within} a tenure, since the
+reporting-unit name is \code{"<tenure> <NAME_SHORT>"}.
 }
 \note{
 Gating was formerly a regex (\code{applies_to}) matched against the

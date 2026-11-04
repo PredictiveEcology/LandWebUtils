@@ -58,6 +58,24 @@ test_that("landbaseLayers returns the expected schema", {
   expect_contains(tenureShortNames()$NAME_SHORT, lyrs$tenure)
 })
 
+test_that("each landbase coverage belongs to the tenure it lies in", {
+  ## A coverage is crossed only with its own tenure, so one assigned to a tenure it does not
+  ## overlap produces no reporting unit, without an error. S20, S21 and C5 had such tenures: S20
+  ## lies in MillarWestern, S21 in WF_Tolko and C5 in Crowsnest.
+  expected <- tibble::tribble(
+    ~key                             , ~NAME_SHORT , ~tenure            ,
+    "Spray Lake C5 Landbase"         , "LB_C5"     , "Crowsnest"        ,
+    "West Fraser Blue Ridge Landbase", "LB"        , "BlueRidge"        ,
+    "West Fraser N CLS S17 Landbase" , "LB_S17"    , "Tolko_Vand_WF_SL" ,
+    "West Fraser N CLS S20 Landbase" , "LB_S20"    , "MillarWestern"    ,
+    "West Fraser N CLS S21 Landbase" , "LB_S21"    , "WF_Tolko"         ,
+    "Tolko AB North Landbase"        , "LB"        , "Tolko_Norbord_LC" ,
+    "Sundre FP Landbase"             , "LB"        , "Sundre"           ,
+    "Manning Landbase"               , "LB"        , "Manning"
+  )
+  expect_identical(landbaseLayers()[, c("key", "NAME_SHORT", "tenure")], expected)
+})
+
 test_that(".slug uses underscores, not the dots make.names() would produce", {
   expect_identical(LandWebUtils:::.slug("National Ecozones"), "National_Ecozones")
   expect_identical(LandWebUtils:::.slug("BC Biogeoclimatic zones"), "BC_Biogeoclimatic_zones")
@@ -133,25 +151,30 @@ test_that("buildLandbasePolygons gates to the landbases of the tenures present",
   )
 
   expect_identical(
-    buildLandbasePolygons(sa, tenures = "SprayLake", destinationPath = withr::local_tempdir()),
+    buildLandbasePolygons(sa, tenures = "Crowsnest", destinationPath = withr::local_tempdir()),
     list()
   )
   expect_length(fetched, 1L)
   expect_match(fetched, "Spray_Lake_C5", fixed = TRUE)
 
-  ## a tenure with several coverages pulls all of them (West Fraser's three CLS blocks)
+  ## the company in a coverage's name does not decide its tenure: C5 lies in Crowsnest, and the
+  ## Slave Lake consortium keeps only S17 of the three CLS coverages
   fetched <- character()
+  buildLandbasePolygons(sa, tenures = "SprayLake", destinationPath = withr::local_tempdir())
+  expect_length(fetched, 0L)
   buildLandbasePolygons(
     sa, tenures = "Tolko_Vand_WF_SL", destinationPath = withr::local_tempdir()
   )
-  expect_length(fetched, 3L)
+  expect_length(fetched, 1L)
+  expect_match(fetched, "CLS_S17", fixed = TRUE)
 
   ## and several tenures pull the union of theirs
   fetched <- character()
   buildLandbasePolygons(
-    sa, tenures = c("SprayLake", "Manning"), destinationPath = withr::local_tempdir()
+    sa, tenures = c("MillarWestern", "WF_Tolko"), destinationPath = withr::local_tempdir()
   )
   expect_length(fetched, 2L)
+  expect_match(fetched, "CLS_S2[01]")
 })
 
 test_that("labelCols coalesces a source's name columns left to right", {

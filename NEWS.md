@@ -1,5 +1,7 @@
 # LandWebUtils (development version)
 
+* `landbaseLayers()` assigns three landbase coverages to the tenures they lie in (1.0.3.9050): CLS S20 to `MillarWestern` and CLS S21 to `WF_Tolko` (both were `Tolko_Vand_WF_SL`), and Spray Lake's C5 to `Crowsnest` (was `SprayLake`). A coverage is crossed only with its own tenure, and none of the three overlaps the tenure it had, so they produced no reporting units, without an error. They now give the units `MillarWestern LB_S20`, `WF_Tolko LB_S21` and `Crowsnest LB_C5`, in WesternAlbertaUpland, WesternBoreal and NorthernContinentalDivide. S20's attribute table is cut short like S17's, and spatialutils 0.0.1.9000 stops on both until they are re-exported.
+
 * `lcc2020_remap_table()` applies LCC 2020's barren, water and snow/ice rule last (1.0.3.9049), so a pixel LCC 2020 calls one of those is non-vegetated even where the simulation land cover marks it forest land without trees (`treeClassesToReplace`, e.g. 240). Those pixels used to be reclassified to a neighbouring forest class. No other combination changes.
 
 * New `landweb_resample_psp()` and `landweb_growth_trait_frequency()` (1.0.3.9048), to measure how much the shared growth-curve fit depends on which plots were measured: the fit is repeated on bootstrap samples of whole plots, drawn with replacement from those inside the fitting area (a plot drawn twice counts as two plots), and the second function counts how often the refits chose each species' set of traits, marking the set the fit to all plots chose.

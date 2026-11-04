@@ -552,12 +552,14 @@ buildReportingPolygons <- function(
 #' `tenure` holds that tenure's curated short name ([tenureShortNames()]):
 #' [buildLandbasePolygons()] fetches a source **only** when its tenure is present
 #' in the study area, avoiding the download of large (multi-GB) coverages that
-#' could not intersect it anyway. `status_col` is the source attribute holding the
+#' could not intersect it anyway. A coverage is assigned to the tenure it lies
+#' in, which need not be the company in its `key`: it is crossed only with that
+#' tenure, so one assigned to a tenure it does not overlap yields no reporting
+#' unit. `status_col` is the source attribute holding the
 #' landbase status; `layer` names the layer for multi-layer File Geodatabases
-#' (`NA` = the source's only/first layer). `NAME_SHORT` discriminates a tenure's
-#' several coverages (West Fraser's three CLS supply blocks); it need only be
-#' unique **within** a tenure, since the reporting-unit name is
-#' `"<tenure> <NAME_SHORT>"`.
+#' (`NA` = the source's only/first layer). `NAME_SHORT` names the coverage within
+#' its tenure; it need only be unique **within** a tenure, since the
+#' reporting-unit name is `"<tenure> <NAME_SHORT>"`.
 #'
 #' @note Gating was formerly a regex (`applies_to`) matched against the
 #'   *study-area name*, which silently stopped matching anything once study areas
@@ -570,13 +572,17 @@ buildReportingPolygons <- function(
 landbaseLayers <- function() {
   out <- tibble::tribble(
     ~key                             , ~NAME_SHORT , ~tenure            , ~source , ~id                                 , ~layer            , ~status_col    ,
-    "Spray Lake C5 Landbase"         , "LB_C5"     , "SprayLake"        , "drive" , "1FpMg6dJ4eblMjMkEHdcoFAYSDyo1OvTv" , "lb_20230901_tsa" , "f_active"     ,
+    ## C5 lies in Crowsnest's FMA, not Spray Lake's: 1,907 of its 3,503 km2, and almost all the
+    ## rest in no tenure of the v10 layer.
+    "Spray Lake C5 Landbase"         , "LB_C5"     , "Crowsnest"        , "drive" , "1FpMg6dJ4eblMjMkEHdcoFAYSDyo1OvTv" , "lb_20230901_tsa" , "f_active"     ,
     "West Fraser Blue Ridge Landbase", "LB"        , "BlueRidge"        , "drive" , "1Mk5L6287sKFGLY4ZfwWIUAczF5AGqAOV" , NA_character_     , "LBC_LBStatus" ,
-    ## "West Fraser N" is the v2 name for the v10 Slave Lake consortium (Tolko + Vanderwell +
-    ## West Fraser Mills Ltd. (Slave Lake)); S17/S20/S21 are its three CLS supply blocks.
+    ## "West Fraser N" is the v2 study-area name. Its three CLS coverages lie in three different
+    ## v10 tenures: S17 in the Slave Lake consortium's (Tolko + Vanderwell + West Fraser Mills
+    ## Ltd. (Slave Lake)), S20 in Millar Western's (5,986 of the 6,172 km2 that can be read) and
+    ## S21 in West Fraser and Tolko's (2,459 of 2,479 km2).
     "West Fraser N CLS S17 Landbase" , "LB_S17"    , "Tolko_Vand_WF_SL" , "drive" , "1XrF9ygQruC2FsUulWhDxR-nD3Cd4eu7B" , NA_character_     , "F_CONDITIO"   ,
-    "West Fraser N CLS S20 Landbase" , "LB_S20"    , "Tolko_Vand_WF_SL" , "drive" , "17fZw80w3n2jIKRP1-X6gq8tyOjSWh0ky" , NA_character_     , "F_CONDITIO"   ,
-    "West Fraser N CLS S21 Landbase" , "LB_S21"    , "Tolko_Vand_WF_SL" , "drive" , "1akMUL-lRumTfmmWG7WF7-9KDrFxTPN3Z" , NA_character_     , "F_CONDITIO"   ,
+    "West Fraser N CLS S20 Landbase" , "LB_S20"    , "MillarWestern"    , "drive" , "17fZw80w3n2jIKRP1-X6gq8tyOjSWh0ky" , NA_character_     , "F_CONDITIO"   ,
+    "West Fraser N CLS S21 Landbase" , "LB_S21"    , "WF_Tolko"         , "drive" , "1akMUL-lRumTfmmWG7WF7-9KDrFxTPN3Z" , NA_character_     , "F_CONDITIO"   ,
     "Tolko AB North Landbase"        , "LB"        , "Tolko_Norbord_LC" , "drive" , "1qzWhMR-nP_2N2KLL84ZHCVGNNlWxd2bZ" , NA_character_     , "LBC_Landbase" ,
     "Sundre FP Landbase"             , "LB"        , "Sundre"           , "drive" , "1oh_w9nALKufCQXb1PR3VIlChPHPysHF4" , NA_character_     , "LBC_LBStatus" ,
     "Manning Landbase"               , "LB"        , "Manning"          , "drive" , "1lY0p6Ms84paja9p1lmGXz5jaCgv2_VkY" , NA_character_     , "LBC_LBStat"
