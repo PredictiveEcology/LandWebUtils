@@ -31,6 +31,12 @@ landbase status; \code{layer} names the layer for multi-layer File Geodatabases
 (\code{NA} = the source's only/first layer). \code{NAME_SHORT} names the coverage within
 its tenure; it need only be unique \strong{within} a tenure, since the
 reporting-unit name is \code{"<tenure> <NAME_SHORT>"}.
+
+\code{source} says how a coverage is fetched: \code{"drive"} (a zipped file on Google
+Drive, by file id), \code{"url"} (a zipped file at a URL), or \code{"drive_gdb"} (a
+Google Drive folder holding a File Geodatabase, by folder id, downloaded file
+by file into \code{destinationPath}). Rows can read different layers of one source,
+which is then fetched once.
 }
 \note{
 Gating was formerly a regex (\code{applies_to}) matched against the

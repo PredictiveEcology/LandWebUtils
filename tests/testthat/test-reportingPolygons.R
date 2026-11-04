@@ -149,6 +149,11 @@ test_that("buildLandbasePolygons gates to the landbases of the tenures present",
     archive_extract_once = function(...) invisible(NULL),
     .package = "workflowtools"
   )
+  gdbs <- character()
+  testthat::local_mocked_bindings(.driveGdbDownloadOnce = function(id, destinationPath, ...) {
+    gdbs <<- c(gdbs, id)
+    NULL
+  })
 
   expect_identical(
     buildLandbasePolygons(sa, tenures = "Crowsnest", destinationPath = withr::local_tempdir()),
@@ -162,19 +167,156 @@ test_that("buildLandbasePolygons gates to the landbases of the tenures present",
   fetched <- character()
   buildLandbasePolygons(sa, tenures = "SprayLake", destinationPath = withr::local_tempdir())
   expect_length(fetched, 0L)
+  expect_length(gdbs, 0L)
   buildLandbasePolygons(
     sa, tenures = "Tolko_Vand_WF_SL", destinationPath = withr::local_tempdir()
   )
-  expect_length(fetched, 1L)
-  expect_match(fetched, "CLS_S17", fixed = TRUE)
+  expect_length(fetched, 0L)
+  expect_identical(gdbs, "1oX9crrPy_PaZRwb09j9LsHB37PY3hY7s")
 
-  ## and several tenures pull the union of theirs
+  ## and several tenures pull the union of theirs: S21's shapefile and S20's geodatabase
   fetched <- character()
+  gdbs <- character()
   buildLandbasePolygons(
     sa, tenures = c("MillarWestern", "WF_Tolko"), destinationPath = withr::local_tempdir()
   )
-  expect_length(fetched, 2L)
-  expect_match(fetched, "CLS_S2[01]")
+  expect_length(fetched, 1L)
+  expect_match(fetched, "CLS_S21", fixed = TRUE)
+  expect_identical(gdbs, "1oX9crrPy_PaZRwb09j9LsHB37PY3hY7s")
+})
+
+test_that("CLS S17 and S20 are read from the cleaned geodatabase", {
+  ## Their shapefiles' .dbf files are cut at the 2 GiB dBASE limit, so GDAL read only the shapes
+  ## before the cut: S17 lost 1,092 km2 and S20 407 km2.
+  lyrs <- landbaseLayers()
+  cls <- lyrs[lyrs$NAME_SHORT %in% c("LB_S17", "LB_S20"), ]
+  expect_identical(cls$source, c("drive_gdb", "drive_gdb"))
+  expect_identical(cls$id, rep("1oX9crrPy_PaZRwb09j9LsHB37PY3hY7s", 2L))
+  expect_identical(cls$layer, c("CLS_Clipped_S17_Clean", "CLS_Clipped_S20_Clean"))
+  expect_identical(cls$status_col, c("STATUS", "STATUS"))
+  expect_identical(cls$tenure, c("Tolko_Vand_WF_SL", "MillarWestern"))
+
+  ## S21's shapefile is whole, and stays
+  expect_identical(lyrs$source[lyrs$NAME_SHORT == "LB_S21"], "drive")
+})
+
+test_that("buildLandbasePolygons fetches a geodatabase once for all of its layers", {
+  sa <- terra::vect("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", crs = "EPSG:3857")
+  dest <- withr::local_tempdir()
+  gdb <- file.path(dest, "Landbases.gdb")
+
+  nFetch <- 0L
+  read <- list()
+  testthat::local_mocked_bindings(.driveGdbDownloadOnce = function(id, destinationPath, ...) {
+    nFetch <<- nFetch + 1L
+    gdb
+  })
+  testthat::local_mocked_bindings(
+    prep_landbase = function(src, aoi, status_col, layer = NULL, ...) {
+      read[[length(read) + 1L]] <<- list(src = src, layer = layer, status_col = status_col)
+      v <- terra::vect(c("POLYGON ((0 0, 1 0, 1 1, 0 0))", "POLYGON ((0 0, 1 1, 0 1, 0 0))"))
+      v$lbstatus <- c("ACTIVE", "PASSIVE")
+      v
+    },
+    .package = "spatialutils"
+  )
+
+  out <- buildLandbasePolygons(
+    sa,
+    tenures = c("Tolko_Vand_WF_SL", "MillarWestern"),
+    destinationPath = dest
+  )
+
+  expect_identical(nFetch, 1L)
+  expect_identical(vapply(read, `[[`, "", "src"), c(gdb, gdb))
+  expect_identical(
+    vapply(read, `[[`, "", "layer"),
+    c("CLS_Clipped_S17_Clean", "CLS_Clipped_S20_Clean")
+  )
+  expect_identical(vapply(read, `[[`, "", "status_col"), c("STATUS", "STATUS"))
+  expect_named(out, c("Tolko_Vand_WF_SL LB_S17", "MillarWestern LB_S20"))
+  ## STATUS holds the same ACTIVE/PASSIVE values as the shapefiles' F_CONDITIO
+  expect_identical(out[[1L]]$Name, c("ACTIVE", "PASSIVE"))
+})
+
+test_that(".driveGdbDownloadOnce downloads every file but lock files into <dest>/<folder name>", {
+  dest <- withr::local_tempdir()
+  calls <- local_fake_drive_gdb(list(
+    gdb = "g",
+    a00000001.gdbtable = "table one",
+    a00000001.gdbtablx = "index",
+    `_gdb.host.123.4.sr.lock` = "lock"
+  ))
+
+  gdb <- LandWebUtils:::.driveGdbDownloadOnce("folder", dest)
+
+  expect_identical(gdb, file.path(dest, "Landbases.gdb"))
+  ## the subfolder and the ArcGIS lock file are not downloaded
+  expect_setequal(list.files(gdb), c("gdb", "a00000001.gdbtable", "a00000001.gdbtablx"))
+  expect_identical(readLines(file.path(gdb, "a00000001.gdbtable"), warn = FALSE), "table one")
+  ## and no temporary download is left behind
+  expect_length(list.files(dest, pattern = "partial", all.files = TRUE, recursive = TRUE), 0L)
+})
+
+test_that(".driveGdbDownloadOnce skips a file present with Drive's size, and replaces one without", {
+  dest <- withr::local_tempdir()
+  gdb <- file.path(dest, "Landbases.gdb")
+  dir.create(gdb)
+  writeBin(charToRaw("g"), file.path(gdb, "gdb"))
+  writeBin(charToRaw("cut"), file.path(gdb, "a00000001.gdbtable"))
+
+  calls <- local_fake_drive_gdb(list(gdb = "g", a00000001.gdbtable = "table one"))
+  LandWebUtils:::.driveGdbDownloadOnce("folder", dest)
+  expect_identical(calls$downloaded, "a00000001.gdbtable")
+  expect_identical(readLines(file.path(gdb, "a00000001.gdbtable"), warn = FALSE), "table one")
+
+  ## a second call (another layer of the same gdb, or another study area) downloads nothing
+  calls$downloaded <- character()
+  LandWebUtils:::.driveGdbDownloadOnce("folder", dest)
+  expect_length(calls$downloaded, 0L)
+})
+
+test_that(".driveGdbDownloadOnce keeps a file another worker placed during its download", {
+  ## Study areas on different workers share the inputs directory, so two can fetch the gdb at
+  ## once. The first worker may already be reading a file it placed; the second must not replace
+  ## it with its own copy.
+  dest <- withr::local_tempdir()
+  gdb <- file.path(dest, "Landbases.gdb")
+  local_fake_drive_gdb(list(a00000001.gdbtable = "table one"), on_download = function(name, path) {
+    writeBin(charToRaw("TABLE ONE"), file.path(gdb, name))
+  })
+
+  LandWebUtils:::.driveGdbDownloadOnce("folder", dest)
+
+  expect_identical(readLines(file.path(gdb, "a00000001.gdbtable"), warn = FALSE), "TABLE ONE")
+  expect_length(list.files(dest, pattern = "partial", all.files = TRUE, recursive = TRUE), 0L)
+})
+
+test_that(".driveGdbDownloadOnce stops on a download of the wrong size, placing nothing", {
+  dest <- withr::local_tempdir()
+  local_fake_drive_gdb(list(a00000001.gdbtable = "table one"), on_download = function(name, path) {
+    writeBin(charToRaw("table"), path)
+  })
+
+  expect_error(LandWebUtils:::.driveGdbDownloadOnce("folder", dest), "5 bytes.*Drive lists 9")
+  expect_false(file.exists(file.path(dest, "Landbases.gdb", "a00000001.gdbtable")))
+  expect_length(list.files(dest, pattern = "partial", all.files = TRUE, recursive = TRUE), 0L)
+})
+
+test_that(".driveGdbDownloadOnce stops on a folder holding two files of one name", {
+  local_fake_drive_gdb(list(gdb = "g", gdb = "h"))
+  expect_error(
+    LandWebUtils:::.driveGdbDownloadOnce("folder", withr::local_tempdir()),
+    "more than one file named .gdb."
+  )
+})
+
+test_that(".driveGdbDownloadOnce stops on a folder whose name does not end in .gdb", {
+  local_fake_drive_gdb(list(gdb = "g"), name = "Landbases")
+  expect_error(
+    LandWebUtils:::.driveGdbDownloadOnce("folder", withr::local_tempdir()),
+    "must end in '.gdb'"
+  )
 })
 
 test_that("labelCols coalesces a source's name columns left to right", {

@@ -32,8 +32,9 @@ landbase; empty when none apply.
 }
 \description{
 For each candidate landbase source (\code{\link[=landbaseLayers]{landbaseLayers()}}) whose \code{tenure} is
-present in \code{tenures}, download it (idempotent \code{workflowtools} \verb{*_once}
-helpers), then dissolve it by landbase status and clip it to \code{studyArea} with
+present in \code{tenures}, download it once (idempotent \code{workflowtools} \verb{*_once}
+helpers, or file by file for a geodatabase kept as a Drive folder), then
+dissolve it by landbase status and clip it to \code{studyArea} with
 \code{\link[spatialutils:prep_landbase]{spatialutils::prep_landbase()}} -- which pushes the column and spatial
 filters down to the read, so a large coverage is reduced to the study area
 before any geometry work. Sources that do not intersect the study area (or

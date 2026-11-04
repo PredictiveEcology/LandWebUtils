@@ -561,6 +561,12 @@ buildReportingPolygons <- function(
 #' its tenure; it need only be unique **within** a tenure, since the
 #' reporting-unit name is `"<tenure> <NAME_SHORT>"`.
 #'
+#' `source` says how a coverage is fetched: `"drive"` (a zipped file on Google
+#' Drive, by file id), `"url"` (a zipped file at a URL), or `"drive_gdb"` (a
+#' Google Drive folder holding a File Geodatabase, by folder id, downloaded file
+#' by file into `destinationPath`). Rows can read different layers of one source,
+#' which is then fetched once.
+#'
 #' @note Gating was formerly a regex (`applies_to`) matched against the
 #'   *study-area name*, which silently stopped matching anything once study areas
 #'   became ecoregion groups (`"WesternAlbertaUpland"` matches no company name), so
@@ -571,21 +577,24 @@ buildReportingPolygons <- function(
 #' @export
 landbaseLayers <- function() {
   out <- tibble::tribble(
-    ~key                             , ~NAME_SHORT , ~tenure            , ~source , ~id                                 , ~layer            , ~status_col    ,
+    ~key                              , ~NAME_SHORT , ~tenure            , ~source     , ~id                                 , ~layer                  , ~status_col    ,
     ## C5 lies in Crowsnest's FMA, not Spray Lake's: 1,907 of its 3,503 km2, and almost all the
     ## rest in no tenure of the v10 layer.
-    "Spray Lake C5 Landbase"         , "LB_C5"     , "Crowsnest"        , "drive" , "1FpMg6dJ4eblMjMkEHdcoFAYSDyo1OvTv" , "lb_20230901_tsa" , "f_active"     ,
-    "West Fraser Blue Ridge Landbase", "LB"        , "BlueRidge"        , "drive" , "1Mk5L6287sKFGLY4ZfwWIUAczF5AGqAOV" , NA_character_     , "LBC_LBStatus" ,
+    "Spray Lake C5 Landbase"          , "LB_C5"     , "Crowsnest"        , "drive"     , "1FpMg6dJ4eblMjMkEHdcoFAYSDyo1OvTv" , "lb_20230901_tsa"       , "f_active"     ,
+    "West Fraser Blue Ridge Landbase" , "LB"        , "BlueRidge"        , "drive"     , "1Mk5L6287sKFGLY4ZfwWIUAczF5AGqAOV" , NA_character_           , "LBC_LBStatus" ,
     ## "West Fraser N" is the v2 study-area name. Its three CLS coverages lie in three different
     ## v10 tenures: S17 in the Slave Lake consortium's (Tolko + Vanderwell + West Fraser Mills
-    ## Ltd. (Slave Lake)), S20 in Millar Western's (5,986 of the 6,172 km2 that can be read) and
-    ## S21 in West Fraser and Tolko's (2,459 of 2,479 km2).
-    "West Fraser N CLS S17 Landbase" , "LB_S17"    , "Tolko_Vand_WF_SL" , "drive" , "1XrF9ygQruC2FsUulWhDxR-nD3Cd4eu7B" , NA_character_     , "F_CONDITIO"   ,
-    "West Fraser N CLS S20 Landbase" , "LB_S20"    , "MillarWestern"    , "drive" , "17fZw80w3n2jIKRP1-X6gq8tyOjSWh0ky" , NA_character_     , "F_CONDITIO"   ,
-    "West Fraser N CLS S21 Landbase" , "LB_S21"    , "WF_Tolko"         , "drive" , "1akMUL-lRumTfmmWG7WF7-9KDrFxTPN3Z" , NA_character_     , "F_CONDITIO"   ,
-    "Tolko AB North Landbase"        , "LB"        , "Tolko_Norbord_LC" , "drive" , "1qzWhMR-nP_2N2KLL84ZHCVGNNlWxd2bZ" , NA_character_     , "LBC_Landbase" ,
-    "Sundre FP Landbase"             , "LB"        , "Sundre"           , "drive" , "1oh_w9nALKufCQXb1PR3VIlChPHPysHF4" , NA_character_     , "LBC_LBStatus" ,
-    "Manning Landbase"               , "LB"        , "Manning"          , "drive" , "1lY0p6Ms84paja9p1lmGXz5jaCgv2_VkY" , NA_character_     , "LBC_LBStat"
+    ## Ltd. (Slave Lake); 7,029 of its 7,283 km2), S20 in Millar Western's (6,376 of 6,580 km2)
+    ## and S21 in West Fraser and Tolko's (2,459 of 2,479 km2). The S17 and S20 shapefiles' .dbf
+    ## files are cut at the 2 GiB dBASE limit, and GDAL reads no shape past the cut (6,190 of
+    ## S17's 7,283 km2, 6,172 of S20's 6,580), so both are read from Julie's cleaned File
+    ## Geodatabase, a Drive folder. S21's shapefile is whole.
+    "West Fraser N CLS S17 Landbase"  , "LB_S17"    , "Tolko_Vand_WF_SL" , "drive_gdb" , "1oX9crrPy_PaZRwb09j9LsHB37PY3hY7s" , "CLS_Clipped_S17_Clean" , "STATUS"       ,
+    "West Fraser N CLS S20 Landbase"  , "LB_S20"    , "MillarWestern"    , "drive_gdb" , "1oX9crrPy_PaZRwb09j9LsHB37PY3hY7s" , "CLS_Clipped_S20_Clean" , "STATUS"       ,
+    "West Fraser N CLS S21 Landbase"  , "LB_S21"    , "WF_Tolko"         , "drive"     , "1akMUL-lRumTfmmWG7WF7-9KDrFxTPN3Z" , NA_character_           , "F_CONDITIO"   ,
+    "Tolko AB North Landbase"         , "LB"        , "Tolko_Norbord_LC" , "drive"     , "1qzWhMR-nP_2N2KLL84ZHCVGNNlWxd2bZ" , NA_character_           , "LBC_Landbase" ,
+    "Sundre FP Landbase"              , "LB"        , "Sundre"           , "drive"     , "1oh_w9nALKufCQXb1PR3VIlChPHPysHF4" , NA_character_           , "LBC_LBStatus" ,
+    "Manning Landbase"                , "LB"        , "Manning"          , "drive"     , "1lY0p6Ms84paja9p1lmGXz5jaCgv2_VkY" , NA_character_           , "LBC_LBStat"
   )
 
   ## unique WITHIN a tenure (the reporting-unit name carries the tenure prefix), and every
@@ -616,11 +625,111 @@ landbaseLayers <- function() {
   NULL
 }
 
+## Fetch the source of landbase row `lyr` and return the path to read: a File Geodatabase
+## directory, a shapefile or a GeoPackage, or NULL when the download holds none of these.
+.fetchLandbaseSource <- function(lyr, destinationPath) {
+  if (identical(lyr$source, "drive_gdb")) {
+    return(.driveGdbDownloadOnce(lyr$id, destinationPath))
+  }
+  dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
+  dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
+  if (identical(lyr$source, "drive")) {
+    workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
+  } else {
+    workflowtools::download_once(lyr$id, dest)
+  }
+  workflowtools::archive_extract_once(dest, dir = dir)
+  .findLandbaseSource(dir)
+}
+
+## Download a File Geodatabase kept on Google Drive as a folder (one Drive file per gdb file) into
+## `<destinationPath>/<folder name>/` and return that directory. ArcGIS `*.lock` files are skipped,
+## and so is any file already there with the size Drive lists, so a later call for another layer
+## of the gdb, or from another study area, downloads nothing.
+##
+## Study areas run on different workers that share `destinationPath`, so two can fetch one gdb at
+## once. As in `workflowtools::drive_download_once()`, each file is downloaded to a temporary file
+## and renamed into place only when complete, so no reader sees a partial file. A file that another
+## worker placed meanwhile is kept, not replaced, since that worker may already be reading it. The
+## temporary files are in `destinationPath`, not in the gdb, so one left by a killed worker does
+## not become part of the gdb.
+.driveGdbDownloadOnce <- function(id, destinationPath, exclude = "\\.lock$") {
+  googledrive::local_drive_quiet()
+  folder <- googledrive::drive_get(googledrive::as_id(id))
+  if (!grepl("\\.gdb$", folder$name)) {
+    stop(
+      "Drive folder '", id, "' is named '", folder$name, "'; the name of a File Geodatabase ",
+      "folder must end in '.gdb', or GDAL cannot open it.",
+      call. = FALSE
+    )
+  }
+  gdb <- file.path(destinationPath, folder$name)
+  dir.create(gdb, recursive = TRUE, showWarnings = FALSE)
+
+  files <- googledrive::drive_ls(googledrive::as_id(id))
+  mime <- vapply(files$drive_resource, function(r) r$mimeType %||% NA_character_, character(1))
+  files <- files[!mime %in% "application/vnd.google-apps.folder" & !grepl(exclude, files$name), ]
+  size <- vapply(files$drive_resource, function(r) as.numeric(r$size %||% NA), numeric(1))
+  if (anyNA(size)) {
+    stop(
+      "Drive lists no size for ", paste(sQuote(files$name[is.na(size)]), collapse = ", "),
+      " in '", folder$name, "'.",
+      call. = FALSE
+    )
+  }
+  ## Drive allows two files of one name; both would be written to the same path
+  twice <- unique(files$name[duplicated(files$name)])
+  if (length(twice)) {
+    stop(
+      "Drive folder '", folder$name, "' holds more than one file named ",
+      paste(sQuote(twice), collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+
+  dest <- file.path(gdb, files$name)
+  todo <- which(!.hasSize(dest, size))
+  if (length(todo)) {
+    message("downloading ", length(todo), " of the ", nrow(files), " files of ", folder$name)
+  }
+  for (i in todo) {
+    .driveDownloadInPlace(files$id[[i]], dest[[i]], size[[i]], tmpdir = destinationPath)
+  }
+  gdb
+}
+
+## TRUE where `path` exists with `size` bytes.
+.hasSize <- function(path, size) {
+  s <- file.size(path)
+  !is.na(s) & s == size
+}
+
+## Download Drive file `id` to `dest` through a temporary file in `tmpdir`, which is on the same
+## filesystem so the rename is atomic, and check it has `size` bytes. If `dest` appeared with that
+## size meanwhile, from another worker, it is kept and this download discarded.
+.driveDownloadInPlace <- function(id, dest, size, tmpdir) {
+  partial <- file.path(tmpdir, paste0(".partial-", basename(tempfile("")), "-", basename(dest)))
+  on.exit(unlink(partial, force = TRUE), add = TRUE)
+  googledrive::drive_download(googledrive::as_id(id), path = partial)
+  if (!.hasSize(partial, size)) {
+    stop(
+      "the download of ", basename(dest), " is ", file.size(partial), " bytes; Drive lists ",
+      size, ".",
+      call. = FALSE
+    )
+  }
+  if (!.hasSize(dest, size) && !file.rename(partial, dest)) {
+    stop("could not move the download ", partial, " into place at ", dest, ".", call. = FALSE)
+  }
+  invisible(dest)
+}
+
 #' Build the active/passive landbase-status reporting polygons
 #'
 #' For each candidate landbase source ([landbaseLayers()]) whose `tenure` is
-#' present in `tenures`, download it (idempotent `workflowtools` `*_once`
-#' helpers), then dissolve it by landbase status and clip it to `studyArea` with
+#' present in `tenures`, download it once (idempotent `workflowtools` `*_once`
+#' helpers, or file by file for a geodatabase kept as a Drive folder), then
+#' dissolve it by landbase status and clip it to `studyArea` with
 #' [spatialutils::prep_landbase()] -- which pushes the column and spatial
 #' filters down to the read, so a large coverage is reduced to the study area
 #' before any geometry work. Sources that do not intersect the study area (or
@@ -659,18 +768,17 @@ buildLandbasePolygons <- function(
     return(list())
   }
 
+  ## fetch each source once: rows can read layers of one source (S17 and S20 are two layers of
+  ## one geodatabase)
+  ids <- unique(layers$id)
+  srcs <- lapply(ids, function(id) {
+    .fetchLandbaseSource(layers[match(id, layers$id), ], destinationPath)
+  })
+  names(srcs) <- ids
+
   out <- lapply(seq_len(nrow(layers)), function(i) {
     lyr <- layers[i, ]
-    dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
-    dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
-    if (identical(lyr$source, "drive")) {
-      workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
-    } else {
-      workflowtools::download_once(lyr$id, dest)
-    }
-    workflowtools::archive_extract_once(dest, dir = dir)
-
-    src <- .findLandbaseSource(dir)
+    src <- srcs[[lyr$id]]
     if (is.null(src)) {
       return(NULL)
     }
