@@ -142,3 +142,17 @@ test_that("the ECCC national layer is NOT a reporting layer", {
   expect_false(any(grepl("ECCC|Priority Species|All51", lyrs$key)))
   expect_false(any(grepl("data-donnees", lyrs$id[!is.na(lyrs$id)])))
 })
+
+test_that("buildCaribouRanges stops on a shapefile whose .dbf is cut short", {
+  ## GDAL reads no shape past the last whole record of a cut .dbf, and only warns
+  shp <- local_cut_shapefile(n = 3L, keep = 2L, cols = list(RANGE_NAME = c("A", "B", "C")))
+  expect_equal(nrow(suppressWarnings(terra::vect(shp))), 2L)
+
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) shp)
+  lyrs <- caribouRangeLayers()
+  sa <- terra::vect("POLYGON ((-1 -1, 7 -1, 7 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  expect_error(
+    buildCaribouRanges(sa, withr::local_tempdir(), layers = lyrs[lyrs$juris == "MB", ]),
+    "2 complete records.*3 shapes"
+  )
+})

@@ -56,3 +56,10 @@ test_that(".cleanLandWebStudyArea() renames without dplyr, so a SpatVector needs
   expect_identical(out$fireReturnInterval, c(NA, 40, 55))
   expect_identical(.cleanLandWebStudyArea(lthfc_sf(c(25, 40)), minFRI = 40)$fireReturnInterval, c(NA, 40))
 })
+
+test_that(".cleanLandWebStudyArea() stops on a shapefile whose .dbf is cut short", {
+  ## createPrjFile() would download a .prj for a file without one; this one has its own
+  local_mocked_bindings(createPrjFile = function(...) invisible(NULL), .package = "pemisc")
+  shp <- local_cut_shapefile(n = 3L, keep = 2L, cols = list(LTHFC = c(60, 100, 170)))
+  expect_error(.cleanLandWebStudyArea(shp), "2 complete records.*3 shapes")
+})

@@ -25,3 +25,18 @@ test_that("the fitting area keeps whole the ecological units that touch the area
     as.numeric(sf::st_area(sf::st_transform(eco[1, ], 3978)))
   )
 })
+
+test_that("landweb_lthfc stops on a shapefile whose .dbf is cut short", {
+  testthat::local_mocked_bindings(
+    drive_download_once = function(...) invisible(NULL),
+    archive_extract_once = function(...) invisible(NULL),
+    .package = "workflowtools"
+  )
+  dest <- withr::local_tempdir()
+  local_cut_shapefile(
+    keep = 2L,
+    cols = list(LTFC10 = c(60, 100, 170)),
+    dir = file.path(dest, "lthfc")
+  )
+  expect_error(landweb_lthfc(dest), "2 complete records.*3 shapes")
+})

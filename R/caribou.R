@@ -223,7 +223,7 @@ buildCaribouRanges <- function(
       )
       return(NULL)
     }
-    v <- terra::vect(f[[1L]])
+    v <- spatialutils::read_vector(f[[1L]])
     v <- .dropExtirpated(v, lyr$statusCols, lyr$extirpated)
     if (nrow(v) == 0L) {
       return(NULL)

@@ -35,7 +35,7 @@ Imports:
     scales,
     sf,
     SpaDES.tools (>= 2.1.2.9000),
-    spatialutils,
+    spatialutils (>= 0.0.1.9001),
     stats,
     terra,
     tibble,

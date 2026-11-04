@@ -9,7 +9,7 @@
 .cleanLandWebStudyArea <- function(poly, minFRI = 40) {
   if (is.character(poly)) {
     pemisc::createPrjFile(poly)
-    poly <- sf::st_read(poly)
+    poly <- sf::st_as_sf(spatialutils::read_vector(poly))
   }
 
   stopifnot(any(c("LTHFC", "LTHRC") %in% names(poly)))

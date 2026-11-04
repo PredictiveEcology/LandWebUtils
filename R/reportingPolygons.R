@@ -127,7 +127,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   if (length(shp) == 0L) {
     stop("no shapefile found under '", dir, "' (Drive id '", id, "').", call. = FALSE)
   }
-  v <- terra::project(terra::makeValid(terra::vect(shp[[1L]])), targetCRS)
+  v <- terra::project(terra::makeValid(spatialutils::read_vector(shp[[1L]])), targetCRS)
   sf::st_as_sf(v)
 }
 
@@ -143,7 +143,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   if (length(shp) == 0L) {
     stop("no shapefile found under '", dir, "' (from '", url, "').", call. = FALSE)
   }
-  v <- terra::project(terra::makeValid(terra::vect(shp[[1L]])), targetCRS)
+  v <- terra::project(terra::makeValid(spatialutils::read_vector(shp[[1L]])), targetCRS)
   sf::st_as_sf(v)
 }
 
@@ -446,7 +446,7 @@ buildReportingPolygons <- function(
       )
       return(NULL)
     }
-    v <- spatialutils::prep_vector(terra::vect(shp[[1]]), studyArea, crs = targetCRS)
+    v <- spatialutils::prep_vector(spatialutils::read_vector(shp[[1]]), studyArea, crs = targetCRS)
     if (nrow(v) == 0L) {
       return(NULL)
     }

@@ -18,7 +18,7 @@ landweb_lthfc <- function(destinationPath, targetCRS = LandWebCRS) {
   workflowtools::drive_download_once(googledrive::as_id(lthfcID), lthfcZip)
   workflowtools::archive_extract_once(lthfcZip, dir = lthfcDir)
 
-  lthfc <- terra::vect(list.files(lthfcDir, "\\.shp$", full.names = TRUE)[[1]]) |>
+  lthfc <- spatialutils::read_vector(list.files(lthfcDir, "\\.shp$", full.names = TRUE)[[1]]) |>
     terra::project(targetCRS)
   lthfc <- lthfc[, "LTFC10"] ## v10 renamed the fire cycle column
   names(lthfc) <- "LTHFC"

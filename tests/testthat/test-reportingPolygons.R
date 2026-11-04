@@ -354,3 +354,35 @@ test_that(".labelColList splits the comma-separated priority list", {
   expect_identical(LandWebUtils:::.labelColList("Name"), "Name")
   expect_length(LandWebUtils:::.labelColList(NA_character_), 0L)
 })
+
+test_that("buildReportingPolygons stops on a shapefile whose .dbf is cut short", {
+  ## GDAL reads no shape past the last whole record of a cut .dbf, and only warns
+  shp <- local_cut_shapefile(n = 3L, keep = 2L)
+  expect_equal(nrow(suppressWarnings(terra::vect(shp))), 2L)
+
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) shp)
+  lyrs <- tibble::tibble(
+    key = "Sub-regions", NAME_SHORT = "Sub", isTenure = FALSE, cross = TRUE, source = "drive",
+    id = "x", labelCols = "Name", where = NA_character_
+  )
+  sa <- terra::vect("POLYGON ((-1 -1, 7 -1, 7 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  expect_error(
+    buildReportingPolygons(sa, withr::local_tempdir(), layers = lyrs, min_area_km2 = 0),
+    "2 complete records.*3 shapes"
+  )
+})
+
+test_that("the Drive and URL layer readers stop on a shapefile whose .dbf is cut short", {
+  testthat::local_mocked_bindings(
+    drive_download_once = function(...) invisible(NULL),
+    download_once = function(...) invisible(NULL),
+    archive_extract_once = function(...) invisible(NULL),
+    .package = "workflowtools"
+  )
+  dest <- withr::local_tempdir()
+  local_cut_shapefile(keep = 2L, dir = file.path(dest, "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"))
+  expect_error(prepFMAs(dest), "2 complete records.*3 shapes")
+
+  local_cut_shapefile(keep = 2L, dir = file.path(dest, "Ecoregions"))
+  expect_error(prepEcoregionLayer(dest), "2 complete records.*3 shapes")
+})
