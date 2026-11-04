@@ -403,6 +403,44 @@ landmine_reburn_budget <- function(tooSmallByPoly, friByPolygon, remainingSize =
   )
 }
 
+#' Draw one FRI zone's start cells for a burn round
+#'
+#' Picks a different start cell for each of a zone's fires, never on a pixel that cannot burn
+#' now, such as one burned earlier in the same year.
+#'
+#' @param pixel the candidate start cells of one FRI zone.
+#' @param n the number of fires the zone needs this round.
+#' @param available logical, as long as `pixel`; `FALSE` marks a pixel no fire may start on now.
+#'   LandMine passes `FALSE` for the pixels earlier rounds of the year burned.
+#'
+#' @details
+#' The cells are drawn without replacement from `pixel[available]`. A zone with fewer available
+#' pixels than fires gives each available pixel a fire, and the remaining fires `NA`: they could
+#' only burn by starting on a pixel already burned that year, whose area would then be counted
+#' twice.
+#'
+#' With every pixel available and `n <= length(pixel)`, the draw is
+#' `pixel[sample.int(length(pixel), n)]`, the same random numbers as `SpaDES.tools:::resample()`,
+#' which LandMine used before. A year whose fires all reach their targets in the first round is
+#' therefore unchanged.
+#'
+#' @return `n` start cells, of the type of `pixel`, with `NA` for each fire left without one.
+#'
+#' @export
+#' @examples
+#' set.seed(1)
+#' landmine_start_cells(101:110, 3L, available = rep(c(TRUE, FALSE), 5))
+#' landmine_start_cells(101:103, 5L, available = c(TRUE, FALSE, TRUE))
+landmine_start_cells <- function(pixel, n, available = rep(TRUE, length(pixel))) {
+  stopifnot(
+    is.logical(available), length(available) == length(pixel), !anyNA(available),
+    length(n) == 1L, !is.na(n), n >= 0
+  )
+  avail <- pixel[available]
+  m <- min(n, length(avail))
+  c(avail[sample.int(length(avail), m)], pixel[rep(NA_integer_, n - m)])
+}
+
 #' Attach fire identity to a burn result
 #'
 #' Joins `fireID`/`attempt`/`targetSize` onto the cluster table `spread2()` returns, keyed on

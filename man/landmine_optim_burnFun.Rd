@@ -33,7 +33,9 @@ These are 2 size (in hectares) thresholds that affect which
 raster layer, or a numeric vector of length \code{terra::ncell(landscape)}.
 For \code{landmine_burn1()}, prefer the numeric vector: \code{spread2()}
 re-materialises a raster \code{spreadProb} on every spread step,
-which is O(ncell) per step.}
+which is O(ncell) per step.
+No fire spreads into a pixel whose \code{spreadProb} is \code{NA}, in any step.
+The first step uses probability 1 in every other pixel.}
 }
 \value{
 named list of length 2 containing:

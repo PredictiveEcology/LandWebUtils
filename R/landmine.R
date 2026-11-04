@@ -43,6 +43,8 @@ utils::globalVariables(c(
 #'                       For `landmine_burn1()`, prefer the numeric vector: `spread2()`
 #'                       re-materialises a raster `spreadProb` on every spread step,
 #'                       which is O(ncell) per step.
+#'                       No fire spreads into a pixel whose `spreadProb` is `NA`, in any step.
+#'                       The first step uses probability 1 in every other pixel.
 #'
 #' @param omitPixels     An optional vector of pixel IDs to omit from fire size calculations.
 #'                       Can be used if `spreadProb` or `spreadProbRel` do not designate
@@ -108,10 +110,21 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
   ## convert to pixels
   sizeCutoffs <- sizeCutoffs / (prod(res(landscape)) / 1e4)
 
+  ## The first step spreads with probability 1, so that every fire gets past its start cell, but
+  ## only into pixels that `spreadProb` lets fire enter: an `NA` stays `NA`. A scalar 1 here
+  ## dropped that mask for the first step, and `spread2()` masks only through `spreadProb` and
+  ## `spreadProbRel`, so the first step could burn pixels LandMine had masked as burned earlier
+  ## in the year (its `spreadProbRel` is `NA` only on non-flammable pixels).
+  spreadProbFirst <- 1
+  if (length(spreadProb) > 1L || inherits(spreadProb, c("SpatRaster", "Raster"))) {
+    spreadProbFirst <- as.vector(spreadProb)
+    spreadProbFirst[!is.na(spreadProbFirst)] <- 1
+  }
+
   a <- SpaDES.tools::spread2(
     landscape,
     start = startCells,
-    spreadProb = 1, ## initial step can have spreadProb 1 so guarantees something
+    spreadProb = spreadProbFirst,
     asRaster = FALSE,
     exactSize = fireSizes,
     directions = 8,

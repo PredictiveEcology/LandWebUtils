@@ -587,3 +587,46 @@ test_that("attainment does not pool the same fireID across years or replicates",
   expect_identical(att$burned, c(100, 300, 700))
   expect_true(all(att$reached))
 })
+
+## ---- landmine_start_cells ----
+
+test_that("with every pixel available the start cells are the draw LandMine made before", {
+  pool <- c(17L, 4L, 250L, 33L, 91L, 8L, 120L)
+  got <- withr::with_seed(11L, landmine_start_cells(pool, 4L))
+  expect_identical(got, withr::with_seed(11L, pool[sample.int(length(pool), 4L)]))
+  expect_identical(
+    withr::with_seed(11L, landmine_start_cells(as.numeric(pool), 4)),
+    as.numeric(got)
+  )
+})
+
+test_that("no fire starts on an unavailable pixel, and no two fires share one", {
+  pool <- 1:200
+  available <- pool %% 3L != 0L
+  got <- withr::with_seed(5L, landmine_start_cells(pool, 60L, available))
+  expect_length(got, 60L)
+  expect_true(all(available[got]))
+  expect_false(anyDuplicated(got) > 0L)
+})
+
+test_that("a zone with fewer available pixels than fires leaves the rest without a start cell", {
+  pool <- c(5L, 6L, 7L, 8L)
+  got <- withr::with_seed(2L, landmine_start_cells(pool, 5L, c(TRUE, FALSE, TRUE, FALSE)))
+  expect_length(got, 5L)
+  expect_setequal(got[!is.na(got)], c(5L, 7L))
+  expect_identical(sum(is.na(got)), 3L)
+  expect_identical(
+    landmine_start_cells(pool, 2L, rep(FALSE, 4L)),
+    c(NA_integer_, NA_integer_)
+  )
+})
+
+test_that("a zone with no fires gets no start cells, of the pool's type", {
+  expect_identical(landmine_start_cells(c(5L, 6L), 0L), integer(0))
+  expect_identical(landmine_start_cells(c(5, 6), 0L, c(FALSE, FALSE)), numeric(0))
+})
+
+test_that("landmine_start_cells refuses an availability vector it cannot pair with the pool", {
+  expect_error(landmine_start_cells(1:4, 2L, c(TRUE, FALSE)), "length(pixel)", fixed = TRUE)
+  expect_error(landmine_start_cells(1:4, 2L, c(TRUE, NA, TRUE, TRUE)), "anyNA", fixed = TRUE)
+})
