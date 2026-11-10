@@ -15,7 +15,7 @@ landweb_anpp_area(
 
 \item{ecoLevel}{\code{"ecoprovince"} or \code{"ecozone"}.}
 
-\item{destinationPath}{directory the framework's shapefile is downloaded to.}
+\item{destinationPath}{directory the framework's archive is downloaded to and extracted in, once.}
 }
 \value{
 \code{sf} of the intersecting polygons, in the coordinate reference system of \code{area}.

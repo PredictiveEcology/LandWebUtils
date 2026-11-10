@@ -45,27 +45,31 @@ landweb_area <- function(lthfc) {
 #'
 #' @param area `sf`, `sfc` or `SpatVector` polygons.
 #' @param ecoLevel `"ecoprovince"` or `"ecozone"`.
-#' @param destinationPath directory the framework's shapefile is downloaded to.
+#' @param destinationPath directory the framework's archive is downloaded to and extracted in, once.
 #'
 #' @return `sf` of the intersecting polygons, in the coordinate reference system of `area`.
 #'
 #' @export
 landweb_anpp_area <- function(area, ecoLevel = c("ecoprovince", "ecozone"), destinationPath) {
   ecoLevel <- match.arg(ecoLevel)
-  url <- switch(
+  src <- switch(
     ecoLevel,
-    ecoprovince = "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/province/ecoprovince_shp.zip",
-    ecozone = "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"
+    ecoprovince = c(
+      url = "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/province/ecoprovince_shp.zip",
+      shp = "Ecoprovinces/ecoprovinces.shp"
+    ),
+    ecozone = c(
+      url = "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+      shp = "Ecozones/ecozones.shp"
+    )
   )
   if (inherits(area, "SpatVector")) {
     area <- sf::st_as_sf(area)
   }
-  eco <- reproducible::prepInputs(
-    url = url,
-    destinationPath = destinationPath,
-    fun = "sf::st_read",
-    overwrite = TRUE
-  )
+  zip <- file.path(fs::dir_create(destinationPath), basename(src[["url"]]))
+  workflowtools::download_once(src[["url"]], zip)
+  workflowtools::archive_extract_once(zip, dir = destinationPath)
+  eco <- sf::st_as_sf(spatialutils::read_vector(file.path(destinationPath, src[["shp"]])))
   eco <- sf::st_transform(eco, sf::st_crs(area))
   eco[which(lengths(sf::st_intersects(eco, area)) > 0), ]
 }
