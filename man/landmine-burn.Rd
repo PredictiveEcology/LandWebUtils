@@ -110,8 +110,9 @@ a) number of active "firelets" (NF); and b) fire size (FS), such that:
 These rules create more heterogeneity in the pattern of burning.
 
 Thresholds are given symbolically because the fitted values differ from the figures this
-documentation used to quote: \code{sizeCutoffs} is calibrated, and is currently 1629 / 52016 ha
-rather than the 8,000 / 20,000 originally described.
+documentation used to quote: \code{sizeCutoffs} is calibrated, and LandMine's adopted fit (the
+120 m fit, row 1 of its \code{LandMine_DEoptim_params.csv}) gives about 2226 / 5559 ha rather than
+the 8,000 / 20,000 originally described.
 
 The second rule uses \code{>=}: with \code{>}, the \code{NF == nActiveCells1[2]} case matched no rule.
 
