@@ -29,6 +29,9 @@ jobs:
           - {os: ubuntu-latest,   r: 'devel'}
           - {os: ubuntu-latest,   r: 'release'}
           - {os: ubuntu-latest,   r: 'oldrel-1'}
+          ## oldrel-2 is the oldest R tested, so it sets the R floor in DESCRIPTION.
+          - {os: ubuntu-latest,   r: 'oldrel-2'}
+          - {os: windows-latest, r: 'oldrel-2'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
