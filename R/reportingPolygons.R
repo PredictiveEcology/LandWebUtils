@@ -71,10 +71,19 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
 ## found nothing there -- which callers could not distinguish from a layer that
 ## legitimately does not intersect the study area.
-## A File Geodatabase (a `*.gdb` directory) comes first, as `.findLandbaseSource()` had it.
-.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson|json)$") {
-  gdb <- list.files(dir, "\\.gdb$", full.names = TRUE, recursive = TRUE, include.dirs = TRUE)
-  c(gdb[dir.exists(gdb)], list.files(dir, pattern, full.names = TRUE, recursive = TRUE))
+## Results are ranked by `types`: a File Geodatabase (a `*.gdb` directory), a GeoPackage, a
+## shapefile, a GeoJSON, then any other `.json` (which may be metadata rather than a layer). A
+## caller that reads only one kind names it. Paths under `__MACOSX` (the resource-fork copies a
+## macOS zip carries, `.gdb` folders included) are never sources.
+.findVectorFile <- function(dir, types = c("gdb", "gpkg", "shp", "geojson", "json")) {
+  types <- match.arg(types, several.ok = TRUE)
+  out <- lapply(types, function(type) {
+    f <- list.files(dir, paste0("\\.", type, "$"), full.names = TRUE, recursive = TRUE,
+                    include.dirs = identical(type, "gdb"))
+    if (identical(type, "gdb")) f <- f[dir.exists(f)]
+    f[!grepl("(^|/)__MACOSX(/|$)", f)]
+  })
+  as.character(unlist(out, use.names = FALSE))
 }
 
 ## `source` gates which fetch path runs, and anything unrecognised would be treated as a zipped URL --
@@ -127,7 +136,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   zip <- file.path(dir, paste0(id, ".zip"))
   workflowtools::drive_download_once(googledrive::as_id(id), zip)
   workflowtools::archive_extract_once(zip, dir = dir)
-  shp <- .findVectorFile(dir, "\\.shp$")
+  shp <- .findVectorFile(dir, "shp")
   if (length(shp) == 0L) {
     stop("no shapefile found under '", dir, "' (Drive id '", id, "').", call. = FALSE)
   }
@@ -143,7 +152,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   zip <- file.path(dir, basename(url))
   workflowtools::download_once(url, zip)
   workflowtools::archive_extract_once(zip, dir = dir)
-  shp <- .findVectorFile(dir, "\\.shp$")
+  shp <- .findVectorFile(dir, "shp")
   if (length(shp) == 0L) {
     stop("no shapefile found under '", dir, "' (from '", url, "').", call. = FALSE)
   }

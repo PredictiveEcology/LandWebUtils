@@ -451,3 +451,26 @@ test_that("a landbase gdb nested below the top level is not taken", {
   file.create(file.path(dir, "y.shp"))
   expect_identical(basename(LandWebUtils:::.findLandbaseSource(dir)), "y.shp")
 })
+
+test_that("a shapefile-only search ignores a File Geodatabase", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "a.gdb"))
+  file.create(file.path(dir, "b.shp"))
+  expect_identical(basename(LandWebUtils:::.findVectorFile(dir, "shp")), "b.shp")
+})
+
+test_that("a vector file outranks a metadata .json", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, c("a_meta.json", "z.shp")))
+  expect_identical(basename(LandWebUtils:::.findVectorFile(dir)[[1]]), "z.shp")
+})
+
+test_that("macOS resource folders are not read", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "__MACOSX", "R.gdb"), recursive = TRUE)
+  dir.create(file.path(dir, "R.gdb"))
+  f <- LandWebUtils:::.findVectorFile(dir)
+  expect_length(f, 1L)
+  expect_match(f, "/R\\.gdb$")
+  expect_no_match(f, "__MACOSX")
+})
