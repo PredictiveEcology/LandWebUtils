@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 60
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ## Codecov refuses tokenless uploads from this repo's own branches; covr::codecov() reads it
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       USING_COVR: true
 
     steps:
