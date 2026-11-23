@@ -105,16 +105,15 @@ test_that(".findVectorFile finds a GeoJSON (the ArcGIS REST sources are not arch
   expect_match(LandWebUtils:::.findVectorFile(dir), "\\.geojson$")
 })
 
-test_that(".findLandbaseSource prefers a File Geodatabase, then a shapefile", {
+test_that(".findVectorFile prefers a File Geodatabase, then a shapefile", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "coverage.gdb"))
-  expect_match(LandWebUtils:::.findLandbaseSource(dir), "coverage\\.gdb$")
+  file.create(file.path(dir, "coverage.shp"))
+  expect_match(LandWebUtils:::.findVectorFile(dir)[[1]], "coverage\\.gdb$")
 
   dir2 <- withr::local_tempdir()
   file.create(file.path(dir2, "coverage.shp"))
-  expect_match(LandWebUtils:::.findLandbaseSource(dir2), "coverage\\.shp$")
-
-  expect_null(LandWebUtils:::.findLandbaseSource(withr::local_tempdir()))
+  expect_match(LandWebUtils:::.findVectorFile(dir2)[[1]], "coverage\\.shp$")
 })
 
 test_that("buildLandbasePolygons skips (no download) when no landbase applies", {
@@ -385,4 +384,62 @@ test_that("the Drive and URL layer readers stop on a shapefile whose .dbf is cut
 
   local_cut_shapefile(keep = 2L, dir = file.path(dest, "Ecoregions"))
   expect_error(prepEcoregionLayer(dest), "2 complete records.*3 shapes")
+})
+
+test_that(".findVectorFile finds a File Geodatabase first, and a .json", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "sub", "ranges.gdb"), recursive = TRUE)
+  file.create(file.path(dir, "sub", "ranges.gdb", "a00000001.gdbtable"))
+  file.create(file.path(dir, "gadm41_CAN_1.json"))
+  f <- LandWebUtils:::.findVectorFile(dir)
+  expect_match(f[[1]], "ranges\\.gdb$")
+  expect_match(f[[2]], "gadm41_CAN_1\\.json$")
+})
+
+test_that("a download API's URL is saved as <slug>.zip, a plain archive URL under its own name", {
+  dest <- character(0)
+  testthat::local_mocked_bindings(
+    download_once = function(url, destfile, ...) dest <<- c(dest, destfile),
+    archive_extract_once = function(...) invisible(NULL),
+    .package = "workflowtools"
+  )
+  dir <- withr::local_tempdir()
+  LandWebUtils:::.fetchVectorFile("url", "https://x.ca/api/file?path=%2Fa%2Fb.gdb.zip", dir, "Boreal_Caribou")
+  LandWebUtils:::.fetchVectorFile("url", "https://x.ca/zone/ecozone_shp.zip", dir, "Ecozones")
+  expect_identical(basename(dest), c("Boreal_Caribou.zip", "ecozone_shp.zip"))
+})
+
+test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal caribou, none crossed", {
+  lyrs <- nationalReportingLayers()
+  expect_named(lyrs, c(names(reportingPolygonLayers()), "query"))
+  expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou"))
+  expect_false(any(lyrs$isTenure | lyrs$cross))
+  ## the ecozone row is reportingPolygonLayers()' own
+  eco <- reportingPolygonLayers()
+  expect_identical(lyrs$id[lyrs$NAME_SHORT == "Ecozone"], eco$id[eco$NAME_SHORT == "Ecozone"])
+  expect_match(lyrs$query[lyrs$NAME_SHORT == "Protected"], "PA_OECM_DF = 1 AND BIOME = 'T'", fixed = TRUE)
+})
+
+test_that("a layer's query selects features and labels them all one reporting unit", {
+  ## protected areas: 2 PAs (one split in two parts) and an OECM; the query keeps the PAs as one unit
+  v <- terra::vect(sf::st_sf(
+    PA_OECM_DF = c(1L, 1L, 2L), BIOME = "T",
+    geometry = sf::st_sfc(square(0, 0, 1), square(2, 0, 1), square(4, 0, 1), crs = 3857)
+  ))
+  ## a shapefile, read with OGR SQL as the CPCAD geodatabase is (a GeoPackage takes SQLite SQL, in
+  ## which the geometry column must be selected by name)
+  src <- file.path(withr::local_tempdir(), "pca.shp")
+  terra::writeVector(v, src)
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  lyrs <- tibble::tibble(
+    key = "Protected Areas", NAME_SHORT = "Protected", isTenure = FALSE, cross = FALSE, source = "url",
+    id = "x", labelCols = "label", where = NA_character_,
+    query = "SELECT 'Protected' AS label FROM pca WHERE PA_OECM_DF = 1"
+  )
+  sa <- terra::vect("POLYGON ((-1 -1, 7 -1, 7 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857", layers = lyrs,
+                                min_area_km2 = 0)
+  expect_named(out, "Protected")
+  expect_identical(unique(out$Protected$Name), "Protected")
+  expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 2)
 })

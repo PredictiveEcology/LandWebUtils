@@ -1,5 +1,7 @@
 # LandWebUtils (development version)
 
+* New `nationalReportingLayers()`: reporting layers that summarise a simulation by province or territory (GADM 4.1, named `AB` ... `YT`), ecozone, protected area (CPCAD 2025, terrestrial protected areas as one unit, `Protected`) and federal boreal caribou range (ECCC's 51 ranges, 2012 boundaries). Pass them as `layers` to `buildReportingPolygons()`. A layer table may now have a `query` column, an OGR SQL query read with the source, which names the layer of a multi-layer source and can select features and add a label. A File Geodatabase and a `.json` are now found in a download, and a URL whose name is a query string (`.../api/file?path=...`) is saved as `<key>.zip`.
+
 * `?landmine_burn1` gives the `sizeCutoffs` of LandMine's adopted 120 m fit, about 2226 / 5559 ha (1.0.3.9054). It quoted 1629 / 52016 ha, from a fit made before the August 2026 re-calibration.
 
 * `landweb_anpp_area()` reads the ecoprovince or ecozone shapefile with `spatialutils::read_vector()`, so a cut `.dbf` is an error as in the other readers (1.0.3.9053). It downloads and extracts the national archive once, with `workflowtools::download_once()` and `archive_extract_once()`, into the same places as before (`<destinationPath>/ecoprovince_shp.zip`, `<destinationPath>/Ecoprovinces/`), instead of `reproducible::prepInputs(overwrite = TRUE)` on every call.
