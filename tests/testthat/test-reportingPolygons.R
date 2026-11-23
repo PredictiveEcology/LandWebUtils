@@ -474,3 +474,43 @@ test_that("macOS resource folders are not read", {
   expect_match(f, "/R\\.gdb$")
   expect_no_match(f, "__MACOSX")
 })
+
+## two shapefiles in one download, as in NRCan's CanVec Admin archive; the first is not the layer
+local_two_shapefiles <- function(env = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = env)
+  mk <- function(name, label) {
+    v <- terra::vect(sf::st_sf(juri_en = label, geometry = sf::st_sfc(square(0, 0, 1), crs = 3857)))
+    f <- file.path(dir, paste0(name, ".shp"))
+    terra::writeVector(v, f)
+    f
+  }
+  c(mk("geopolitical_boundary_1", "wrong"), mk("geo_political_region_2", "Alberta"))
+}
+
+provinceRow <- function(layer) {
+  tibble::tibble(
+    key = "Provinces and Territories", NAME_SHORT = "Province", isTenure = FALSE, cross = FALSE,
+    source = "url", id = "x", labelCols = "juri_en", where = NA_character_, layer = layer
+  )
+}
+
+test_that("a layer's 'layer' picks one shapefile of several", {
+  src <- local_two_shapefiles()
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  sa <- terra::vect("POLYGON ((-1 -1, 2 -1, 2 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857",
+                                layers = provinceRow("geo_political_region_2"), min_area_km2 = 0)
+  expect_identical(unique(out$Province$Name), "Alberta")
+})
+
+test_that("a 'layer' matching no file warns and drops the layer", {
+  src <- local_two_shapefiles()
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  sa <- terra::vect("POLYGON ((-1 -1, 2 -1, 2 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  expect_warning(
+    out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857",
+                                  layers = provinceRow("no_such_layer"), min_area_km2 = 0),
+    "no vector file named 'no_such_layer'"
+  )
+  expect_length(out, 0L)
+})

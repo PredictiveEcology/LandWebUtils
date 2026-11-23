@@ -525,6 +525,19 @@ buildReportingPolygons <- function(
       )
       return(NULL)
     }
+    ## `layer`: which file of a multi-file download to read, by its name without the extension
+    ## (NRCan's CanVec Admin archive holds one shapefile per feature type)
+    if ("layer" %in% names(lyr) && !is.na(lyr$layer)) {
+      shp <- shp[sub("\\.[^.]*$", "", basename(shp)) == lyr$layer]
+      if (length(shp) == 0L) {
+        warning(
+          "no vector file named '", lyr$layer, "' under '", dir, "' for reporting layer '",
+          lyr$key, "'; the layer will be MISSING from the reporting polygons.",
+          call. = FALSE
+        )
+        return(NULL)
+      }
+    }
     ## `query`: an OGR SQL query, which names the layer of a multi-layer source and may select
     ## features and add a constant label (see nationalReportingLayers())
     query <- if ("query" %in% names(lyr) && !is.na(lyr$query)) lyr$query else ""
