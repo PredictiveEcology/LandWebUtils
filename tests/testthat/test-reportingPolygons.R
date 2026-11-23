@@ -514,3 +514,19 @@ test_that("a 'layer' matching no file warns and drops the layer", {
   )
   expect_length(out, 0L)
 })
+
+test_that("a dissolved layer counts overlapping features once", {
+  v <- terra::vect(sf::st_sf(label = "Protected", geometry = sf::st_sfc(square(0, 0, 1), square(0.5, 0, 1), crs = 3857)))
+  src <- file.path(withr::local_tempdir(), "pa.shp")
+  terra::writeVector(v, src)
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  lyrs <- tibble::tibble(
+    key = "Protected Areas", NAME_SHORT = "Protected", isTenure = FALSE, cross = FALSE, source = "url",
+    id = "x", labelCols = "label", where = NA_character_, dissolve = TRUE
+  )
+  sa <- terra::vect("POLYGON ((-1 -1, 3 -1, 3 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857", layers = lyrs,
+                                min_area_km2 = 0)
+  expect_equal(nrow(out$Protected), 1)
+  expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 1.5)
+})

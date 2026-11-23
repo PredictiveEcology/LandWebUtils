@@ -551,6 +551,11 @@ buildReportingPolygons <- function(
     if (!is.null(lyr$where) && !is.na(lyr$where)) {
       v <- v[!is.na(v$Name) & grepl(lyr$where, v$Name), ]
     }
+    ## `dissolve`: one feature per Name, so the area that overlapping features share (CPCAD's
+    ## protected areas overlap) counts once
+    if ("dissolve" %in% names(lyr) && isTRUE(lyr$dissolve)) {
+      v <- spatialutils::dissolve_by(v, "Name", explode = FALSE)
+    }
     if (nrow(v) == 0L) {
       return(NULL)
     }
