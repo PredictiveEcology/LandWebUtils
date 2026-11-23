@@ -431,7 +431,7 @@ test_that("a download API's URL is saved as <slug>.zip, a plain archive URL unde
 
 test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal caribou, none crossed", {
   lyrs <- nationalReportingLayers()
-  expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve"))
+  expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve", "labelMap"))
   expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou"))
   expect_false(any(lyrs$isTenure | lyrs$cross))
   ## the ecozone row is reportingPolygonLayers()' own
@@ -449,6 +449,17 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal
   expect_identical(prov$labelCols, "juri_en")
   expect_false(any(grepl("gadm", lyrs$id, ignore.case = TRUE)))
   expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE))
+  ## named by two-letter code, as #8 had them
+  codes <- prov$labelMap[[1]]
+  expect_identical(
+    unname(codes),
+    c("AB", "BC", "MB", "NB", "NL", "NT", "NS", "NU", "ON", "PE", "QC", "SK", "YT")
+  )
+  expect_identical(
+    codes[c("Quebec", "Newfoundland and Labrador")],
+    c(Quebec = "QC", `Newfoundland and Labrador` = "NL")
+  )
+  expect_true(all(vapply(lyrs$labelMap[-1], is.null, logical(1))))
 })
 
 test_that("a layer's query selects features and labels them all one reporting unit", {
@@ -603,4 +614,49 @@ test_that("a dissolved layer counts overlapping features once", {
   )
   expect_equal(nrow(out$Protected), 1)
   expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 1.5)
+})
+
+test_that("a layer's labelMap renames its units", {
+  v <- terra::vect(sf::st_sf(
+    juri_en = c("Alberta", "British Columbia"),
+    geometry = sf::st_sfc(square(0, 0, 1), square(1, 0, 1), crs = 3857)
+  ))
+  src <- file.path(withr::local_tempdir(), "prov.shp")
+  terra::writeVector(v, src)
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  lyrs <- provinceRow(NA_character_)
+  lyrs$labelMap <- list(c(Alberta = "AB", `British Columbia` = "BC"))
+  sa <- terra::vect("POLYGON ((-1 -1, 3 -1, 3 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = "EPSG:3857",
+    layers = lyrs,
+    min_area_km2 = 0
+  )
+  expect_setequal(out$Province$Name, c("AB", "BC"))
+})
+
+test_that("a label missing from labelMap warns and is dropped", {
+  v <- terra::vect(sf::st_sf(
+    juri_en = c("Alberta", "Atlantis"),
+    geometry = sf::st_sfc(square(0, 0, 1), square(1, 0, 1), crs = 3857)
+  ))
+  src <- file.path(withr::local_tempdir(), "prov.shp")
+  terra::writeVector(v, src)
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  lyrs <- provinceRow(NA_character_)
+  lyrs$labelMap <- list(c(Alberta = "AB"))
+  sa <- terra::vect("POLYGON ((-1 -1, 3 -1, 3 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  expect_warning(
+    out <- buildReportingPolygons(
+      sa,
+      withr::local_tempdir(),
+      targetCRS = "EPSG:3857",
+      layers = lyrs,
+      min_area_km2 = 0
+    ),
+    "no code in `labelMap` for .Atlantis."
+  )
+  expect_identical(out$Province$Name, "AB")
 })

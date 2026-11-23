@@ -20,7 +20,7 @@ buildReportingPolygons(
 \item{targetCRS}{Target CRS (default \link{LandWebCRS}).}
 
 \item{layers}{Candidate-layer table (default \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}}, whose help lists the
-optional columns \code{query}, \code{layer} and \code{dissolve}).}
+optional columns \code{query}, \code{layer}, \code{dissolve} and \code{labelMap}).}
 
 \item{min_area_km2}{numeric; reporting units (all features sharing a \code{Name}) smaller than this
 within the study area are merged into the neighbouring unit of the same layer that they share

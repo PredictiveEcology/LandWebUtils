@@ -54,6 +54,8 @@ primary source is missing. Removing a supplement later is a one-row deletion.
 
 A table passed to \code{\link[=buildReportingPolygons]{buildReportingPolygons()}} may also have these optional columns (see
 \code{\link[=nationalReportingLayers]{nationalReportingLayers()}}): \code{query}, an OGR SQL query read with the source; \code{layer}, which file
-of a multi-file download to read, by its name without the extension; and \code{dissolve}, \code{TRUE} to
-merge each unit's features into one so that overlaps count once.
+of a multi-file download to read, by its name without the extension; \code{dissolve}, \code{TRUE} to
+merge each unit's features into one so that overlaps count once; and \code{labelMap}, a list column
+holding a named character vector that renames each source label (names) to its unit name
+(values), dropping with a warning the features whose label it lacks.
 }

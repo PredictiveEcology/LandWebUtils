@@ -319,8 +319,10 @@ joinReportingPolygons <- function(x, y) {
 #'
 #' A table passed to [buildReportingPolygons()] may also have these optional columns (see
 #' [nationalReportingLayers()]): `query`, an OGR SQL query read with the source; `layer`, which file
-#' of a multi-file download to read, by its name without the extension; and `dissolve`, `TRUE` to
-#' merge each unit's features into one so that overlaps count once.
+#' of a multi-file download to read, by its name without the extension; `dissolve`, `TRUE` to
+#' merge each unit's features into one so that overlaps count once; and `labelMap`, a list column
+#' holding a named character vector that renames each source label (names) to its unit name
+#' (values), dropping with a warning the features whose label it lacks.
 #'
 #' @return A `tibble` with columns `key`, `NAME_SHORT`, `isTenure`, `cross`,
 #'   `source`, `id`, `labelCols`, and `where`.
@@ -386,8 +388,8 @@ reportingPolygonLayers <- function() {
 #' [buildReportingPolygons()].
 #'
 #' - `Province`: NRCan's CanVec 1:1,000,000 administrative boundaries (`geo_political_region_2`,
-#'   Open Government Licence - Canada), named by English name (`Alberta`, ..., `Yukon`) and
-#'   dissolved to one feature per province or territory. Not GADM, whose licence bars commercial use
+#'   Open Government Licence - Canada), named by two-letter code (`AB`, `BC`, ..., `YT`) through
+#'   `labelMap`, and dissolved to one feature per province or territory. Not GADM, whose licence bars commercial use
 #'   and redistribution without permission, nor Statistics Canada's boundary file
 #'   (`lpr_000b21a_e.zip`), which answers scripted downloads with a browser check (HTTP 403).
 #' - `Protected`: the Canadian Protected and Conserved Areas Database (CPCAD, ECCC, 2025),
@@ -401,9 +403,10 @@ reportingPolygonLayers <- function() {
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
 #' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
 #' feature type). `dissolve = TRUE` merges each unit's features into one, so overlaps count once.
+#' `labelMap` renames source labels to unit names (CanVec's English names to two-letter codes).
 #'
-#' @return A `tibble` with the columns of [reportingPolygonLayers()], `query`, `layer` and
-#'   `dissolve`.
+#' @return A `tibble` with the columns of [reportingPolygonLayers()], `query`, `layer`, `dissolve`
+#'   and `labelMap`.
 #' @export
 nationalReportingLayers <- function() {
   eco <- reportingPolygonLayers()
@@ -412,6 +415,7 @@ nationalReportingLayers <- function() {
   eco$query <- NA_character_
   eco$layer <- NA_character_
   eco$dissolve <- FALSE
+  eco$labelMap <- vector("list", nrow(eco))
   ## ECCC's download API redirects to a signed copy; the path goes unencoded, as an encoded ")" in
   ## the caribou folder name breaks the signature (HTTP 403)
   ecccFile <- "https://data-donnees.az.ec.gc.ca/api/file?path="
@@ -432,7 +436,9 @@ nationalReportingLayers <- function() {
         "WHERE ctry_en = 'Canada' AND juri >= 92 AND juri <= 104"
       ),
       layer = "geo_political_region_2",
-      dissolve = TRUE
+      dissolve = TRUE,
+      ## the two-letter codes #8 named the units by (from GADM)
+      labelMap = list(.canadaJurisdictionCodes())
     ),
     eco,
     tibble::tibble(
@@ -453,7 +459,8 @@ nationalReportingLayers <- function() {
         "WHERE PA_OECM_DF = 1 AND BIOME = 'T'"
       ),
       layer = NA_character_,
-      dissolve = TRUE
+      dissolve = TRUE,
+      labelMap = list(NULL)
     ),
     tibble::tibble(
       key = "Boreal Caribou Ranges",
@@ -475,7 +482,8 @@ nationalReportingLayers <- function() {
       where = NA_character_,
       query = NA_character_,
       layer = NA_character_,
-      dissolve = FALSE
+      dissolve = FALSE,
+      labelMap = list(NULL)
     )
   )
   .validateLayerSources(out$source)
@@ -540,7 +548,7 @@ nationalReportingLayers <- function() {
 #' @param destinationPath Directory for downloads/extraction.
 #' @param targetCRS Target CRS (default [LandWebCRS]).
 #' @param layers Candidate-layer table (default [reportingPolygonLayers()], whose help lists the
-#'   optional columns `query`, `layer` and `dissolve`).
+#'   optional columns `query`, `layer`, `dissolve` and `labelMap`).
 #' @param min_area_km2 numeric; reporting units (all features sharing a `Name`) smaller than this
 #'   within the study area are merged into the neighbouring unit of the same layer that they share
 #'   the longest border with (see `spatialutils::eliminate_slivers()`), so an edge sliver does not
@@ -692,7 +700,45 @@ buildReportingPolygons <- function(
     ## the vector so each feature keeps its own label.
     v$Name <- do.call(.coalesceChr, lapply(cols, function(k) .blankToNA(v[[k]][[1]])))
   }
+  ## `labelMap`: a named character vector renaming each source label (names) to its unit name
+  ## (values); as for an uncurated tenure, a label it lacks is reported and its features dropped
+  if ("labelMap" %in% names(lyr) && length(lyr$labelMap[[1L]])) {
+    map <- lyr$labelMap[[1L]]
+    unmapped <- setdiff(unique(v$Name[!is.na(v$Name)]), names(map))
+    if (length(unmapped)) {
+      warning(
+        "no code in `labelMap` for ",
+        paste(sQuote(unmapped, FALSE), collapse = ", "),
+        " in reporting layer '",
+        lyr$key,
+        "'; they are DROPPED.",
+        call. = FALSE
+      )
+    }
+    v$Name <- unname(map[v$Name])
+    v <- v[!is.na(v$Name), ]
+  }
   v
+}
+
+## The two-letter codes of Canada's provinces and territories, named by their English names as
+## NRCan's CanVec writes them (`juri_en`).
+.canadaJurisdictionCodes <- function() {
+  c(
+    "Alberta" = "AB",
+    "British Columbia" = "BC",
+    "Manitoba" = "MB",
+    "New Brunswick" = "NB",
+    "Newfoundland and Labrador" = "NL",
+    "Northwest Territories" = "NT",
+    "Nova Scotia" = "NS",
+    "Nunavut" = "NU",
+    "Ontario" = "ON",
+    "Prince Edward Island" = "PE",
+    "Quebec" = "QC",
+    "Saskatchewan" = "SK",
+    "Yukon" = "YT"
+  )
 }
 
 ## Split a comma-separated `labelCols` entry into its priority list of column names.
