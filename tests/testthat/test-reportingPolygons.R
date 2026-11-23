@@ -412,13 +412,20 @@ test_that("a download API's URL is saved as <slug>.zip, a plain archive URL unde
 
 test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal caribou, none crossed", {
   lyrs <- nationalReportingLayers()
-  expect_named(lyrs, c(names(reportingPolygonLayers()), "query"))
+  expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve"))
   expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou"))
   expect_false(any(lyrs$isTenure | lyrs$cross))
   ## the ecozone row is reportingPolygonLayers()' own
   eco <- reportingPolygonLayers()
   expect_identical(lyrs$id[lyrs$NAME_SHORT == "Ecozone"], eco$id[eco$NAME_SHORT == "Ecozone"])
   expect_match(lyrs$query[lyrs$NAME_SHORT == "Protected"], "PA_OECM_DF = 1 AND BIOME = 'T'", fixed = TRUE)
+  ## provinces from NRCan's CanVec (Open Government Licence - Canada), not GADM (non-commercial)
+  prov <- lyrs[lyrs$NAME_SHORT == "Province", ]
+  expect_match(prov$id, "canvec_1M_CA_Admin_shp\\.zip$")
+  expect_identical(prov$layer, "geo_political_region_2")
+  expect_identical(prov$labelCols, "juri_en")
+  expect_false(any(grepl("gadm", lyrs$id, ignore.case = TRUE)))
+  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE))
 })
 
 test_that("a layer's query selects features and labels them all one reporting unit", {

@@ -367,36 +367,47 @@ reportingPolygonLayers <- function() {
 #' caribou ranges. None is crossed with a tenure. Pass the rows wanted as `layers` to
 #' [buildReportingPolygons()].
 #'
-#' - `Province`: GADM 4.1 level 1, named by the two-letter code (`AB`, `BC`, ..., `YT`). Statistics
-#'   Canada's boundary file (`lpr_000b21a_e.zip`) refuses some clients (HTTP 403).
+#' - `Province`: NRCan's CanVec 1:1,000,000 administrative boundaries (`geo_political_region_2`,
+#'   Open Government Licence - Canada), named by English name (`Alberta`, ..., `Yukon`) and
+#'   dissolved to one feature per province or territory. Not GADM, whose licence bars commercial use
+#'   and redistribution without permission, nor Statistics Canada's boundary file
+#'   (`lpr_000b21a_e.zip`), which answers scripted downloads with a browser check (HTTP 403).
 #' - `Protected`: the Canadian Protected and Conserved Areas Database (CPCAD, ECCC, 2025),
 #'   terrestrial protected areas only (`PA_OECM_DF = 1`, `BIOME = 'T'`; OECMs and interim areas
 #'   excluded). Every feature is labelled `"Protected"`, so the layer is one reporting unit: all
-#'   protected land in the study area.
+#'   protected land in the study area, dissolved so that overlapping areas count once.
 #' - `BorealCaribou`: ECCC's 51 boreal caribou ranges (2012 boundaries), the ranges of the federal
 #'   recovery strategy and its 35% disturbance threshold, named by `HERD`. The `Caribou` layer of
 #'   [reportingPolygonLayers()] is the jurisdictional ranges instead.
 #'
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
+#' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
+#' feature type). `dissolve = TRUE` merges each unit's features into one, so overlaps count once.
 #'
-#' @return A `tibble` with the columns of [reportingPolygonLayers()] and `query`.
+#' @return A `tibble` with the columns of [reportingPolygonLayers()], `query`, `layer` and
+#'   `dissolve`.
 #' @export
 nationalReportingLayers <- function() {
   eco <- reportingPolygonLayers()
   eco <- eco[eco$NAME_SHORT == "Ecozone", ]
   eco$cross <- FALSE
   eco$query <- NA_character_
+  eco$layer <- NA_character_
+  eco$dissolve <- FALSE
   ## ECCC's download API redirects to a signed copy; the path goes unencoded, as an encoded ")" in
   ## the caribou folder name breaks the signature (HTTP 403)
   ecccFile <- "https://data-donnees.az.ec.gc.ca/api/file?path="
   out <- rbind(
     tibble::tibble(
       key = "Provinces and Territories", NAME_SHORT = "Province", isTenure = FALSE, cross = FALSE,
-      source = "url", id = "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CAN_1.json.zip",
-      ## the two-letter code: GADM's ISO_1 is "NA" for Quebec, and its HASC_1 is "NF" for
-      ## Newfoundland and Labrador, so the ISO code with the HASC one where ISO has none
-      labelCols = "iso,hasc", where = NA_character_,
-      query = "SELECT SUBSTR(ISO_1, 4, 2) AS iso, SUBSTR(HASC_1, 4, 2) AS hasc FROM gadm41_CAN_1"
+      source = "url",
+      id = "https://ftp.maps.canada.ca/pub/nrcan_rncan/vector/canvec/shp/Admin/canvec_1M_CA_Admin_shp.zip",
+      ## jurisdictions 92-104 are the 13 provinces and territories (CanVec's jurisdiction codes);
+      ## the islands of each are separate features, dissolved into one
+      labelCols = "juri_en", where = NA_character_,
+      query = paste("SELECT juri_en FROM geo_political_region_2",
+                    "WHERE ctry_en = 'Canada' AND juri >= 92 AND juri <= 104"),
+      layer = "geo_political_region_2", dissolve = TRUE
     ),
     eco,
     tibble::tibble(
@@ -405,7 +416,8 @@ nationalReportingLayers <- function() {
                   "Databases/ProtectedConservedArea_2025.zip"),
       labelCols = "label", where = NA_character_,
       query = paste("SELECT 'Protected' AS label FROM ProtectedConservedArea_2025",
-                    "WHERE PA_OECM_DF = 1 AND BIOME = 'T'")
+                    "WHERE PA_OECM_DF = 1 AND BIOME = 'T'"),
+      layer = NA_character_, dissolve = TRUE
     ),
     tibble::tibble(
       key = "Boreal Caribou Ranges", NAME_SHORT = "BorealCaribou", isTenure = FALSE, cross = FALSE,
@@ -417,7 +429,8 @@ nationalReportingLayers <- function() {
         "across-canada-as-interpreted-from-2020-landsat-satellite-imagery/boreal-disturbance-data-2020/",
         "All51_Caribou_Ranges_Aires_2012.gdb.zip"
       )),
-      labelCols = "HERD", where = NA_character_, query = NA_character_
+      labelCols = "HERD", where = NA_character_, query = NA_character_,
+      layer = NA_character_, dissolve = FALSE
     )
   )
   .validateLayerSources(out$source)
