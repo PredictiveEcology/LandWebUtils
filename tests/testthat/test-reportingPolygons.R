@@ -105,16 +105,15 @@ test_that(".findVectorFile finds a GeoJSON (the ArcGIS REST sources are not arch
   expect_match(LandWebUtils:::.findVectorFile(dir), "\\.geojson$")
 })
 
-test_that(".findLandbaseSource prefers a File Geodatabase, then a shapefile", {
+test_that(".findVectorFile prefers a File Geodatabase, then a shapefile", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "coverage.gdb"))
-  expect_match(LandWebUtils:::.findLandbaseSource(dir), "coverage\\.gdb$")
+  file.create(file.path(dir, "coverage.shp"))
+  expect_match(LandWebUtils:::.findVectorFile(dir)[[1]], "coverage\\.gdb$")
 
   dir2 <- withr::local_tempdir()
   file.create(file.path(dir2, "coverage.shp"))
-  expect_match(LandWebUtils:::.findLandbaseSource(dir2), "coverage\\.shp$")
-
-  expect_null(LandWebUtils:::.findLandbaseSource(withr::local_tempdir()))
+  expect_match(LandWebUtils:::.findVectorFile(dir2)[[1]], "coverage\\.shp$")
 })
 
 test_that("buildLandbasePolygons skips (no download) when no landbase applies", {

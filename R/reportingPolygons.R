@@ -71,7 +71,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
 ## found nothing there -- which callers could not distinguish from a layer that
 ## legitimately does not intersect the study area.
-## A File Geodatabase (a `*.gdb` directory) comes first, as `.findLandbaseSource()` had it.
+## A File Geodatabase (a `*.gdb` directory) comes first: a landbase download may hold both.
 .findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson|json)$") {
   gdb <- list.files(dir, "\\.gdb$", full.names = TRUE, recursive = TRUE, include.dirs = TRUE)
   c(gdb[dir.exists(gdb)], list.files(dir, pattern, full.names = TRUE, recursive = TRUE))
@@ -683,13 +683,6 @@ landbaseLayers <- function() {
   out
 }
 
-## Locate a readable vector source inside an extracted download directory:
-## a File Geodatabase directory (`*.gdb`) if present, else a shapefile/GeoPackage.
-.findLandbaseSource <- function(dir) {
-  f <- .findVectorFile(dir)
-  if (length(f)) f[[1]] else NULL
-}
-
 ## Fetch the source of landbase row `lyr` and return the path to read: a File Geodatabase
 ## directory, a shapefile or a GeoPackage, or NULL when the download holds none of these.
 .fetchLandbaseSource <- function(lyr, destinationPath) {
@@ -697,14 +690,8 @@ landbaseLayers <- function() {
     return(.driveGdbDownloadOnce(lyr$id, destinationPath))
   }
   dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
-  dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
-  if (identical(lyr$source, "drive")) {
-    workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
-  } else {
-    workflowtools::download_once(lyr$id, dest)
-  }
-  workflowtools::archive_extract_once(dest, dir = dir)
-  .findLandbaseSource(dir)
+  f <- .fetchVectorFile(lyr$source, lyr$id, dir, .slug(lyr$key))
+  if (length(f)) f[[1]] else NULL
 }
 
 ## Download a File Geodatabase kept on Google Drive as a folder (one Drive file per gdb file) into
