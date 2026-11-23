@@ -105,15 +105,16 @@ test_that(".findVectorFile finds a GeoJSON (the ArcGIS REST sources are not arch
   expect_match(LandWebUtils:::.findVectorFile(dir), "\\.geojson$")
 })
 
-test_that(".findVectorFile prefers a File Geodatabase, then a shapefile", {
+test_that(".findLandbaseSource prefers a File Geodatabase, then a shapefile", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "coverage.gdb"))
-  file.create(file.path(dir, "coverage.shp"))
-  expect_match(LandWebUtils:::.findVectorFile(dir)[[1]], "coverage\\.gdb$")
+  expect_match(LandWebUtils:::.findLandbaseSource(dir), "coverage\\.gdb$")
 
   dir2 <- withr::local_tempdir()
   file.create(file.path(dir2, "coverage.shp"))
-  expect_match(LandWebUtils:::.findVectorFile(dir2)[[1]], "coverage\\.shp$")
+  expect_match(LandWebUtils:::.findLandbaseSource(dir2), "coverage\\.shp$")
+
+  expect_null(LandWebUtils:::.findLandbaseSource(withr::local_tempdir()))
 })
 
 test_that("buildLandbasePolygons skips (no download) when no landbase applies", {
@@ -442,4 +443,11 @@ test_that("a layer's query selects features and labels them all one reporting un
   expect_named(out, "Protected")
   expect_identical(unique(out$Protected$Name), "Protected")
   expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 2)
+})
+
+test_that("a landbase gdb nested below the top level is not taken", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "sub", "x.gdb"), recursive = TRUE)
+  file.create(file.path(dir, "y.shp"))
+  expect_identical(basename(LandWebUtils:::.findLandbaseSource(dir)), "y.shp")
 })

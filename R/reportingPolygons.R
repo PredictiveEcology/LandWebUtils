@@ -71,7 +71,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
 ## found nothing there -- which callers could not distinguish from a layer that
 ## legitimately does not intersect the study area.
-## A File Geodatabase (a `*.gdb` directory) comes first: a landbase download may hold both.
+## A File Geodatabase (a `*.gdb` directory) comes first, as `.findLandbaseSource()` had it.
 .findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson|json)$") {
   gdb <- list.files(dir, "\\.gdb$", full.names = TRUE, recursive = TRUE, include.dirs = TRUE)
   c(gdb[dir.exists(gdb)], list.files(dir, pattern, full.names = TRUE, recursive = TRUE))
@@ -683,6 +683,21 @@ landbaseLayers <- function() {
   out
 }
 
+## Locate a readable vector source inside an extracted download directory:
+## a File Geodatabase directory (`*.gdb`) if present, else a shapefile/GeoPackage.
+.findLandbaseSource <- function(dir) {
+  gdb <- list.files(dir, pattern = "\\.gdb$", full.names = TRUE, include.dirs = TRUE)
+  gdb <- gdb[dir.exists(gdb)]
+  if (length(gdb) > 0L) {
+    return(gdb[[1]])
+  }
+  vec <- list.files(dir, pattern = "\\.(shp|gpkg)$", full.names = TRUE, recursive = TRUE)
+  if (length(vec) > 0L) {
+    return(vec[[1]])
+  }
+  NULL
+}
+
 ## Fetch the source of landbase row `lyr` and return the path to read: a File Geodatabase
 ## directory, a shapefile or a GeoPackage, or NULL when the download holds none of these.
 .fetchLandbaseSource <- function(lyr, destinationPath) {
@@ -690,8 +705,14 @@ landbaseLayers <- function() {
     return(.driveGdbDownloadOnce(lyr$id, destinationPath))
   }
   dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
-  f <- .fetchVectorFile(lyr$source, lyr$id, dir, .slug(lyr$key))
-  if (length(f)) f[[1]] else NULL
+  dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
+  if (identical(lyr$source, "drive")) {
+    workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
+  } else {
+    workflowtools::download_once(lyr$id, dest)
+  }
+  workflowtools::archive_extract_once(dest, dir = dir)
+  .findLandbaseSource(dir)
 }
 
 ## Download a File Geodatabase kept on Google Drive as a folder (one Drive file per gdb file) into
