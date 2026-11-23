@@ -71,8 +71,10 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
 ## found nothing there -- which callers could not distinguish from a layer that
 ## legitimately does not intersect the study area.
-.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson)$") {
-  list.files(dir, pattern, full.names = TRUE, recursive = TRUE)
+## A File Geodatabase (a `*.gdb` directory) comes first, as `.findLandbaseSource()` had it.
+.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson|json)$") {
+  gdb <- list.files(dir, "\\.gdb$", full.names = TRUE, recursive = TRUE, include.dirs = TRUE)
+  c(gdb[dir.exists(gdb)], list.files(dir, pattern, full.names = TRUE, recursive = TRUE))
 }
 
 ## `source` gates which fetch path runs, and anything unrecognised would be treated as a zipped URL --
@@ -108,7 +110,9 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
     dest <- file.path(dir, paste0(slug, ".geojson"))
     workflowtools::download_once(id, dest)
   } else {
-    dest <- file.path(dir, basename(id))
+    ## a download API's URL (`.../api/file?path=...`) ends in its query string, too long and
+    ## unsafe for a file name: such an archive is saved as `<slug>.zip`
+    dest <- file.path(dir, if (grepl("[?=&]", basename(id))) paste0(slug, ".zip") else basename(id))
     workflowtools::download_once(id, dest)
     workflowtools::archive_extract_once(dest, dir = dir)
   }
@@ -346,6 +350,72 @@ reportingPolygonLayers <- function() {
   out
 }
 
+#' National reporting-polygon layers
+#'
+#' Layers for summarising a simulation by jurisdiction and by national ecological and
+#' conservation units, rather than by forest tenure: provinces and territories, ecozones
+#' (the row of [reportingPolygonLayers()]), terrestrial protected areas, and the federal boreal
+#' caribou ranges. None is crossed with a tenure. Pass the rows wanted as `layers` to
+#' [buildReportingPolygons()].
+#'
+#' - `Province`: GADM 4.1 level 1, named by the two-letter code (`AB`, `BC`, ..., `YT`). Statistics
+#'   Canada's boundary file (`lpr_000b21a_e.zip`) refuses some clients (HTTP 403).
+#' - `Protected`: the Canadian Protected and Conserved Areas Database (CPCAD, ECCC, 2025),
+#'   terrestrial protected areas only (`PA_OECM_DF = 1`, `BIOME = 'T'`; OECMs and interim areas
+#'   excluded). Every feature is labelled `"Protected"`, so the layer is one reporting unit: all
+#'   protected land in the study area.
+#' - `BorealCaribou`: ECCC's 51 boreal caribou ranges (2012 boundaries), the ranges of the federal
+#'   recovery strategy and its 35% disturbance threshold, named by `HERD`. The `Caribou` layer of
+#'   [reportingPolygonLayers()] is the jurisdictional ranges instead.
+#'
+#' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
+#'
+#' @return A `tibble` with the columns of [reportingPolygonLayers()] and `query`.
+#' @export
+nationalReportingLayers <- function() {
+  eco <- reportingPolygonLayers()
+  eco <- eco[eco$NAME_SHORT == "Ecozone", ]
+  eco$cross <- FALSE
+  eco$query <- NA_character_
+  ## ECCC's download API redirects to a signed copy; the path goes unencoded, as an encoded ")" in
+  ## the caribou folder name breaks the signature (HTTP 403)
+  ecccFile <- "https://data-donnees.az.ec.gc.ca/api/file?path="
+  out <- rbind(
+    tibble::tibble(
+      key = "Provinces and Territories", NAME_SHORT = "Province", isTenure = FALSE, cross = FALSE,
+      source = "url", id = "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CAN_1.json.zip",
+      ## the two-letter code: GADM's ISO_1 is "NA" for Quebec, and its HASC_1 is "NF" for
+      ## Newfoundland and Labrador, so the ISO code with the HASC one where ISO has none
+      labelCols = "iso,hasc", where = NA_character_,
+      query = "SELECT SUBSTR(ISO_1, 4, 2) AS iso, SUBSTR(HASC_1, 4, 2) AS hasc FROM gadm41_CAN_1"
+    ),
+    eco,
+    tibble::tibble(
+      key = "Protected Areas", NAME_SHORT = "Protected", isTenure = FALSE, cross = FALSE, source = "url",
+      id = paste0(ecccFile, "/species/protectrestore/canadian-protected-conserved-areas-database/",
+                  "Databases/ProtectedConservedArea_2025.zip"),
+      labelCols = "label", where = NA_character_,
+      query = paste("SELECT 'Protected' AS label FROM ProtectedConservedArea_2025",
+                    "WHERE PA_OECM_DF = 1 AND BIOME = 'T'")
+    ),
+    tibble::tibble(
+      key = "Boreal Caribou Ranges", NAME_SHORT = "BorealCaribou", isTenure = FALSE, cross = FALSE,
+      source = "url",
+      id = paste0(ecccFile, paste0(
+        "/species/developplans/anthropogenic-disturbance-footprint-within-boreal-caribou-ranges-",
+        "across-canada-as-interpreted-from-2008-2010-Landsat-satellite-imagery-Updated-to-2012-",
+        "range-boundaries)/2020-anthropogenic-disturbance-footprint-within-boreal-caribou-ranges-",
+        "across-canada-as-interpreted-from-2020-landsat-satellite-imagery/boreal-disturbance-data-2020/",
+        "All51_Caribou_Ranges_Aires_2012.gdb.zip"
+      )),
+      labelCols = "HERD", where = NA_character_, query = NA_character_
+    )
+  )
+  .validateLayerSources(out$source)
+  validateShortNames(out$NAME_SHORT, what = "nationalReportingLayers()$NAME_SHORT")
+  out
+}
+
 ## ---- GNWT NWT boreal caribou ------------------------------------------------------------------
 ## The v10 Caribou layer has no NWT ranges. The Government of the Northwest Territories publishes
 ## them through the ArcGIS MapServer below, which supports GeoJSON export, so the layer is fetched
@@ -446,7 +516,10 @@ buildReportingPolygons <- function(
       )
       return(NULL)
     }
-    v <- spatialutils::prep_vector(spatialutils::read_vector(shp[[1]]), studyArea, crs = targetCRS)
+    ## `query`: an OGR SQL query, which names the layer of a multi-layer source and may select
+    ## features and add a constant label (see nationalReportingLayers())
+    query <- if ("query" %in% names(lyr) && !is.na(lyr$query)) lyr$query else ""
+    v <- spatialutils::prep_vector(spatialutils::read_vector(shp[[1]], query = query), studyArea, crs = targetCRS)
     if (nrow(v) == 0L) {
       return(NULL)
     }
@@ -613,16 +686,8 @@ landbaseLayers <- function() {
 ## Locate a readable vector source inside an extracted download directory:
 ## a File Geodatabase directory (`*.gdb`) if present, else a shapefile/GeoPackage.
 .findLandbaseSource <- function(dir) {
-  gdb <- list.files(dir, pattern = "\\.gdb$", full.names = TRUE, include.dirs = TRUE)
-  gdb <- gdb[dir.exists(gdb)]
-  if (length(gdb) > 0L) {
-    return(gdb[[1]])
-  }
-  vec <- list.files(dir, pattern = "\\.(shp|gpkg)$", full.names = TRUE, recursive = TRUE)
-  if (length(vec) > 0L) {
-    return(vec[[1]])
-  }
-  NULL
+  f <- .findVectorFile(dir)
+  if (length(f)) f[[1]] else NULL
 }
 
 ## Fetch the source of landbase row `lyr` and return the path to read: a File Geodatabase
