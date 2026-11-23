@@ -317,6 +317,11 @@ joinReportingPolygons <- function(x, y) {
 #' a regular expression, so a supplementary source can contribute just the part the
 #' primary source is missing. Removing a supplement later is a one-row deletion.
 #'
+#' A table passed to [buildReportingPolygons()] may also have these optional columns (see
+#' [nationalReportingLayers()]): `query`, an OGR SQL query read with the source; `layer`, which file
+#' of a multi-file download to read, by its name without the extension; and `dissolve`, `TRUE` to
+#' merge each unit's features into one so that overlaps count once.
+#'
 #' @return A `tibble` with columns `key`, `NAME_SHORT`, `isTenure`, `cross`,
 #'   `source`, `id`, `labelCols`, and `where`.
 #' @export
@@ -534,7 +539,8 @@ nationalReportingLayers <- function() {
 #' @param studyArea A `SpatVector` (or source readable by [terra::vect()]).
 #' @param destinationPath Directory for downloads/extraction.
 #' @param targetCRS Target CRS (default [LandWebCRS]).
-#' @param layers Candidate-layer table (default [reportingPolygonLayers()]).
+#' @param layers Candidate-layer table (default [reportingPolygonLayers()], whose help lists the
+#'   optional columns `query`, `layer` and `dissolve`).
 #' @param min_area_km2 numeric; reporting units (all features sharing a `Name`) smaller than this
 #'   within the study area are merged into the neighbouring unit of the same layer that they share
 #'   the longest border with (see `spatialutils::eliminate_slivers()`), so an edge sliver does not
