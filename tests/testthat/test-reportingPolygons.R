@@ -1,6 +1,9 @@
 test_that("reportingPolygonLayers returns the expected schema", {
   lyrs <- reportingPolygonLayers()
-  expect_named(lyrs, c("key", "NAME_SHORT", "isTenure", "cross", "source", "id", "labelCols", "where"))
+  expect_named(
+    lyrs,
+    c("key", "NAME_SHORT", "isTenure", "cross", "source", "id", "labelCols", "where")
+  )
   expect_setequal(unique(lyrs$source), c("drive", "url", "assembly"))
   expect_contains(lyrs$key, "FMA Boundaries Updated")
 
@@ -20,10 +23,7 @@ test_that("reportingPolygonLayers rejects an unknown source", {
   ## "no vector file found"
   lyrs <- reportingPolygonLayers()
   lyrs$source[[1L]] <- "geojsn"
-  expect_error(
-    LandWebUtils:::.validateLayerSources(lyrs$source),
-    "unknown source.*geojsn"
-  )
+  expect_error(LandWebUtils:::.validateLayerSources(lyrs$source), "unknown source.*geojsn")
   expect_silent(LandWebUtils:::.validateLayerSources(c("drive", "url", "geojson")))
 })
 
@@ -31,7 +31,9 @@ test_that(".mergeLayerSources merges rows sharing a NAME_SHORT, and leaves singl
   mk <- function(nm, extra = NULL) {
     v <- terra::vect("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))")
     v$Name <- nm
-    if (!is.null(extra)) v$extra <- extra
+    if (!is.null(extra)) {
+      v$extra <- extra
+    }
     terra::crs(v) <- "EPSG:3857"
     v
   }
@@ -63,15 +65,15 @@ test_that("each landbase coverage belongs to the tenure it lies in", {
   ## overlap produces no reporting unit, without an error. S20, S21 and C5 had such tenures: S20
   ## lies in MillarWestern, S21 in WF_Tolko and C5 in Crowsnest.
   expected <- tibble::tribble(
-    ~key                             , ~NAME_SHORT , ~tenure            ,
-    "Spray Lake C5 Landbase"         , "LB_C5"     , "Crowsnest"        ,
-    "West Fraser Blue Ridge Landbase", "LB"        , "BlueRidge"        ,
-    "West Fraser N CLS S17 Landbase" , "LB_S17"    , "Tolko_Vand_WF_SL" ,
-    "West Fraser N CLS S20 Landbase" , "LB_S20"    , "MillarWestern"    ,
-    "West Fraser N CLS S21 Landbase" , "LB_S21"    , "WF_Tolko"         ,
-    "Tolko AB North Landbase"        , "LB"        , "Tolko_Norbord_LC" ,
-    "Sundre FP Landbase"             , "LB"        , "Sundre"           ,
-    "Manning Landbase"               , "LB"        , "Manning"
+    ~key                              , ~NAME_SHORT , ~tenure            ,
+    "Spray Lake C5 Landbase"          , "LB_C5"     , "Crowsnest"        ,
+    "West Fraser Blue Ridge Landbase" , "LB"        , "BlueRidge"        ,
+    "West Fraser N CLS S17 Landbase"  , "LB_S17"    , "Tolko_Vand_WF_SL" ,
+    "West Fraser N CLS S20 Landbase"  , "LB_S20"    , "MillarWestern"    ,
+    "West Fraser N CLS S21 Landbase"  , "LB_S21"    , "WF_Tolko"         ,
+    "Tolko AB North Landbase"         , "LB"        , "Tolko_Norbord_LC" ,
+    "Sundre FP Landbase"              , "LB"        , "Sundre"           ,
+    "Manning Landbase"                , "LB"        , "Manning"
   )
   expect_identical(landbaseLayers()[, c("key", "NAME_SHORT", "tenure")], expected)
 })
@@ -121,14 +123,20 @@ test_that("buildLandbasePolygons skips (no download) when no landbase applies", 
   sa <- terra::vect("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))")
   terra::crs(sa) <- "EPSG:3857"
 
-  out <- buildLandbasePolygons(sa, tenures = "NoSuchTenure", destinationPath = withr::local_tempdir())
+  out <- buildLandbasePolygons(
+    sa,
+    tenures = "NoSuchTenure",
+    destinationPath = withr::local_tempdir()
+  )
   expect_identical(out, list())
 
   ## regression: gating used to match a regex against the STUDY-AREA name, so once study areas
   ## became ecoregion groups ("WesternAlbertaUpland") nothing matched and no landbase was ever
   ## fetched. A study-area name must not accidentally pass the tenure gate.
   out2 <- buildLandbasePolygons(
-    sa, tenures = "WesternAlbertaUpland", destinationPath = withr::local_tempdir()
+    sa,
+    tenures = "WesternAlbertaUpland",
+    destinationPath = withr::local_tempdir()
   )
   expect_identical(out2, list())
 })
@@ -168,9 +176,7 @@ test_that("buildLandbasePolygons gates to the landbases of the tenures present",
   buildLandbasePolygons(sa, tenures = "SprayLake", destinationPath = withr::local_tempdir())
   expect_length(fetched, 0L)
   expect_length(gdbs, 0L)
-  buildLandbasePolygons(
-    sa, tenures = "Tolko_Vand_WF_SL", destinationPath = withr::local_tempdir()
-  )
+  buildLandbasePolygons(sa, tenures = "Tolko_Vand_WF_SL", destinationPath = withr::local_tempdir())
   expect_length(fetched, 0L)
   expect_identical(gdbs, "1oX9crrPy_PaZRwb09j9LsHB37PY3hY7s")
 
@@ -178,7 +184,9 @@ test_that("buildLandbasePolygons gates to the landbases of the tenures present",
   fetched <- character()
   gdbs <- character()
   buildLandbasePolygons(
-    sa, tenures = c("MillarWestern", "WF_Tolko"), destinationPath = withr::local_tempdir()
+    sa,
+    tenures = c("MillarWestern", "WF_Tolko"),
+    destinationPath = withr::local_tempdir()
   )
   expect_length(fetched, 1L)
   expect_match(fetched, "CLS_S21", fixed = TRUE)
@@ -362,8 +370,14 @@ test_that("buildReportingPolygons stops on a shapefile whose .dbf is cut short",
 
   testthat::local_mocked_bindings(.fetchVectorFile = function(...) shp)
   lyrs <- tibble::tibble(
-    key = "Sub-regions", NAME_SHORT = "Sub", isTenure = FALSE, cross = TRUE, source = "drive",
-    id = "x", labelCols = "Name", where = NA_character_
+    key = "Sub-regions",
+    NAME_SHORT = "Sub",
+    isTenure = FALSE,
+    cross = TRUE,
+    source = "drive",
+    id = "x",
+    labelCols = "Name",
+    where = NA_character_
   )
   sa <- terra::vect("POLYGON ((-1 -1, 7 -1, 7 2, -1 2, -1 -1))", crs = "EPSG:3857")
   expect_error(
@@ -405,7 +419,12 @@ test_that("a download API's URL is saved as <slug>.zip, a plain archive URL unde
     .package = "workflowtools"
   )
   dir <- withr::local_tempdir()
-  LandWebUtils:::.fetchVectorFile("url", "https://x.ca/api/file?path=%2Fa%2Fb.gdb.zip", dir, "Boreal_Caribou")
+  LandWebUtils:::.fetchVectorFile(
+    "url",
+    "https://x.ca/api/file?path=%2Fa%2Fb.gdb.zip",
+    dir,
+    "Boreal_Caribou"
+  )
   LandWebUtils:::.fetchVectorFile("url", "https://x.ca/zone/ecozone_shp.zip", dir, "Ecozones")
   expect_identical(basename(dest), c("Boreal_Caribou.zip", "ecozone_shp.zip"))
 })
@@ -418,7 +437,11 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal
   ## the ecozone row is reportingPolygonLayers()' own
   eco <- reportingPolygonLayers()
   expect_identical(lyrs$id[lyrs$NAME_SHORT == "Ecozone"], eco$id[eco$NAME_SHORT == "Ecozone"])
-  expect_match(lyrs$query[lyrs$NAME_SHORT == "Protected"], "PA_OECM_DF = 1 AND BIOME = 'T'", fixed = TRUE)
+  expect_match(
+    lyrs$query[lyrs$NAME_SHORT == "Protected"],
+    "PA_OECM_DF = 1 AND BIOME = 'T'",
+    fixed = TRUE
+  )
   ## provinces from NRCan's CanVec (Open Government Licence - Canada), not GADM (non-commercial)
   prov <- lyrs[lyrs$NAME_SHORT == "Province", ]
   expect_match(prov$id, "canvec_1M_CA_Admin_shp\\.zip$")
@@ -431,7 +454,8 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal
 test_that("a layer's query selects features and labels them all one reporting unit", {
   ## protected areas: 2 PAs (one split in two parts) and an OECM; the query keeps the PAs as one unit
   v <- terra::vect(sf::st_sf(
-    PA_OECM_DF = c(1L, 1L, 2L), BIOME = "T",
+    PA_OECM_DF = c(1L, 1L, 2L),
+    BIOME = "T",
     geometry = sf::st_sfc(square(0, 0, 1), square(2, 0, 1), square(4, 0, 1), crs = 3857)
   ))
   ## a shapefile, read with OGR SQL as the CPCAD geodatabase is (a GeoPackage takes SQLite SQL, in
@@ -440,13 +464,24 @@ test_that("a layer's query selects features and labels them all one reporting un
   terra::writeVector(v, src)
   testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
   lyrs <- tibble::tibble(
-    key = "Protected Areas", NAME_SHORT = "Protected", isTenure = FALSE, cross = FALSE, source = "url",
-    id = "x", labelCols = "label", where = NA_character_,
+    key = "Protected Areas",
+    NAME_SHORT = "Protected",
+    isTenure = FALSE,
+    cross = FALSE,
+    source = "url",
+    id = "x",
+    labelCols = "label",
+    where = NA_character_,
     query = "SELECT 'Protected' AS label FROM pca WHERE PA_OECM_DF = 1"
   )
   sa <- terra::vect("POLYGON ((-1 -1, 7 -1, 7 2, -1 2, -1 -1))", crs = "EPSG:3857")
-  out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857", layers = lyrs,
-                                min_area_km2 = 0)
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = "EPSG:3857",
+    layers = lyrs,
+    min_area_km2 = 0
+  )
   expect_named(out, "Protected")
   expect_identical(unique(out$Protected$Name), "Protected")
   expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 2)
@@ -496,8 +531,15 @@ local_two_shapefiles <- function(env = parent.frame()) {
 
 provinceRow <- function(layer) {
   tibble::tibble(
-    key = "Provinces and Territories", NAME_SHORT = "Province", isTenure = FALSE, cross = FALSE,
-    source = "url", id = "x", labelCols = "juri_en", where = NA_character_, layer = layer
+    key = "Provinces and Territories",
+    NAME_SHORT = "Province",
+    isTenure = FALSE,
+    cross = FALSE,
+    source = "url",
+    id = "x",
+    labelCols = "juri_en",
+    where = NA_character_,
+    layer = layer
   )
 }
 
@@ -505,8 +547,13 @@ test_that("a layer's 'layer' picks one shapefile of several", {
   src <- local_two_shapefiles()
   testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
   sa <- terra::vect("POLYGON ((-1 -1, 2 -1, 2 2, -1 2, -1 -1))", crs = "EPSG:3857")
-  out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857",
-                                layers = provinceRow("geo_political_region_2"), min_area_km2 = 0)
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = "EPSG:3857",
+    layers = provinceRow("geo_political_region_2"),
+    min_area_km2 = 0
+  )
   expect_identical(unique(out$Province$Name), "Alberta")
 })
 
@@ -515,25 +562,45 @@ test_that("a 'layer' matching no file warns and drops the layer", {
   testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
   sa <- terra::vect("POLYGON ((-1 -1, 2 -1, 2 2, -1 2, -1 -1))", crs = "EPSG:3857")
   expect_warning(
-    out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857",
-                                  layers = provinceRow("no_such_layer"), min_area_km2 = 0),
+    out <- buildReportingPolygons(
+      sa,
+      withr::local_tempdir(),
+      targetCRS = "EPSG:3857",
+      layers = provinceRow("no_such_layer"),
+      min_area_km2 = 0
+    ),
     "no vector file named 'no_such_layer'"
   )
   expect_length(out, 0L)
 })
 
 test_that("a dissolved layer counts overlapping features once", {
-  v <- terra::vect(sf::st_sf(label = "Protected", geometry = sf::st_sfc(square(0, 0, 1), square(0.5, 0, 1), crs = 3857)))
+  v <- terra::vect(sf::st_sf(
+    label = "Protected",
+    geometry = sf::st_sfc(square(0, 0, 1), square(0.5, 0, 1), crs = 3857)
+  ))
   src <- file.path(withr::local_tempdir(), "pa.shp")
   terra::writeVector(v, src)
   testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
   lyrs <- tibble::tibble(
-    key = "Protected Areas", NAME_SHORT = "Protected", isTenure = FALSE, cross = FALSE, source = "url",
-    id = "x", labelCols = "label", where = NA_character_, dissolve = TRUE
+    key = "Protected Areas",
+    NAME_SHORT = "Protected",
+    isTenure = FALSE,
+    cross = FALSE,
+    source = "url",
+    id = "x",
+    labelCols = "label",
+    where = NA_character_,
+    dissolve = TRUE
   )
   sa <- terra::vect("POLYGON ((-1 -1, 3 -1, 3 2, -1 2, -1 -1))", crs = "EPSG:3857")
-  out <- buildReportingPolygons(sa, withr::local_tempdir(), targetCRS = "EPSG:3857", layers = lyrs,
-                                min_area_km2 = 0)
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = "EPSG:3857",
+    layers = lyrs,
+    min_area_km2 = 0
+  )
   expect_equal(nrow(out$Protected), 1)
   expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 1.5)
 })
