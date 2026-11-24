@@ -432,7 +432,10 @@ test_that("a download API's URL is saved as <slug>.zip, a plain archive URL unde
 test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribou, intact forest, none crossed", {
   lyrs <- nationalReportingLayers()
   expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve", "labelMap"))
-  expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact"))
+  expect_identical(
+    lyrs$NAME_SHORT,
+    c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact")
+  )
   expect_false(any(lyrs$isTenure | lyrs$cross))
   ## the ecozone row is reportingPolygonLayers()' own
   eco <- reportingPolygonLayers()
@@ -698,4 +701,81 @@ test_that("a label missing from labelMap warns and is dropped", {
     "no code in `labelMap` for .Atlantis."
   )
   expect_identical(out$Province$Name, "AB")
+})
+
+test_that("a source's CRS is read from the layer its query names", {
+  gp <- file.path(withr::local_tempdir(), "two.gpkg")
+  merc <- terra::vect(sf::st_sf(id = 1, geometry = sf::st_sfc(square(0, 0, 1), crs = 3857)))
+  geo <- terra::vect(sf::st_sf(id = 1, geometry = sf::st_sfc(square(0, 0, 1), crs = 4326)))
+  terra::writeVector(merc, gp, layer = "merc")
+  terra::writeVector(geo, gp, layer = "geo", insert = TRUE)
+  expect_true(sf::st_crs(LandWebUtils:::.sourceCrs(gp, "SELECT geom FROM geo")) == sf::st_crs(4326))
+  expect_true(sf::st_crs(LandWebUtils:::.sourceCrs(gp, "")) == sf::st_crs(3857))
+})
+
+test_that("a reporting layer is read only near the study area, in the source's CRS", {
+  near <- sf::st_polygon(list(rbind(c(-100, 50), c(-99, 50), c(-99, 51), c(-100, 51), c(-100, 50))))
+  far <- sf::st_polygon(list(rbind(c(10, 50), c(11, 50), c(11, 51), c(10, 51), c(10, 50))))
+  v <- terra::vect(sf::st_sf(
+    label = c("near", "far"),
+    geometry = sf::st_sfc(near, far, crs = 4326)
+  ))
+  src <- file.path(withr::local_tempdir(), "lyr.gpkg")
+  terra::writeVector(v, src, layer = "lyr")
+  nRead <- NULL
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  testthat::local_mocked_bindings(
+    read_vector = function(src, ...) {
+      x <- terra::vect(src, ...)
+      nRead <<- nrow(x)
+      x
+    },
+    .package = "spatialutils"
+  )
+  sa <- terra::project(
+    terra::vect(
+      "POLYGON ((-100.5 49.5, -98.5 49.5, -98.5 51.5, -100.5 51.5, -100.5 49.5))",
+      crs = "EPSG:4326"
+    ),
+    LandWebCRS
+  )
+  lyrs <- tibble::tibble(
+    key = "Test",
+    NAME_SHORT = "Test",
+    isTenure = FALSE,
+    cross = FALSE,
+    source = "url",
+    id = "x",
+    labelCols = "label",
+    where = NA_character_,
+    query = "SELECT geom, label FROM lyr"
+  )
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = LandWebCRS,
+    layers = lyrs,
+    min_area_km2 = 0
+  )
+  expect_equal(nRead, 1)
+  expect_identical(out$Test$Name, "near")
+})
+
+test_that("the read filter is the study area, widened, in the source's CRS", {
+  sa <- terra::project(
+    terra::vect(
+      "POLYGON ((-100.5 49.5, -98.5 49.5, -98.5 51.5, -100.5 51.5, -100.5 49.5))",
+      crs = "EPSG:4326"
+    ),
+    LandWebCRS
+  )
+  src <- file.path(withr::local_tempdir(), "pt.gpkg")
+  pt <- terra::vect(sf::st_sf(id = 1, geometry = sf::st_sfc(sf::st_point(c(-99, 50)), crs = 4326)))
+  terra::writeVector(pt, src, layer = "lyr")
+  for (x in list(sa, sf::st_as_sf(sa))) {
+    f <- LandWebUtils:::.readFilter(x, src, "SELECT geom FROM lyr")
+    expect_s4_class(f, "SpatVector")
+    expect_true(terra::same.crs(f, "EPSG:4326"))
+    expect_true(terra::relate(f, terra::project(sa, "EPSG:4326"), "covers")[1, 1])
+  }
 })
