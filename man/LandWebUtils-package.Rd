@@ -11,7 +11,7 @@ Additional utilities for LandWeb analyses.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{http://LandWebUtils.predictiveecology.org}
+  \item \url{https://predictiveecology.github.io/LandWebUtils/}
   \item \url{https://github.com/PredictiveEcology/LandWebUtils}
 }
 

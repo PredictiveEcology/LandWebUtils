@@ -12,7 +12,7 @@ Authors@R: c(
   )
 Description: Additional utilities for LandWeb analyses.
 License: GPL-3
-URL: http://LandWebUtils.predictiveecology.org,
+URL: https://predictiveecology.github.io/LandWebUtils/,
     https://github.com/PredictiveEcology/LandWebUtils
 Depends:
     R (>= 4.4)

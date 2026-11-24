@@ -1,6 +1,5 @@
-url: http://LandWeb.predictiveecology.org
+url: https://predictiveecology.github.io/LandWebUtils/
 
 template:
   params:
     bootswatch: flatly
-    ganalytics: UA-58633549-5

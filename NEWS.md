@@ -1,5 +1,7 @@
 # LandWebUtils 1.1.0 (2026-11-24)
 
+* The package website is at <https://predictiveecology.github.io/LandWebUtils/> (`URL` in DESCRIPTION). The pkgdown site was built for LandWeb.predictiveecology.org, another server, and was not published.
+
 * `buildReportingPolygons()` reads each reporting layer only near the study area (a spatial filter in the source's CRS), where a national source such as the global Intact Forest Landscapes GeoPackage (352 MB) was read whole for every study area. `?nationalReportingLayers` says that the `Intact` layer maps intactness, not forest: it includes non-forest land (tundra, wetlands, rock), and it must be credited (CC BY 4.0) (1.0.3.9060). Requires spatialutils 0.0.2, whose `prep_vector()` returns an empty layer (a filtered read that finds nothing) instead of stopping.
 
 * `nationalReportingLayers()` gains `Intact2000`, the Intact Forest Landscapes of 2000, as one unit named `Intact2000`, so the loss of intact forest since 2000 can be reported beside `Intact` (2025) (1.0.3.9059). The loss counts land that is no longer intact, including landscapes split by roads or other industrial use below the IFL size and width thresholds, not only forest cover lost.
