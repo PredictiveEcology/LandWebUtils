@@ -136,7 +136,10 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
     ## unsafe for a file name: such an archive is saved as `<slug>.zip`
     dest <- file.path(dir, if (grepl("[?=&]", basename(id))) paste0(slug, ".zip") else basename(id))
     workflowtools::download_once(id, dest)
-    workflowtools::archive_extract_once(dest, dir = dir)
+    ## a GeoPackage or GeoJSON served bare (the Intact Forest Landscapes) is read as it is
+    if (!grepl("\\.(gpkg|geojson)$", dest)) {
+      workflowtools::archive_extract_once(dest, dir = dir)
+    }
   }
   .findVectorFile(dir)
 }
@@ -383,8 +386,8 @@ reportingPolygonLayers <- function() {
 #'
 #' Layers for summarising a simulation by jurisdiction and by national ecological and
 #' conservation units, rather than by forest tenure: provinces and territories, ecozones
-#' (the row of [reportingPolygonLayers()]), terrestrial protected areas, and the federal boreal
-#' caribou ranges. None is crossed with a tenure. Pass the rows wanted as `layers` to
+#' (the row of [reportingPolygonLayers()]), terrestrial protected areas, the federal boreal
+#' caribou ranges, and intact forest. None is crossed with a tenure. Pass the rows wanted as `layers` to
 #' [buildReportingPolygons()].
 #'
 #' - `Province`: NRCan's CanVec 1:1,000,000 administrative boundaries (`geo_political_region_2`,
@@ -399,6 +402,11 @@ reportingPolygonLayers <- function() {
 #' - `BorealCaribou`: ECCC's 51 boreal caribou ranges (2012 boundaries), the ranges of the federal
 #'   recovery strategy and its 35% disturbance threshold, named by `HERD`. The `Caribou` layer of
 #'   [reportingPolygonLayers()] is the jurisdictional ranges instead.
+#' - `Intact`: the Intact Forest Landscapes of 2025 (Potapov et al. 2017, Science Advances 3:e1600821;
+#'   <https://intactforests.org>, CC BY 4.0): forest and natural treeless land of at least 500 km2
+#'   with no detectable industrial use (roads, logging, mining), as one reporting unit, `"Intact"`.
+#'   It stands in for primary forest, which no national map shows, and understates it, as smaller
+#'   unlogged areas fall below the 500 km2 floor.
 #'
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
 #' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
@@ -483,6 +491,21 @@ nationalReportingLayers <- function() {
       query = NA_character_,
       layer = NA_character_,
       dissolve = FALSE,
+      labelMap = list(NULL)
+    ),
+    tibble::tibble(
+      key = "Intact Forest Landscapes",
+      NAME_SHORT = "Intact",
+      isTenure = FALSE,
+      cross = FALSE,
+      source = "url",
+      id = "https://intactforests.org/shp/IFL_2025.gpkg",
+      labelCols = "label",
+      where = NA_character_,
+      ## a GeoPackage is queried in SQLite, which returns the geometry only when it is selected
+      query = "SELECT geom, 'Intact' AS label FROM IFL_2025",
+      layer = NA_character_,
+      dissolve = TRUE,
       labelMap = list(NULL)
     )
   )

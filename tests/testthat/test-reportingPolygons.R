@@ -429,10 +429,10 @@ test_that("a download API's URL is saved as <slug>.zip, a plain archive URL unde
   expect_identical(basename(dest), c("Boreal_Caribou.zip", "ecozone_shp.zip"))
 })
 
-test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal caribou, none crossed", {
+test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribou, intact forest, none crossed", {
   lyrs <- nationalReportingLayers()
   expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve", "labelMap"))
-  expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou"))
+  expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact"))
   expect_false(any(lyrs$isTenure | lyrs$cross))
   ## the ecozone row is reportingPolygonLayers()' own
   eco <- reportingPolygonLayers()
@@ -448,7 +448,7 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, boreal
   expect_identical(prov$layer, "geo_political_region_2")
   expect_identical(prov$labelCols, "juri_en")
   expect_false(any(grepl("gadm", lyrs$id, ignore.case = TRUE)))
-  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE))
+  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE, TRUE))
   ## named by two-letter code, as #8 had them
   codes <- prov$labelMap[[1]]
   expect_identical(
@@ -496,6 +496,45 @@ test_that("a layer's query selects features and labels them all one reporting un
   expect_named(out, "Protected")
   expect_identical(unique(out$Protected$Name), "Protected")
   expect_equal(sum(terra::expanse(out$Protected, transform = FALSE)), 2)
+})
+
+test_that("the Intact row's query reads a GeoPackage as one dissolved unit", {
+  ## two adjacent intact landscapes and one far away, in the IFL file's layer and columns
+  v <- terra::vect(sf::st_sf(
+    IFL_ID = c("NAM_1", "NAM_2", "NAM_3"),
+    geometry = sf::st_sfc(square(0, 0, 1), square(1, 0, 1), square(10, 0, 1), crs = 3857)
+  ))
+  src <- file.path(withr::local_tempdir(), "IFL_2025.gpkg")
+  terra::writeVector(v, src, layer = "IFL_2025")
+  testthat::local_mocked_bindings(.fetchVectorFile = function(...) src)
+  lyrs <- nationalReportingLayers()
+  sa <- terra::vect("POLYGON ((-1 -1, 3 -1, 3 2, -1 2, -1 -1))", crs = "EPSG:3857")
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = "EPSG:3857",
+    layers = lyrs[lyrs$NAME_SHORT == "Intact", ],
+    min_area_km2 = 0
+  )
+  expect_named(out, "Intact")
+  expect_equal(nrow(out$Intact), 1)
+  expect_identical(out$Intact$Name, "Intact")
+  expect_equal(sum(terra::expanse(out$Intact, transform = FALSE)), 2)
+})
+
+test_that("a GeoPackage served bare is not extracted", {
+  extracted <- character(0)
+  testthat::local_mocked_bindings(
+    download_once = function(url, destfile, ...) file.create(destfile),
+    archive_extract_once = function(archive, ...) extracted <<- c(extracted, archive),
+    .package = "workflowtools"
+  )
+  dir <- withr::local_tempdir()
+  f <- LandWebUtils:::.fetchVectorFile("url", "https://x.org/shp/IFL_2025.gpkg", dir, "Intact")
+  expect_identical(basename(f), "IFL_2025.gpkg")
+  expect_length(extracted, 0L)
+  LandWebUtils:::.fetchVectorFile("url", "https://x.ca/zone/ecozone_shp.zip", dir, "Ecozones")
+  expect_identical(basename(extracted), "ecozone_shp.zip")
 })
 
 test_that("a landbase gdb nested below the top level is not taken", {
