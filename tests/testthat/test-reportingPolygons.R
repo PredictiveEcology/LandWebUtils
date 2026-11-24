@@ -434,7 +434,7 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribo
   expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve", "labelMap"))
   expect_identical(
     lyrs$NAME_SHORT,
-    c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact")
+    c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact", "Intact2000")
   )
   expect_false(any(lyrs$isTenure | lyrs$cross))
   ## the ecozone row is reportingPolygonLayers()' own
@@ -451,7 +451,7 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribo
   expect_identical(prov$layer, "geo_political_region_2")
   expect_identical(prov$labelCols, "juri_en")
   expect_false(any(grepl("gadm", lyrs$id, ignore.case = TRUE)))
-  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE, TRUE))
+  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE))
   ## named by two-letter code, as #8 had them
   codes <- prov$labelMap[[1]]
   expect_identical(
@@ -463,6 +463,15 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribo
     c(Quebec = "QC", `Newfoundland and Labrador` = "NL")
   )
   expect_true(all(vapply(lyrs$labelMap[-1], is.null, logical(1))))
+  ## each IFL year reads its own file and layer, under its own download folder
+  ifl <- lyrs[startsWith(lyrs$NAME_SHORT, "Intact"), ]
+  expect_identical(basename(ifl$id), c("IFL_2025.gpkg", "IFL_2000.gpkg"))
+  ## each year's one unit is named by its layer, so the two years never share a unit name
+  expect_identical(
+    ifl$query,
+    paste0("SELECT geom, '", c("Intact", "Intact2000"), "' AS label FROM IFL_", c(2025, 2000))
+  )
+  expect_identical(ifl$key, c("Intact Forest Landscapes", "Intact Forest Landscapes 2000"))
 })
 
 test_that("a layer's query selects features and labels them all one reporting unit", {
@@ -523,6 +532,18 @@ test_that("the Intact row's query reads a GeoPackage as one dissolved unit", {
   expect_equal(nrow(out$Intact), 1)
   expect_identical(out$Intact$Name, "Intact")
   expect_equal(sum(terra::expanse(out$Intact, transform = FALSE)), 2)
+
+  ## the 2000 file reads as a unit of its own name
+  src <- file.path(withr::local_tempdir(), "IFL_2000.gpkg")
+  terra::writeVector(v, src, layer = "IFL_2000")
+  out <- buildReportingPolygons(
+    sa,
+    withr::local_tempdir(),
+    targetCRS = "EPSG:3857",
+    layers = lyrs[lyrs$NAME_SHORT == "Intact2000", ],
+    min_area_km2 = 0
+  )
+  expect_identical(out$Intact2000$Name, "Intact2000")
 })
 
 test_that("a GeoPackage served bare is not extracted", {
