@@ -11,7 +11,8 @@ LeadingVegTypeByAgeClass(
   ageClassCutOffs,
   ageClasses,
   sppEquivCol,
-  sppEquiv
+  sppEquiv,
+  ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")
 )
 }
 \arguments{
@@ -32,6 +33,12 @@ e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.}
 \item{sppEquivCol}{Character giving the column name to use in \code{sppEquiv}.}
 
 \item{sppEquiv}{Species equivalency table, e.g., derived from \code{LandR::sppEquivalencies_CA}.}
+
+\item{ccAgeLayer}{Which age layer to read for the current condition, when \code{vtm} is the
+current-condition map (\code{CurrentConditionVTM.tif}): \code{"TSF"}, time since fire
+(\code{CurrentConditionTSF.tif}), or \code{"SAM"}, stand age (\code{CurrentConditionSAM.tif}). Ignored for
+the maps of simulated years, whose age layer is \code{tsf}. Defaults to the option
+\code{LandWebUtils.ccAgeLayer}, else \code{"TSF"}, as since 1.0.1.}
 }
 \value{
 A \code{data.table} with proportion of the pixels in each vegetation class,

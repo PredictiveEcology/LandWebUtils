@@ -25,14 +25,28 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #' @param crop2poly logical indicating whether to crop/mask `vtm` and `tsf`
 #'                  rasters to `poly`. Default `FALSE` for backwards compatibility.
 #'
+#' @template ccAgeLayer
+#'
 #' @export
-LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageClasses,
-                         sppEquivCol, sppEquiv, crop2poly = FALSE) {
+LargePatches <- function(
+  tsf,
+  vtm,
+  poly,
+  labelColumn,
+  id,
+  ageClassCutOffs,
+  ageClasses,
+  sppEquivCol,
+  sppEquiv,
+  crop2poly = FALSE,
+  ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")
+) {
   vtm <- vtm[1]
 
-  ## TODO: LandWeb workaround
-  if (basename(vtm) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) {
-    tsf <- file.path(dirname(vtm), "CurrentConditionTSF.tif")
+  ## the current condition's age layer sits beside its vegetation-type map
+  ccAge <- .ccAgeFile(vtm, ccAgeLayer)
+  if (!is.null(ccAge)) {
+    tsf <- ccAge
   }
 
   ## prepare tsf rasters
@@ -43,11 +57,7 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
 
   tsf <- terra::classify(
     timeSinceFireFilesRast,
-    cbind(
-      from = ageClassCutOffs - 0.1,
-      to = c(ageClassCutOffs[-1], Inf),
-      seq_along(ageClasses)
-    )
+    cbind(from = ageClassCutOffs - 0.1, to = c(ageClassCutOffs[-1], Inf), seq_along(ageClasses))
   )
   levels(tsf) <- data.frame(ID = seq_along(ageClasses), Factor = ageClasses)
 
@@ -142,8 +152,12 @@ LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageCl
     out <- out[sizeInHa >= 100] # never will need patches smaller than 100 ha
   } else {
     out <- data.table(
-      polygonID = character(0), sizeInHa = numeric(0), vegCover = character(0),
-      rep = numeric(0), ageClass = numeric(0), polygonName = numeric(0)
+      polygonID = character(0),
+      sizeInHa = numeric(0),
+      vegCover = character(0),
+      rep = numeric(0),
+      ageClass = numeric(0),
+      polygonName = numeric(0)
     )
   }
 

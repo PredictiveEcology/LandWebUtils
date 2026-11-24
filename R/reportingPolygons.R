@@ -407,8 +407,9 @@ reportingPolygonLayers <- function() {
 #'   with no detectable industrial use (roads, logging, mining), as one reporting unit, `"Intact"`.
 #'   It stands in for primary forest, which no national map shows, and understates it, as smaller
 #'   unlogged areas fall below the 500 km2 floor.
-#' - `Intact2000`: the same for 2000, the first year mapped. With `Intact`, it gives the loss of intact
-#'   forest since 2000.
+#' - `Intact2000`: the same for 2000, the first year mapped, as one unit, `"Intact2000"`. With `Intact`,
+#'   it gives the loss of intact forest since 2000: land no longer intact, which includes landscapes split
+#'   by roads or other industrial use below the IFL size and width thresholds, not only forest cover lost.
 #'
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
 #' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
@@ -441,7 +442,8 @@ nationalReportingLayers <- function() {
       labelCols = "label",
       where = NA_character_,
       ## a GeoPackage is queried in SQLite, which returns the geometry only when it is selected
-      query = paste0("SELECT geom, 'Intact' AS label FROM IFL_", year),
+      ## each year's unit is named by its layer, so outputs keyed by unit name keep the years apart
+      query = paste0("SELECT geom, '", short, "' AS label FROM IFL_", year),
       layer = NA_character_,
       dissolve = TRUE,
       labelMap = list(NULL)

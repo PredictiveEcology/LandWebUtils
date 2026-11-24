@@ -13,8 +13,8 @@ and \code{labelMap}.
 \description{
 Layers for summarising a simulation by jurisdiction and by national ecological and
 conservation units, rather than by forest tenure: provinces and territories, ecozones
-(the row of \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}}), terrestrial protected areas, and the federal boreal
-caribou ranges. None is crossed with a tenure. Pass the rows wanted as \code{layers} to
+(the row of \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}}), terrestrial protected areas, the federal boreal
+caribou ranges, and intact forest. None is crossed with a tenure. Pass the rows wanted as \code{layers} to
 \code{\link[=buildReportingPolygons]{buildReportingPolygons()}}.
 }
 \details{
@@ -31,6 +31,14 @@ protected land in the study area, dissolved so that overlapping areas count once
 \item \code{BorealCaribou}: ECCC's 51 boreal caribou ranges (2012 boundaries), the ranges of the federal
 recovery strategy and its 35\% disturbance threshold, named by \code{HERD}. The \code{Caribou} layer of
 \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}} is the jurisdictional ranges instead.
+\item \code{Intact}: the Intact Forest Landscapes of 2025 (Potapov et al. 2017, Science Advances 3:e1600821;
+\url{https://intactforests.org}, CC BY 4.0): forest and natural treeless land of at least 500 km2
+with no detectable industrial use (roads, logging, mining), as one reporting unit, \code{"Intact"}.
+It stands in for primary forest, which no national map shows, and understates it, as smaller
+unlogged areas fall below the 500 km2 floor.
+\item \code{Intact2000}: the same for 2000, the first year mapped, as one unit, \code{"Intact2000"}. With \code{Intact},
+it gives the loss of intact forest since 2000: land no longer intact, which includes landscapes split
+by roads or other industrial use below the IFL size and width thresholds, not only forest cover lost.
 }
 
 \code{query} is an OGR SQL query read with the source; it names the layer of a multi-layer source.
