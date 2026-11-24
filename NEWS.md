@@ -1,6 +1,6 @@
 # LandWebUtils (development version)
 
-* `nationalReportingLayers()` gains `Intact`: the 2025 Intact Forest Landscapes (intactforests.org, CC BY 4.0) as one reporting unit, a stand-in for primary forest. A GeoPackage or GeoJSON downloaded as it is (not zipped) is no longer passed to the archive extractor.
+* `nationalReportingLayers()` gains `Intact`: the 2025 Intact Forest Landscapes (intactforests.org, CC BY 4.0) as one reporting unit, a stand-in for primary forest. A GeoPackage or GeoJSON downloaded as it is (not zipped) is no longer passed to the archive extractor (1.0.3.9057).
 
 * `nationalReportingLayers()` takes provinces and territories from NRCan's CanVec 1:1,000,000 boundaries (Open Government Licence - Canada), still named by two-letter code (`AB` ... `YT`), not GADM, whose licence bars commercial use; its `Province` and `Protected` layers are dissolved, so overlapping protected areas count once. A layer table may have a `layer` column (which file of a multi-file download to read), a `dissolve` column, and a `labelMap` column renaming source labels to unit names. A shapefile-only reader is no longer handed a `.gdb`, a `.json` no longer outranks a shapefile, and `__MACOSX` copies are skipped. The landbase file search is again the one before 1.0.3.9055 (1.0.3.9056).
 
