@@ -1,0 +1,14 @@
+## Keep the GitHub Actions used in .github/workflows current (e.g. a new major version of
+## actions/checkout when GitHub retires the Node runtime of the old one). Branch references such
+## as PredictiveEcology/actions/install-spatial-deps@main are not version tags and are left alone.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "development"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
