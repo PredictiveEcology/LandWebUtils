@@ -471,7 +471,11 @@ nationalReportingLayers <- function() {
   ## the Intact Forest Landscapes of one year, as one unit (each year's file has the same layout)
   ifl <- function(year, short) {
     tibble::tibble(
-      key = if (year == 2025) "Intact Forest Landscapes" else paste("Intact Forest Landscapes", year),
+      key = if (year == 2025) {
+        "Intact Forest Landscapes"
+      } else {
+        paste("Intact Forest Landscapes", year)
+      },
       NAME_SHORT = short,
       isTenure = FALSE,
       cross = FALSE,
