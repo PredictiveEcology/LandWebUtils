@@ -14,7 +14,8 @@ LargePatches(
   ageClasses,
   sppEquivCol,
   sppEquiv,
-  crop2poly = FALSE
+  crop2poly = FALSE,
+  ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")
 )
 }
 \arguments{
@@ -43,6 +44,12 @@ e.g., \code{c("Young", "Immature", "Mature", "Old")}. See \code{.ageClasses}.}
 
 \item{crop2poly}{logical indicating whether to crop/mask \code{vtm} and \code{tsf}
 rasters to \code{poly}. Default \code{FALSE} for backwards compatibility.}
+
+\item{ccAgeLayer}{Which age layer to read for the current condition, when \code{vtm} is the
+current-condition map (\code{CurrentConditionVTM.tif}): \code{"TSF"}, time since fire
+(\code{CurrentConditionTSF.tif}), or \code{"SAM"}, stand age (\code{CurrentConditionSAM.tif}). Ignored for
+the maps of simulated years, whose age layer is \code{tsf}. Defaults to the option
+\code{LandWebUtils.ccAgeLayer}, else \code{"TSF"}, as since 1.0.1.}
 }
 \description{
 TODO: needs description
