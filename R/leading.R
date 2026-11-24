@@ -46,9 +46,16 @@ utils::globalVariables(c(
 #'         for each given age class within each polygon.
 #'
 #' @export
-LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses,
-                                     sppEquivCol, sppEquiv,
-                                     ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")) {
+LeadingVegTypeByAgeClass <- function(
+  tsf,
+  vtm,
+  poly,
+  ageClassCutOffs,
+  ageClasses,
+  sppEquivCol,
+  sppEquiv,
+  ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")
+) {
   ## main function code
   startTime <- Sys.time()
   if (utils::tail(ageClassCutOffs, 1) != Inf) {
@@ -122,7 +129,7 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
 
   ## this is same, if all values present: e.g., 1, 2, 3, 4, 5 ...,
   ## but not if missing: e.g., 1, 2, 3, 5
-  levs <- pemisc::factorValues2(poly, levs$ID)  ## TODO: test / verify use factorValues2
+  levs <- pemisc::factorValues2(poly, levs$ID) ## TODO: test / verify use factorValues2
   facVals <- pemisc::factorValues2(poly, poly[], att = c("shinyLabel", "polygonNum"))
 
   bb <- data.table(
@@ -131,7 +138,13 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     cell = seq_len(ncell(ras))
   )
 
-  bb[, c("ageClass", "vegCover") := pemisc::factorValues2(ras, ras[][bb$cell], att = c("ageClass", "vegCover"))]
+  bb[,
+    c("ageClass", "vegCover") := pemisc::factorValues2(
+      ras,
+      ras[][bb$cell],
+      att = c("ageClass", "vegCover")
+    )
+  ]
   bb <- na.omit(bb)
 
   ## One species at a time -- collapse polygons with same 'zone' name
@@ -193,7 +206,8 @@ LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses
     "label",
     paste(
       tabulated$ageClass,
-      paste(gsub(basename(dirname(tsf[1])), pattern = "\\.", replacement = ""),
+      paste(
+        gsub(basename(dirname(tsf[1])), pattern = "\\.", replacement = ""),
         basename(tsf[1]),
         sep = "_"
       ),
