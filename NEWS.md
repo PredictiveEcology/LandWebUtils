@@ -1,4 +1,4 @@
-# LandWebUtils (development version)
+# LandWebUtils 1.1.0 (2026-11-24)
 
 * `buildReportingPolygons()` reads each reporting layer only near the study area (a spatial filter in the source's CRS), where a national source such as the global Intact Forest Landscapes GeoPackage (352 MB) was read whole for every study area. `?nationalReportingLayers` says that the `Intact` layer maps intactness, not forest: it includes non-forest land (tundra, wetlands, rock), and it must be credited (CC BY 4.0) (1.0.3.9060). Requires spatialutils 0.0.2, whose `prep_vector()` returns an empty layer (a filtered read that finds nothing) instead of stopping.
 
