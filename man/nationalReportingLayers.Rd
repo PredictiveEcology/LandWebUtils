@@ -32,10 +32,12 @@ protected land in the study area, dissolved so that overlapping areas count once
 recovery strategy and its 35\% disturbance threshold, named by \code{HERD}. The \code{Caribou} layer of
 \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}} is the jurisdictional ranges instead.
 \item \code{Intact}: the Intact Forest Landscapes of 2025 (Potapov et al. 2017, Science Advances 3:e1600821;
-\url{https://intactforests.org}, CC BY 4.0): forest and natural treeless land of at least 500 km2
-with no detectable industrial use (roads, logging, mining), as one reporting unit, \code{"Intact"}.
-It stands in for primary forest, which no national map shows, and understates it, as smaller
-unlogged areas fall below the 500 km2 floor.
+\url{https://intactforests.org}, CC BY 4.0, so outputs that use it must credit it): forest and
+natural treeless land (tundra, wetlands, rock) in patches of at least 500 km2 with no detectable
+industrial use (roads, logging, mining), as one reporting unit, \code{"Intact"}. It stands in for
+primary forest, which no national map shows, but it maps intactness, not forest: it includes
+non-forest land and leaves out unlogged areas under 500 km2. The forest inside it comes from
+the vegetation maps.
 \item \code{Intact2000}: the same for 2000, the first year mapped, as one unit, \code{"Intact2000"}. With \code{Intact},
 it gives the loss of intact forest since 2000: land no longer intact, which includes landscapes split
 by roads or other industrial use below the IFL size and width thresholds, not only forest cover lost.

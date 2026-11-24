@@ -68,6 +68,42 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   gsub("^_+|_+$", "", gsub("[^A-Za-z0-9]+", "_", x))
 }
 
+## The CRS of the layer `query` reads (its FROM table), else of the source's first layer; "" when
+## the source declares none.
+.sourceCrs <- function(src, query = "") {
+  layers <- sf::st_layers(src)
+  from <- regmatches(query, regexec("(?i)\\bFROM\\s+\"?([A-Za-z0-9_.]+)\"?", query, perl = TRUE))[[
+    1L
+  ]]
+  idx <- if (length(from) == 2L) match(from[[2L]], layers$name) else NA_integer_
+  if (is.na(idx)) {
+    idx <- 1L
+  }
+  crs <- sf::st_crs(layers$crs[[idx]])
+  if (is.na(crs)) "" else crs$wkt
+}
+
+## The study area as a read filter in the source's CRS, so a national source (a global GeoPackage,
+## say) is read only near the study area instead of whole. It is the study area's hull widened by a
+## tenth of the square root of its area: projecting an outline only moves its vertices, so the
+## margin keeps every feature the exact clip that follows would keep. NULL (read everything) when
+## the source has no CRS or the outline cannot be projected.
+.readFilter <- function(studyArea, src, query = "") {
+  crs <- .sourceCrs(src, query)
+  if (!nzchar(crs)) {
+    return(NULL)
+  }
+  tryCatch(
+    {
+      sa <- if (inherits(studyArea, "SpatVector")) studyArea else terra::vect(studyArea)
+      sa <- terra::hull(terra::aggregate(sa))
+      width <- 0.1 * sqrt(sum(terra::expanse(sa)))
+      terra::project(terra::buffer(sa, width = width), crs)
+    },
+    error = function(e) NULL
+  )
+}
+
 ## Locate an extracted vector file. Searches RECURSIVELY: several source archives
 ## unpack into a subdirectory (e.g. the AAFC national ecoregion/ecozone zips extract
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
@@ -403,10 +439,12 @@ reportingPolygonLayers <- function() {
 #'   recovery strategy and its 35% disturbance threshold, named by `HERD`. The `Caribou` layer of
 #'   [reportingPolygonLayers()] is the jurisdictional ranges instead.
 #' - `Intact`: the Intact Forest Landscapes of 2025 (Potapov et al. 2017, Science Advances 3:e1600821;
-#'   <https://intactforests.org>, CC BY 4.0): forest and natural treeless land of at least 500 km2
-#'   with no detectable industrial use (roads, logging, mining), as one reporting unit, `"Intact"`.
-#'   It stands in for primary forest, which no national map shows, and understates it, as smaller
-#'   unlogged areas fall below the 500 km2 floor.
+#'   <https://intactforests.org>, CC BY 4.0, so outputs that use it must credit it): forest and
+#'   natural treeless land (tundra, wetlands, rock) in patches of at least 500 km2 with no detectable
+#'   industrial use (roads, logging, mining), as one reporting unit, `"Intact"`. It stands in for
+#'   primary forest, which no national map shows, but it maps intactness, not forest: it includes
+#'   non-forest land and leaves out unlogged areas under 500 km2. The forest inside it comes from
+#'   the vegetation maps.
 #' - `Intact2000`: the same for 2000, the first year mapped, as one unit, `"Intact2000"`. With `Intact`,
 #'   it gives the loss of intact forest since 2000: land no longer intact, which includes landscapes split
 #'   by roads or other industrial use below the IFL size and width thresholds, not only forest cover lost.
@@ -651,7 +689,11 @@ buildReportingPolygons <- function(
     ## features and add a constant label (see nationalReportingLayers())
     query <- if ("query" %in% names(lyr) && !is.na(lyr$query)) lyr$query else ""
     v <- spatialutils::prep_vector(
-      spatialutils::read_vector(shp[[1]], query = query),
+      spatialutils::read_vector(
+        shp[[1]],
+        query = query,
+        filter = .readFilter(studyArea, shp[[1]], query)
+      ),
       studyArea,
       crs = targetCRS
     )
