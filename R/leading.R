@@ -2,6 +2,18 @@ utils::globalVariables(c(
   ".", ":=", ".N", ".SD", "NPixels", "proportion"
 ))
 
+## The current condition's age layer beside a current-condition vegetation-type map `vtm`
+## (`CurrentConditionVTM.tif`): time since fire (`CurrentConditionTSF.tif`) or stand age
+## (`CurrentConditionSAM.tif`), as `ccAgeLayer` says. NULL for any other map, whose age layer
+## the caller passes itself.
+.ccAgeFile <- function(vtm, ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")) {
+  ccAgeLayer <- match.arg(ccAgeLayer, c("TSF", "SAM"))
+  if (!basename(vtm[1]) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) {
+    return(NULL)
+  }
+  file.path(dirname(vtm[1]), paste0("CurrentCondition", ccAgeLayer, ".tif"))
+}
+
 #' Calculate proportion of landscape occupied by each vegetation class
 #'
 #' This function is recursive.
@@ -28,21 +40,25 @@ utils::globalVariables(c(
 #'
 #' @param sppEquiv Species equivalency table, e.g., derived from `LandR::sppEquivalencies_CA`.
 #'
+#' @template ccAgeLayer
+#'
 #' @return A `data.table` with proportion of the pixels in each vegetation class,
 #'         for each given age class within each polygon.
 #'
 #' @export
 LeadingVegTypeByAgeClass <- function(tsf, vtm, poly, ageClassCutOffs, ageClasses,
-                                     sppEquivCol, sppEquiv) {
+                                     sppEquivCol, sppEquiv,
+                                     ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")) {
   ## main function code
   startTime <- Sys.time()
   if (utils::tail(ageClassCutOffs, 1) != Inf) {
     ageClassCutOffs <- c(ageClassCutOffs, Inf)
   }
 
-  ## TODO: LandWeb workaround
-  if (basename(vtm[1]) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) {
-    tsf <- file.path(dirname(vtm), "CurrentConditionTSF.tif")
+  ## the current condition's age layer sits beside its vegetation-type map
+  ccAge <- .ccAgeFile(vtm, ccAgeLayer)
+  if (!is.null(ccAge)) {
+    tsf <- ccAge
   }
 
   ## prepare tsf rasters

@@ -25,14 +25,18 @@ utils::globalVariables(c(":=", "sizeInHa"))
 #' @param crop2poly logical indicating whether to crop/mask `vtm` and `tsf`
 #'                  rasters to `poly`. Default `FALSE` for backwards compatibility.
 #'
+#' @template ccAgeLayer
+#'
 #' @export
 LargePatches <- function(tsf, vtm, poly, labelColumn, id, ageClassCutOffs, ageClasses,
-                         sppEquivCol, sppEquiv, crop2poly = FALSE) {
+                         sppEquivCol, sppEquiv, crop2poly = FALSE,
+                         ccAgeLayer = getOption("LandWebUtils.ccAgeLayer", "TSF")) {
   vtm <- vtm[1]
 
-  ## TODO: LandWeb workaround
-  if (basename(vtm) %in% c("CurrentConditionVTM.grd", "CurrentConditionVTM.tif")) {
-    tsf <- file.path(dirname(vtm), "CurrentConditionTSF.tif")
+  ## the current condition's age layer sits beside its vegetation-type map
+  ccAge <- .ccAgeFile(vtm, ccAgeLayer)
+  if (!is.null(ccAge)) {
+    tsf <- ccAge
   }
 
   ## prepare tsf rasters
