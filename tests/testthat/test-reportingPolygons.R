@@ -432,7 +432,7 @@ test_that("a download API's URL is saved as <slug>.zip, a plain archive URL unde
 test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribou, intact forest, none crossed", {
   lyrs <- nationalReportingLayers()
   expect_named(lyrs, c(names(reportingPolygonLayers()), "query", "layer", "dissolve", "labelMap"))
-  expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact"))
+  expect_identical(lyrs$NAME_SHORT, c("Province", "Ecozone", "Protected", "BorealCaribou", "Intact", "Intact2000"))
   expect_false(any(lyrs$isTenure | lyrs$cross))
   ## the ecozone row is reportingPolygonLayers()' own
   eco <- reportingPolygonLayers()
@@ -448,7 +448,7 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribo
   expect_identical(prov$layer, "geo_political_region_2")
   expect_identical(prov$labelCols, "juri_en")
   expect_false(any(grepl("gadm", lyrs$id, ignore.case = TRUE)))
-  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE, TRUE))
+  expect_identical(lyrs$dissolve, c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE))
   ## named by two-letter code, as #8 had them
   codes <- prov$labelMap[[1]]
   expect_identical(
@@ -460,6 +460,11 @@ test_that("nationalReportingLayers: provinces, ecozones, protected areas, caribo
     c(Quebec = "QC", `Newfoundland and Labrador` = "NL")
   )
   expect_true(all(vapply(lyrs$labelMap[-1], is.null, logical(1))))
+  ## each IFL year reads its own file and layer, under its own download folder
+  ifl <- lyrs[startsWith(lyrs$NAME_SHORT, "Intact"), ]
+  expect_identical(basename(ifl$id), c("IFL_2025.gpkg", "IFL_2000.gpkg"))
+  expect_identical(ifl$query, paste0("SELECT geom, 'Intact' AS label FROM IFL_", c(2025, 2000)))
+  expect_identical(ifl$key, c("Intact Forest Landscapes", "Intact Forest Landscapes 2000"))
 })
 
 test_that("a layer's query selects features and labels them all one reporting unit", {

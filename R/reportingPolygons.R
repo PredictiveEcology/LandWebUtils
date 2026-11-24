@@ -407,6 +407,8 @@ reportingPolygonLayers <- function() {
 #'   with no detectable industrial use (roads, logging, mining), as one reporting unit, `"Intact"`.
 #'   It stands in for primary forest, which no national map shows, and understates it, as smaller
 #'   unlogged areas fall below the 500 km2 floor.
+#' - `Intact2000`: the same for 2000, the first year mapped. With `Intact`, it gives the loss of intact
+#'   forest since 2000.
 #'
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
 #' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
@@ -427,6 +429,24 @@ nationalReportingLayers <- function() {
   ## ECCC's download API redirects to a signed copy; the path goes unencoded, as an encoded ")" in
   ## the caribou folder name breaks the signature (HTTP 403)
   ecccFile <- "https://data-donnees.az.ec.gc.ca/api/file?path="
+  ## the Intact Forest Landscapes of one year, as one unit (each year's file has the same layout)
+  ifl <- function(year, short) {
+    tibble::tibble(
+      key = if (year == 2025) "Intact Forest Landscapes" else paste("Intact Forest Landscapes", year),
+      NAME_SHORT = short,
+      isTenure = FALSE,
+      cross = FALSE,
+      source = "url",
+      id = paste0("https://intactforests.org/shp/IFL_", year, ".gpkg"),
+      labelCols = "label",
+      where = NA_character_,
+      ## a GeoPackage is queried in SQLite, which returns the geometry only when it is selected
+      query = paste0("SELECT geom, 'Intact' AS label FROM IFL_", year),
+      layer = NA_character_,
+      dissolve = TRUE,
+      labelMap = list(NULL)
+    )
+  }
   out <- rbind(
     tibble::tibble(
       key = "Provinces and Territories",
@@ -493,21 +513,8 @@ nationalReportingLayers <- function() {
       dissolve = FALSE,
       labelMap = list(NULL)
     ),
-    tibble::tibble(
-      key = "Intact Forest Landscapes",
-      NAME_SHORT = "Intact",
-      isTenure = FALSE,
-      cross = FALSE,
-      source = "url",
-      id = "https://intactforests.org/shp/IFL_2025.gpkg",
-      labelCols = "label",
-      where = NA_character_,
-      ## a GeoPackage is queried in SQLite, which returns the geometry only when it is selected
-      query = "SELECT geom, 'Intact' AS label FROM IFL_2025",
-      layer = NA_character_,
-      dissolve = TRUE,
-      labelMap = list(NULL)
-    )
+    ifl(2025, "Intact"),
+    ifl(2000, "Intact2000")
   )
   .validateLayerSources(out$source)
   validateShortNames(out$NAME_SHORT, what = "nationalReportingLayers()$NAME_SHORT")
