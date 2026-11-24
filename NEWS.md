@@ -1,5 +1,7 @@
 # LandWebUtils (development version)
 
+* `buildReportingPolygons()` reads each reporting layer only near the study area (a spatial filter in the source's CRS), where a national source such as the global Intact Forest Landscapes GeoPackage (352 MB) was read whole for every study area. `?nationalReportingLayers` says that the `Intact` layer maps intactness, not forest: it includes non-forest land (tundra, wetlands, rock), and it must be credited (CC BY 4.0) (1.0.3.9059).
+
 * `LargePatches()` and `LeadingVegTypeByAgeClass()` gain `ccAgeLayer`: the current condition's age classes come from time since fire (`"TSF"`, the default since 1.0.1) or stand age (`"SAM"`), set per call or by the option `LandWebUtils.ccAgeLayer` (#3) (1.0.3.9058).
 
 * `nationalReportingLayers()` gains `Intact`: the 2025 Intact Forest Landscapes (intactforests.org, CC BY 4.0) as one reporting unit, a stand-in for primary forest. A GeoPackage or GeoJSON downloaded as it is (not zipped) is no longer passed to the archive extractor (1.0.3.9057).

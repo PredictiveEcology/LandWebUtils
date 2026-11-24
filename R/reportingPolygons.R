@@ -439,10 +439,11 @@ reportingPolygonLayers <- function() {
 #'   recovery strategy and its 35% disturbance threshold, named by `HERD`. The `Caribou` layer of
 #'   [reportingPolygonLayers()] is the jurisdictional ranges instead.
 #' - `Intact`: the Intact Forest Landscapes of 2025 (Potapov et al. 2017, Science Advances 3:e1600821;
-#'   <https://intactforests.org>, CC BY 4.0): forest and natural treeless land of at least 500 km2
-#'   with no detectable industrial use (roads, logging, mining), as one reporting unit, `"Intact"`.
-#'   It stands in for primary forest, which no national map shows, and understates it, as smaller
-#'   unlogged areas fall below the 500 km2 floor.
+#'   <https://intactforests.org>, CC BY 4.0, so outputs that use it must credit it): forest and
+#'   natural treeless land (tundra, wetlands, rock) in patches of at least 500 km2 with no detectable
+#'   industrial use (roads, logging, mining), as one reporting unit, `"Intact"`. It is used as a
+#'   stand-in for primary forest, but it maps intactness, not forest: it includes non-forest land
+#'   and leaves out smaller unlogged areas. The forest inside it comes from the vegetation maps.
 #'
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
 #' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
