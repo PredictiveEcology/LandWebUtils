@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9053</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9056</span>
       </span>
     </div>
 
@@ -188,8 +188,9 @@ a) number of active "firelets" (NF); and b) fire size (FS), such that:</p>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="sc">-</span> <span class="fu">otherwise</span> (including NF <span class="sc">&lt;</span> nActiveCells1[<span class="dv">1</span>])                            <span class="ot">-&gt;</span> spawnNewActive[<span class="dv">1</span>].</span></code></pre><p></p></div>
 <p>These rules create more heterogeneity in the pattern of burning.</p>
 <p>Thresholds are given symbolically because the fitted values differ from the figures this
-documentation used to quote: <code>sizeCutoffs</code> is calibrated, and is currently 1629 / 52016 ha
-rather than the 8,000 / 20,000 originally described.</p>
+documentation used to quote: <code>sizeCutoffs</code> is calibrated, and LandMine's adopted fit (the
+120 m fit, row 1 of its <code>LandMine_DEoptim_params.csv</code>) gives about 2226 / 5559 ha rather than
+the 8,000 / 20,000 originally described.</p>
 <p>The second rule uses <code>&gt;=</code>: with <code>&gt;</code>, the <code>NF == nActiveCells1[2]</code> case matched no rule.</p>
 <p>A gap remains, and is deliberately <em>not</em> patched silently: when <code>NF &gt;= nActiveCells1[2]</code>
 and <code>FS &gt;= sizeCutoffs[1]</code>, no rule applies and <code>spawnNewActive[1]</code> is used. The deprecated

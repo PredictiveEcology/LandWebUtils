@@ -29,7 +29,7 @@ labelCols names the attribute(s) holding the sub-region label."><!-- mathjax -->
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9053</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3.9056</span>
       </span>
     </div>
 
@@ -108,6 +108,12 @@ nothing to report against.</p>
 common <code>Name</code> column). <code>where</code> optionally keeps only the features whose label matches
 a regular expression, so a supplementary source can contribute just the part the
 primary source is missing. Removing a supplement later is a one-row deletion.</p>
+<p>A table passed to <code><a href="buildReportingPolygons.html">buildReportingPolygons()</a></code> may also have these optional columns (see
+<code><a href="nationalReportingLayers.html">nationalReportingLayers()</a></code>): <code>query</code>, an OGR SQL query read with the source; <code>layer</code>, which file
+of a multi-file download to read, by its name without the extension; <code>dissolve</code>, <code>TRUE</code> to
+merge each unit's features into one so that overlaps count once; and <code>labelMap</code>, a list column
+holding a named character vector that renames each source label (names) to its unit name
+(values), dropping with a warning the features whose label it lacks.</p>
     </div>
 
   </div>
