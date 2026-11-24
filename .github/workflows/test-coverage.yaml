@@ -1,21 +1,45 @@
-# Thin caller — shared logic lives in PredictiveEcology/actions (reusable workflow).
 on:
   push:
-    branches: [main, development]
+    branches:
+      - main
+      - development
   pull_request:
-    branches: [main, development]
+    branches:
+      - main
+      - development
 
 name: test-coverage
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   test-coverage:
-    uses: PredictiveEcology/actions/.github/workflows/test-coverage.yaml@main
-    secrets: inherit
-    with:
-      extra-packages: |
-        any::sf
-        any::terra
+    if: "!contains(github.event.commits[0].message, '[skip-ci]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ## Codecov refuses tokenless uploads from this repo's own branches; covr::codecov() reads it
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      USING_COVR: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: PredictiveEcology/actions/install-spatial-deps@main
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          Ncpus: 2
+          use-public-rspm: false
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::covr
+            any::sf
+            any::terra
+
+      - name: Test coverage
+        run: covr::codecov()
+        shell: Rscript {0}

@@ -7,7 +7,8 @@
 nationalReportingLayers()
 }
 \value{
-A \code{tibble} with the columns of \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}} and \code{query}.
+A \code{tibble} with the columns of \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}}, \code{query}, \code{layer}, \code{dissolve}
+and \code{labelMap}.
 }
 \description{
 Layers for summarising a simulation by jurisdiction and by national ecological and
@@ -18,16 +19,22 @@ caribou ranges. None is crossed with a tenure. Pass the rows wanted as \code{lay
 }
 \details{
 \itemize{
-\item \code{Province}: GADM 4.1 level 1, named by the two-letter code (\code{AB}, \code{BC}, ..., \code{YT}). Statistics
-Canada's boundary file (\code{lpr_000b21a_e.zip}) refuses some clients (HTTP 403).
+\item \code{Province}: NRCan's CanVec 1:1,000,000 administrative boundaries (\code{geo_political_region_2},
+Open Government Licence - Canada), named by two-letter code (\code{AB}, \code{BC}, ..., \code{YT}) through
+\code{labelMap}, and dissolved to one feature per province or territory. Not GADM, whose licence bars commercial use
+and redistribution without permission, nor Statistics Canada's boundary file
+(\code{lpr_000b21a_e.zip}), which answers scripted downloads with a browser check (HTTP 403).
 \item \code{Protected}: the Canadian Protected and Conserved Areas Database (CPCAD, ECCC, 2025),
 terrestrial protected areas only (\code{PA_OECM_DF = 1}, \code{BIOME = 'T'}; OECMs and interim areas
 excluded). Every feature is labelled \code{"Protected"}, so the layer is one reporting unit: all
-protected land in the study area.
+protected land in the study area, dissolved so that overlapping areas count once.
 \item \code{BorealCaribou}: ECCC's 51 boreal caribou ranges (2012 boundaries), the ranges of the federal
 recovery strategy and its 35\% disturbance threshold, named by \code{HERD}. The \code{Caribou} layer of
 \code{\link[=reportingPolygonLayers]{reportingPolygonLayers()}} is the jurisdictional ranges instead.
 }
 
 \code{query} is an OGR SQL query read with the source; it names the layer of a multi-layer source.
+\code{layer} names the file to read when a download holds several (CanVec's holds one shapefile per
+feature type). \code{dissolve = TRUE} merges each unit's features into one, so overlaps count once.
+\code{labelMap} renames source labels to unit names (CanVec's English names to two-letter codes).
 }

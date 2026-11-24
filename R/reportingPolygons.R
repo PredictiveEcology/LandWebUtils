@@ -43,7 +43,8 @@ prepANSRs <- function(destinationPath, targetCRS = LandWebCRS) {
 prepEcoregionLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   .prepUrlVector(
     "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip",
-    destinationPath, targetCRS,
+    destinationPath,
+    targetCRS,
     subdir = "Ecoregions"
   )
 }
@@ -53,7 +54,8 @@ prepEcoregionLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   .prepUrlVector(
     "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/province/ecoprovince_shp.zip",
-    destinationPath, targetCRS,
+    destinationPath,
+    targetCRS,
     subdir = "Ecoprovinces"
   )
 }
@@ -71,10 +73,26 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
 ## to `<dir>/Ecoregions/ecoregions.shp`), and a non-recursive `list.files()` silently
 ## found nothing there -- which callers could not distinguish from a layer that
 ## legitimately does not intersect the study area.
-## A File Geodatabase (a `*.gdb` directory) comes first: a landbase download may hold both.
-.findVectorFile <- function(dir, pattern = "\\.(shp|gpkg|geojson|json)$") {
-  gdb <- list.files(dir, "\\.gdb$", full.names = TRUE, recursive = TRUE, include.dirs = TRUE)
-  c(gdb[dir.exists(gdb)], list.files(dir, pattern, full.names = TRUE, recursive = TRUE))
+## Results are ranked by `types`: a File Geodatabase (a `*.gdb` directory), a GeoPackage, a
+## shapefile, a GeoJSON, then any other `.json` (which may be metadata rather than a layer). A
+## caller that reads only one kind names it. Paths under `__MACOSX` (the resource-fork copies a
+## macOS zip carries, `.gdb` folders included) are never sources.
+.findVectorFile <- function(dir, types = c("gdb", "gpkg", "shp", "geojson", "json")) {
+  types <- match.arg(types, several.ok = TRUE)
+  out <- lapply(types, function(type) {
+    f <- list.files(
+      dir,
+      paste0("\\.", type, "$"),
+      full.names = TRUE,
+      recursive = TRUE,
+      include.dirs = identical(type, "gdb")
+    )
+    if (identical(type, "gdb")) {
+      f <- f[dir.exists(f)]
+    }
+    f[!grepl("(^|/)__MACOSX(/|$)", f)]
+  })
+  as.character(unlist(out, use.names = FALSE))
 }
 
 ## `source` gates which fetch path runs, and anything unrecognised would be treated as a zipped URL --
@@ -87,8 +105,12 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   bad <- setdiff(source, .LAYER_SOURCES)
   if (length(bad)) {
     stop(
-      "unknown source(s) ", paste(sQuote(bad), collapse = ", "), "; must be one of ",
-      paste(sQuote(.LAYER_SOURCES), collapse = ", "), ".", call. = FALSE
+      "unknown source(s) ",
+      paste(sQuote(bad), collapse = ", "),
+      "; must be one of ",
+      paste(sQuote(.LAYER_SOURCES), collapse = ", "),
+      ".",
+      call. = FALSE
     )
   }
   invisible(source)
@@ -127,7 +149,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   zip <- file.path(dir, paste0(id, ".zip"))
   workflowtools::drive_download_once(googledrive::as_id(id), zip)
   workflowtools::archive_extract_once(zip, dir = dir)
-  shp <- .findVectorFile(dir, "\\.shp$")
+  shp <- .findVectorFile(dir, "shp")
   if (length(shp) == 0L) {
     stop("no shapefile found under '", dir, "' (Drive id '", id, "').", call. = FALSE)
   }
@@ -143,7 +165,7 @@ prepEcoprovinceLayer <- function(destinationPath, targetCRS = LandWebCRS) {
   zip <- file.path(dir, basename(url))
   workflowtools::download_once(url, zip)
   workflowtools::archive_extract_once(zip, dir = dir)
-  shp <- .findVectorFile(dir, "\\.shp$")
+  shp <- .findVectorFile(dir, "shp")
   if (length(shp) == 0L) {
     stop("no shapefile found under '", dir, "' (from '", url, "').", call. = FALSE)
   }
@@ -295,12 +317,19 @@ joinReportingPolygons <- function(x, y) {
 #' a regular expression, so a supplementary source can contribute just the part the
 #' primary source is missing. Removing a supplement later is a one-row deletion.
 #'
+#' A table passed to [buildReportingPolygons()] may also have these optional columns (see
+#' [nationalReportingLayers()]): `query`, an OGR SQL query read with the source; `layer`, which file
+#' of a multi-file download to read, by its name without the extension; `dissolve`, `TRUE` to
+#' merge each unit's features into one so that overlaps count once; and `labelMap`, a list column
+#' holding a named character vector that renames each source label (names) to its unit name
+#' (values), dropping with a warning the features whose label it lacks.
+#'
 #' @return A `tibble` with columns `key`, `NAME_SHORT`, `isTenure`, `cross`,
 #'   `source`, `id`, `labelCols`, and `where`.
 #' @export
 reportingPolygonLayers <- function() {
   out <- tibble::tribble(
-    ~key                               , ~NAME_SHORT     , ~isTenure , ~cross , ~source , ~id                                                                   , ~labelCols   , ~where,
+    ~key                               , ~NAME_SHORT    , ~isTenure , ~cross , ~source    , ~id                                                                   , ~labelCols    , ~where        ,
     ## NB: the source FMA shapefile's `Name` column is CORRUPT for most rows -- they hold the
     ## deparsed whole-column vector as a literal string ("c(NA, NA, ..., \"Fort Providence\",
     ## ...)"), a bug in whatever built FMAs_LandWebltfc_map_v10. `labelCols` is a FALLBACK here:
@@ -308,7 +337,7 @@ reportingPolygonLayers <- function() {
     ## identity fields (AB/NT `FMA_NAME`, ON `FMU_NAME`, BC `TSA_NUMB_1`, SK `FOREST_NAM`,
     ## MB `FML_NAME`) -- `FMA_NAME` alone is NA for every non-AB member, which would have left the
     ## tenure layer empty for the BC/SK/ON/MB study-area groups.
-    "FMA Boundaries Updated"           , "FMA"           , TRUE      , FALSE  , "drive" , "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"                                   , "FMA_NAME"   , NA_character_,
+    "FMA Boundaries Updated"           , "FMA"          , TRUE      , FALSE  , "drive"    , "1c5vkNPG81DB5wkAVT3CP_h2jFCUDqCoL"                                   , "FMA_NAME"    , NA_character_ ,
     ## Caribou ranges are ASSEMBLED from the six jurisdictional sources rather than fetched from one
     ## file -- see `caribouRangeLayers()` / `buildCaribouRanges()` for the sources and the reasoning.
     ## This replaces (a) Julie's pre-combined v10 layer, whose manual combine had dropped the NWT
@@ -317,7 +346,7 @@ reportingPolygonLayers <- function() {
     ## who each want their own management-unit names, so the jurisdictional sources are authoritative
     ## here; the ECCC national layer is kept as a documented comparison only (see
     ## `scripts/make_caribou_reference.R`), NOT as a reporting layer.
-    "Caribou Ranges"                   , "Caribou"       , FALSE     , TRUE   , "assembly", "caribou"                                                            , NA_character_, NA_character_,
+    "Caribou Ranges"                   , "Caribou"      , FALSE     , TRUE   , "assembly" , "caribou"                                                             , NA_character_ , NA_character_ ,
     ## NB: no `Parks` layer. Reporting is always `studyAreaReporting` INTERSECTED BY TENURE, and
     ## protected areas are carved OUT of forest tenures, so a parks layer has essentially nothing
     ## to report against here: for WesternAlbertaUpland, 81 of 732 parks merely abut the FMAs and
@@ -326,11 +355,11 @@ reportingPolygonLayers <- function() {
     ## scale, and even that does not resolve it -- provincial parks sit inside one province, but
     ## NATIONAL parks cross provincial boundaries, so summarising "all parks" needs a domain
     ## wider than any single province. Excluded pending that review (LandWeb#118).
-    "Alberta Natural Subregions"       , "ANSR"          , FALSE     , TRUE   , "drive" , "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ"                                   , "Name"       , NA_character_,
-    "BC Biogeoclimatic zones"          , "BEC"           , FALSE     , TRUE   , "drive" , "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS"                                   , "ZONE_NAME"  , NA_character_,
-    "Northwest Territories Ecoregions" , "NT_Ecoregion"  , FALSE     , TRUE   , "drive" , "1iRAQfARkmS6-XVHFnTkB-iltzMNPAczC"                                   , "ECO4_NAM_1" , NA_character_,
-    "National Ecozones"                , "Ecozone"       , FALSE     , TRUE   , "url"   , "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"     , "ZONE_NAME"  , NA_character_,
-    "National Ecoregions"              , "Ecoregion"     , FALSE     , TRUE   , "url"   , "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip" , "REGION_NAM" , NA_character_
+    "Alberta Natural Subregions"       , "ANSR"         , FALSE     , TRUE   , "drive"    , "1hW6zy0CpUBdk-K2IAjzW4INjVl1J4aLJ"                                   , "Name"        , NA_character_ ,
+    "BC Biogeoclimatic zones"          , "BEC"          , FALSE     , TRUE   , "drive"    , "1NS15Gd7dHEhvPOy-Ol_LBtf-4Ch6mPnS"                                   , "ZONE_NAME"   , NA_character_ ,
+    "Northwest Territories Ecoregions" , "NT_Ecoregion" , FALSE     , TRUE   , "drive"    , "1iRAQfARkmS6-XVHFnTkB-iltzMNPAczC"                                   , "ECO4_NAM_1"  , NA_character_ ,
+    "National Ecozones"                , "Ecozone"      , FALSE     , TRUE   , "url"      , "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"     , "ZONE_NAME"   , NA_character_ ,
+    "National Ecoregions"              , "Ecoregion"    , FALSE     , TRUE   , "url"      , "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/region/ecoregion_shp.zip" , "REGION_NAM"  , NA_character_
   )
 
   ## flags must agree across the rows that make up one layer, and exactly one layer is the tenure
@@ -358,57 +387,103 @@ reportingPolygonLayers <- function() {
 #' caribou ranges. None is crossed with a tenure. Pass the rows wanted as `layers` to
 #' [buildReportingPolygons()].
 #'
-#' - `Province`: GADM 4.1 level 1, named by the two-letter code (`AB`, `BC`, ..., `YT`). Statistics
-#'   Canada's boundary file (`lpr_000b21a_e.zip`) refuses some clients (HTTP 403).
+#' - `Province`: NRCan's CanVec 1:1,000,000 administrative boundaries (`geo_political_region_2`,
+#'   Open Government Licence - Canada), named by two-letter code (`AB`, `BC`, ..., `YT`) through
+#'   `labelMap`, and dissolved to one feature per province or territory. Not GADM, whose licence bars commercial use
+#'   and redistribution without permission, nor Statistics Canada's boundary file
+#'   (`lpr_000b21a_e.zip`), which answers scripted downloads with a browser check (HTTP 403).
 #' - `Protected`: the Canadian Protected and Conserved Areas Database (CPCAD, ECCC, 2025),
 #'   terrestrial protected areas only (`PA_OECM_DF = 1`, `BIOME = 'T'`; OECMs and interim areas
 #'   excluded). Every feature is labelled `"Protected"`, so the layer is one reporting unit: all
-#'   protected land in the study area.
+#'   protected land in the study area, dissolved so that overlapping areas count once.
 #' - `BorealCaribou`: ECCC's 51 boreal caribou ranges (2012 boundaries), the ranges of the federal
 #'   recovery strategy and its 35% disturbance threshold, named by `HERD`. The `Caribou` layer of
 #'   [reportingPolygonLayers()] is the jurisdictional ranges instead.
 #'
 #' `query` is an OGR SQL query read with the source; it names the layer of a multi-layer source.
+#' `layer` names the file to read when a download holds several (CanVec's holds one shapefile per
+#' feature type). `dissolve = TRUE` merges each unit's features into one, so overlaps count once.
+#' `labelMap` renames source labels to unit names (CanVec's English names to two-letter codes).
 #'
-#' @return A `tibble` with the columns of [reportingPolygonLayers()] and `query`.
+#' @return A `tibble` with the columns of [reportingPolygonLayers()], `query`, `layer`, `dissolve`
+#'   and `labelMap`.
 #' @export
 nationalReportingLayers <- function() {
   eco <- reportingPolygonLayers()
   eco <- eco[eco$NAME_SHORT == "Ecozone", ]
   eco$cross <- FALSE
   eco$query <- NA_character_
+  eco$layer <- NA_character_
+  eco$dissolve <- FALSE
+  eco$labelMap <- vector("list", nrow(eco))
   ## ECCC's download API redirects to a signed copy; the path goes unencoded, as an encoded ")" in
   ## the caribou folder name breaks the signature (HTTP 403)
   ecccFile <- "https://data-donnees.az.ec.gc.ca/api/file?path="
   out <- rbind(
     tibble::tibble(
-      key = "Provinces and Territories", NAME_SHORT = "Province", isTenure = FALSE, cross = FALSE,
-      source = "url", id = "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CAN_1.json.zip",
-      ## the two-letter code: GADM's ISO_1 is "NA" for Quebec, and its HASC_1 is "NF" for
-      ## Newfoundland and Labrador, so the ISO code with the HASC one where ISO has none
-      labelCols = "iso,hasc", where = NA_character_,
-      query = "SELECT SUBSTR(ISO_1, 4, 2) AS iso, SUBSTR(HASC_1, 4, 2) AS hasc FROM gadm41_CAN_1"
+      key = "Provinces and Territories",
+      NAME_SHORT = "Province",
+      isTenure = FALSE,
+      cross = FALSE,
+      source = "url",
+      id = "https://ftp.maps.canada.ca/pub/nrcan_rncan/vector/canvec/shp/Admin/canvec_1M_CA_Admin_shp.zip",
+      ## jurisdictions 92-104 are the 13 provinces and territories (CanVec's jurisdiction codes);
+      ## the islands of each are separate features, dissolved into one
+      labelCols = "juri_en",
+      where = NA_character_,
+      query = paste(
+        "SELECT juri_en FROM geo_political_region_2",
+        "WHERE ctry_en = 'Canada' AND juri >= 92 AND juri <= 104"
+      ),
+      layer = "geo_political_region_2",
+      dissolve = TRUE,
+      ## the two-letter codes #8 named the units by (from GADM)
+      labelMap = list(.canadaJurisdictionCodes())
     ),
     eco,
     tibble::tibble(
-      key = "Protected Areas", NAME_SHORT = "Protected", isTenure = FALSE, cross = FALSE, source = "url",
-      id = paste0(ecccFile, "/species/protectrestore/canadian-protected-conserved-areas-database/",
-                  "Databases/ProtectedConservedArea_2025.zip"),
-      labelCols = "label", where = NA_character_,
-      query = paste("SELECT 'Protected' AS label FROM ProtectedConservedArea_2025",
-                    "WHERE PA_OECM_DF = 1 AND BIOME = 'T'")
+      key = "Protected Areas",
+      NAME_SHORT = "Protected",
+      isTenure = FALSE,
+      cross = FALSE,
+      source = "url",
+      id = paste0(
+        ecccFile,
+        "/species/protectrestore/canadian-protected-conserved-areas-database/",
+        "Databases/ProtectedConservedArea_2025.zip"
+      ),
+      labelCols = "label",
+      where = NA_character_,
+      query = paste(
+        "SELECT 'Protected' AS label FROM ProtectedConservedArea_2025",
+        "WHERE PA_OECM_DF = 1 AND BIOME = 'T'"
+      ),
+      layer = NA_character_,
+      dissolve = TRUE,
+      labelMap = list(NULL)
     ),
     tibble::tibble(
-      key = "Boreal Caribou Ranges", NAME_SHORT = "BorealCaribou", isTenure = FALSE, cross = FALSE,
+      key = "Boreal Caribou Ranges",
+      NAME_SHORT = "BorealCaribou",
+      isTenure = FALSE,
+      cross = FALSE,
       source = "url",
-      id = paste0(ecccFile, paste0(
-        "/species/developplans/anthropogenic-disturbance-footprint-within-boreal-caribou-ranges-",
-        "across-canada-as-interpreted-from-2008-2010-Landsat-satellite-imagery-Updated-to-2012-",
-        "range-boundaries)/2020-anthropogenic-disturbance-footprint-within-boreal-caribou-ranges-",
-        "across-canada-as-interpreted-from-2020-landsat-satellite-imagery/boreal-disturbance-data-2020/",
-        "All51_Caribou_Ranges_Aires_2012.gdb.zip"
-      )),
-      labelCols = "HERD", where = NA_character_, query = NA_character_
+      id = paste0(
+        ecccFile,
+        paste0(
+          "/species/developplans/anthropogenic-disturbance-footprint-within-boreal-caribou-ranges-",
+          "across-canada-as-interpreted-from-2008-2010-Landsat-satellite-imagery-Updated-to-2012-",
+          "range-boundaries)/2020-anthropogenic-disturbance-footprint-within-boreal-caribou-ranges-",
+          "across-canada-as-interpreted-from-2020-landsat-satellite-imagery/boreal-disturbance-data-2020/",
+          "All51_Caribou_Ranges_Aires_2012.gdb.zip"
+        )
+      ),
+      labelCols = "HERD",
+      where = NA_character_,
+      query = NA_character_,
+      layer = NA_character_,
+      dissolve = FALSE,
+      labelMap = list(NULL)
     )
   )
   .validateLayerSources(out$source)
@@ -472,7 +547,8 @@ nationalReportingLayers <- function() {
 #' @param studyArea A `SpatVector` (or source readable by [terra::vect()]).
 #' @param destinationPath Directory for downloads/extraction.
 #' @param targetCRS Target CRS (default [LandWebCRS]).
-#' @param layers Candidate-layer table (default [reportingPolygonLayers()]).
+#' @param layers Candidate-layer table (default [reportingPolygonLayers()], whose help lists the
+#'   optional columns `query`, `layer`, `dissolve` and `labelMap`).
 #' @param min_area_km2 numeric; reporting units (all features sharing a `Name`) smaller than this
 #'   within the study area are merged into the neighbouring unit of the same layer that they share
 #'   the longest border with (see `spatialutils::eliminate_slivers()`), so an edge sliver does not
@@ -499,7 +575,9 @@ buildReportingPolygons <- function(
     ## per-source cleaning and merging, and returns an already-clipped layer.
     if (identical(lyr$source, "assembly")) {
       v <- .ASSEMBLERS[[lyr$id]](
-        studyArea = studyArea, destinationPath = dir, targetCRS = targetCRS
+        studyArea = studyArea,
+        destinationPath = dir,
+        targetCRS = targetCRS
       )
       return(if (is.null(v) || nrow(v) == 0L) NULL else v)
     }
@@ -510,16 +588,41 @@ buildReportingPolygons <- function(
       ## legitimately does not intersect the study area both returned NULL, making
       ## genuine data loss indistinguishable from expected behaviour.
       warning(
-        "no vector file found under '", dir, "' for reporting layer '", lyr$key,
+        "no vector file found under '",
+        dir,
+        "' for reporting layer '",
+        lyr$key,
         "'; the layer will be MISSING from the reporting polygons.",
         call. = FALSE
       )
       return(NULL)
     }
+    ## `layer`: which file of a multi-file download to read, by its name without the extension
+    ## (NRCan's CanVec Admin archive holds one shapefile per feature type)
+    if ("layer" %in% names(lyr) && !is.na(lyr$layer)) {
+      shp <- shp[sub("\\.[^.]*$", "", basename(shp)) == lyr$layer]
+      if (length(shp) == 0L) {
+        warning(
+          "no vector file named '",
+          lyr$layer,
+          "' under '",
+          dir,
+          "' for reporting layer '",
+          lyr$key,
+          "'; the layer will be MISSING from the reporting polygons.",
+          call. = FALSE
+        )
+        return(NULL)
+      }
+    }
     ## `query`: an OGR SQL query, which names the layer of a multi-layer source and may select
     ## features and add a constant label (see nationalReportingLayers())
     query <- if ("query" %in% names(lyr) && !is.na(lyr$query)) lyr$query else ""
-    v <- spatialutils::prep_vector(spatialutils::read_vector(shp[[1]], query = query), studyArea, crs = targetCRS)
+    v <- spatialutils::prep_vector(
+      spatialutils::read_vector(shp[[1]], query = query),
+      studyArea,
+      crs = targetCRS
+    )
     if (nrow(v) == 0L) {
       return(NULL)
     }
@@ -528,6 +631,11 @@ buildReportingPolygons <- function(
     ## source filling a gap in the primary one -- see reportingPolygonLayers()).
     if (!is.null(lyr$where) && !is.na(lyr$where)) {
       v <- v[!is.na(v$Name) & grepl(lyr$where, v$Name), ]
+    }
+    ## `dissolve`: one feature per Name, so the area that overlapping features share (CPCAD's
+    ## protected areas overlap) counts once
+    if ("dissolve" %in% names(lyr) && isTRUE(lyr$dissolve)) {
+      v <- spatialutils::dissolve_by(v, "Name", explode = FALSE)
     }
     if (nrow(v) == 0L) {
       return(NULL)
@@ -576,7 +684,8 @@ buildReportingPolygons <- function(
     unknown <- unique(ident$member[is.na(v$Name) & !is.na(ident$member)])
     if (length(unknown)) {
       warning(
-        "no curated short name for tenure(s): ", paste(sQuote(unknown), collapse = ", "),
+        "no curated short name for tenure(s): ",
+        paste(sQuote(unknown), collapse = ", "),
         "; they are DROPPED from the reporting polygons. Add them to `tenureShortNames()`.",
         call. = FALSE
       )
@@ -591,7 +700,45 @@ buildReportingPolygons <- function(
     ## the vector so each feature keeps its own label.
     v$Name <- do.call(.coalesceChr, lapply(cols, function(k) .blankToNA(v[[k]][[1]])))
   }
+  ## `labelMap`: a named character vector renaming each source label (names) to its unit name
+  ## (values); as for an uncurated tenure, a label it lacks is reported and its features dropped
+  if ("labelMap" %in% names(lyr) && length(lyr$labelMap[[1L]])) {
+    map <- lyr$labelMap[[1L]]
+    unmapped <- setdiff(unique(v$Name[!is.na(v$Name)]), names(map))
+    if (length(unmapped)) {
+      warning(
+        "no code in `labelMap` for ",
+        paste(sQuote(unmapped, FALSE), collapse = ", "),
+        " in reporting layer '",
+        lyr$key,
+        "'; they are DROPPED.",
+        call. = FALSE
+      )
+    }
+    v$Name <- unname(map[v$Name])
+    v <- v[!is.na(v$Name), ]
+  }
   v
+}
+
+## The two-letter codes of Canada's provinces and territories, named by their English names as
+## NRCan's CanVec writes them (`juri_en`).
+.canadaJurisdictionCodes <- function() {
+  c(
+    "Alberta" = "AB",
+    "British Columbia" = "BC",
+    "Manitoba" = "MB",
+    "New Brunswick" = "NB",
+    "Newfoundland and Labrador" = "NL",
+    "Northwest Territories" = "NT",
+    "Nova Scotia" = "NS",
+    "Nunavut" = "NU",
+    "Ontario" = "ON",
+    "Prince Edward Island" = "PE",
+    "Quebec" = "QC",
+    "Saskatchewan" = "SK",
+    "Yukon" = "YT"
+  )
 }
 
 ## Split a comma-separated `labelCols` entry into its priority list of column names.
@@ -607,8 +754,11 @@ buildReportingPolygons <- function(
 ## columns that do not apply to them, which would otherwise label a real polygon.
 .blankToNA <- function(x) {
   x <- as.character(x)
-  x[!is.na(x) & (trimws(x) == "" | tolower(trimws(x)) %in%
-                   c("not applicable", "n/a", "na", "none", "unknown"))] <- NA_character_
+  x[
+    !is.na(x) &
+      (trimws(x) == "" |
+        tolower(trimws(x)) %in% c("not applicable", "n/a", "na", "none", "unknown"))
+  ] <- NA_character_
   x
 }
 
@@ -676,11 +826,28 @@ landbaseLayers <- function() {
   unknown <- setdiff(out$tenure, tenureShortNames()$NAME_SHORT)
   if (length(unknown)) {
     stop(
-      "landbaseLayers(): unknown tenure(s) ", paste(sQuote(unknown), collapse = ", "),
-      "; must be a `tenureShortNames()$NAME_SHORT`.", call. = FALSE
+      "landbaseLayers(): unknown tenure(s) ",
+      paste(sQuote(unknown), collapse = ", "),
+      "; must be a `tenureShortNames()$NAME_SHORT`.",
+      call. = FALSE
     )
   }
   out
+}
+
+## Locate a readable vector source inside an extracted download directory:
+## a File Geodatabase directory (`*.gdb`) if present, else a shapefile/GeoPackage.
+.findLandbaseSource <- function(dir) {
+  gdb <- list.files(dir, pattern = "\\.gdb$", full.names = TRUE, include.dirs = TRUE)
+  gdb <- gdb[dir.exists(gdb)]
+  if (length(gdb) > 0L) {
+    return(gdb[[1]])
+  }
+  vec <- list.files(dir, pattern = "\\.(shp|gpkg)$", full.names = TRUE, recursive = TRUE)
+  if (length(vec) > 0L) {
+    return(vec[[1]])
+  }
+  NULL
 }
 
 ## Fetch the source of landbase row `lyr` and return the path to read: a File Geodatabase
@@ -690,8 +857,14 @@ landbaseLayers <- function() {
     return(.driveGdbDownloadOnce(lyr$id, destinationPath))
   }
   dir <- reproducible::checkPath(file.path(destinationPath, .slug(lyr$key)), create = TRUE)
-  f <- .fetchVectorFile(lyr$source, lyr$id, dir, .slug(lyr$key))
-  if (length(f)) f[[1]] else NULL
+  dest <- file.path(dir, paste0(.slug(lyr$key), ".zip"))
+  if (identical(lyr$source, "drive")) {
+    workflowtools::drive_download_once(googledrive::as_id(lyr$id), dest)
+  } else {
+    workflowtools::download_once(lyr$id, dest)
+  }
+  workflowtools::archive_extract_once(dest, dir = dir)
+  .findLandbaseSource(dir)
 }
 
 ## Download a File Geodatabase kept on Google Drive as a folder (one Drive file per gdb file) into
@@ -710,7 +883,11 @@ landbaseLayers <- function() {
   folder <- googledrive::drive_get(googledrive::as_id(id))
   if (!grepl("\\.gdb$", folder$name)) {
     stop(
-      "Drive folder '", id, "' is named '", folder$name, "'; the name of a File Geodatabase ",
+      "Drive folder '",
+      id,
+      "' is named '",
+      folder$name,
+      "'; the name of a File Geodatabase ",
       "folder must end in '.gdb', or GDAL cannot open it.",
       call. = FALSE
     )
@@ -724,8 +901,11 @@ landbaseLayers <- function() {
   size <- vapply(files$drive_resource, function(r) as.numeric(r$size %||% NA), numeric(1))
   if (anyNA(size)) {
     stop(
-      "Drive lists no size for ", paste(sQuote(files$name[is.na(size)]), collapse = ", "),
-      " in '", folder$name, "'.",
+      "Drive lists no size for ",
+      paste(sQuote(files$name[is.na(size)]), collapse = ", "),
+      " in '",
+      folder$name,
+      "'.",
       call. = FALSE
     )
   }
@@ -733,8 +913,11 @@ landbaseLayers <- function() {
   twice <- unique(files$name[duplicated(files$name)])
   if (length(twice)) {
     stop(
-      "Drive folder '", folder$name, "' holds more than one file named ",
-      paste(sQuote(twice), collapse = ", "), ".",
+      "Drive folder '",
+      folder$name,
+      "' holds more than one file named ",
+      paste(sQuote(twice), collapse = ", "),
+      ".",
       call. = FALSE
     )
   }
@@ -765,8 +948,13 @@ landbaseLayers <- function() {
   googledrive::drive_download(googledrive::as_id(id), path = partial)
   if (!.hasSize(partial, size)) {
     stop(
-      "the download of ", basename(dest), " is ", file.size(partial), " bytes; Drive lists ",
-      size, ".",
+      "the download of ",
+      basename(dest),
+      " is ",
+      file.size(partial),
+      " bytes; Drive lists ",
+      size,
+      ".",
       call. = FALSE
     )
   }
