@@ -104,3 +104,32 @@ recode_cohorts <- function(cohortData, map) {
   data.table::set(cd, j = "speciesCode", value = group)
   cd
 }
+
+#' The most abundant species of a landscape
+#'
+#' Picks the `n` species with the largest share (of the forested area, of the biomass, ...) from
+#' the shares of one landscape, e.g. today's landscape, so that reports can drop the rare ones.
+#'
+#' @details
+#' Species with a share of `NA` or 0 are not abundant and are never returned, so fewer than `n`
+#' names come back when fewer species occur. Species with equal shares are ordered by name, so the
+#' result does not depend on the order of `shares`.
+#'
+#' @param shares named numeric vector: the share of each species, named by species code.
+#' @param n integer; how many species to keep.
+#'
+#' @return A character vector of at most `n` species codes, the most abundant first.
+#'
+#' @seealso [sppEquiv_groups()]
+#'
+#' @export
+top_species <- function(shares, n) {
+  if (!is.numeric(shares) || is.null(names(shares))) {
+    stop("`shares` must be a named numeric vector.", call. = FALSE)
+  }
+  if (length(n) != 1L || is.na(n) || n < 0) {
+    stop("`n` must be a single non-negative number.", call. = FALSE)
+  }
+  shares <- shares[!is.na(shares) & shares > 0]
+  utils::head(names(shares)[order(-shares, names(shares), method = "radix")], n)
+}
