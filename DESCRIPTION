@@ -1,7 +1,7 @@
 Type: Package
 Package: LandWebUtils
 Title: Helper functions for the LandWeb project
-Version: 1.1.0.9000
+Version: 1.1.0.9001
 Date: 2026-11-24
 Authors@R: c(
     person("Eliot J B", "McIntire", , "eliot.mcintire@NRCan-RNCan.gc.ca", role = "aut",
