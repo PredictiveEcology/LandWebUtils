@@ -2,7 +2,7 @@
 
 * New `top_species()`: the `n` most abundant species of a landscape from their shares (ties by name), for reports that keep only the common species.
 
-* Removed the v2 analysis functions `LargePatches()`, `LeadingVegTypeByAgeClass()`, `runBoxPlotsVegCover()`, `runHistsLargePatches()` and `runHistsVegCover()`, with the exported helper `.doPlotBoxplot()` and the option `LandWebUtils.ccAgeLayer` (use nrvtools: `leadingVegByAgeClass()`, `largePatchCounts()`); dropped the map and graphics dependencies (PredictiveEcology/LandWeb#160).
+* Removed the v2 analysis functions `LargePatches()`, `LeadingVegTypeByAgeClass()`, `runBoxPlotsVegCover()`, `runHistsLargePatches()` and `runHistsVegCover()`, with the exported helper `.doPlotBoxplot()` and the option `LandWebUtils.ccAgeLayer` (use nrvtools: `leadingVegByAgeClass()`, `largePatchCounts()`); dropped the map and graphics dependencies (PredictiveEcology/LandWeb#160) (1.1.0.9001).
 
 # LandWebUtils 1.1.0 (2026-11-24)
 
