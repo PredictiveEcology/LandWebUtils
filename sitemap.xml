@@ -8,8 +8,6 @@
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/LandWebCRS.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/LandWebStudyAreas.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/LandWebUtils-package.html</loc></url>
-<url><loc>https://predictiveecology.github.io/LandWebUtils/reference/LargePatches.html</loc></url>
-<url><loc>https://predictiveecology.github.io/LandWebUtils/reference/LeadingVegTypeByAgeClass.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/analysesOutputsTimes.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/buildCaribouRanges.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/buildCrossedReportingPolygons.html</loc></url>
@@ -100,9 +98,6 @@
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/recode_cohorts.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/refCodeFor.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/reportingPolygonLayers.html</loc></url>
-<url><loc>https://predictiveecology.github.io/LandWebUtils/reference/runBoxPlotsVegCover.html</loc></url>
-<url><loc>https://predictiveecology.github.io/LandWebUtils/reference/runHistsLargePatches.html</loc></url>
-<url><loc>https://predictiveecology.github.io/LandWebUtils/reference/runHistsVegCover.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/shortNameFor.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/simfiles.html</loc></url>
 <url><loc>https://predictiveecology.github.io/LandWebUtils/reference/sppEquiv_groups.html</loc></url>

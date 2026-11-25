@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.0.9001</span>
       </span>
     </div>
 
@@ -44,15 +44,19 @@
   <div class="col-md-9 contents">
     <div class="page-header">
       <h1 data-toc-skip>Changelog <small></small></h1>
-      <small>Source: <a href="https://github.com/PredictiveEcology/LandWebUtils/blob/v1.1.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PredictiveEcology/LandWebUtils/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="development version" id="landwebutils-development-version">LandWebUtils (development version)<a class="anchor" aria-label="anchor" href="#landwebutils-development-version"></a></h2>
+<ul><li>Removed the v2 analysis functions <code>LargePatches()</code>, <code>LeadingVegTypeByAgeClass()</code>, <code>runBoxPlotsVegCover()</code>, <code>runHistsLargePatches()</code> and <code>runHistsVegCover()</code>, with the exported helper <code>.doPlotBoxplot()</code> and the option <code>LandWebUtils.ccAgeLayer</code> (use nrvtools: <code>leadingVegByAgeClass()</code>, <code>largePatchCounts()</code>); dropped the map and graphics dependencies (PredictiveEcology/LandWeb#160) (1.1.0.9001).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.1.0" id="landwebutils-110-2026-11-24">LandWebUtils 1.1.0 (2026-11-24)<a class="anchor" aria-label="anchor" href="#landwebutils-110-2026-11-24"></a></h2>
 <ul><li><p>The package website is at <a href="https://predictiveecology.github.io/LandWebUtils/" class="uri">https://predictiveecology.github.io/LandWebUtils/</a> (<code>URL</code> in DESCRIPTION). The pkgdown site was built for LandWeb.predictiveecology.org, another server, and was not published.</p></li>
 <li><p><code><a href="../reference/buildReportingPolygons.html">buildReportingPolygons()</a></code> reads each reporting layer only near the study area (a spatial filter in the source’s CRS), where a national source such as the global Intact Forest Landscapes GeoPackage (352 MB) was read whole for every study area. <code><a href="../reference/nationalReportingLayers.html">?nationalReportingLayers</a></code> says that the <code>Intact</code> layer maps intactness, not forest: it includes non-forest land (tundra, wetlands, rock), and it must be credited (CC BY 4.0) (1.0.3.9060). Requires spatialutils 0.0.2, whose <code>prep_vector()</code> returns an empty layer (a filtered read that finds nothing) instead of stopping.</p></li>
 <li><p><code><a href="../reference/nationalReportingLayers.html">nationalReportingLayers()</a></code> gains <code>Intact2000</code>, the Intact Forest Landscapes of 2000, as one unit named <code>Intact2000</code>, so the loss of intact forest since 2000 can be reported beside <code>Intact</code> (2025) (1.0.3.9059). The loss counts land that is no longer intact, including landscapes split by roads or other industrial use below the IFL size and width thresholds, not only forest cover lost.</p></li>
-<li><p><code><a href="../reference/LargePatches.html">LargePatches()</a></code> and <code><a href="../reference/LeadingVegTypeByAgeClass.html">LeadingVegTypeByAgeClass()</a></code> gain <code>ccAgeLayer</code>: the current condition’s age classes come from time since fire (<code>"TSF"</code>, the default since 1.0.1) or stand age (<code>"SAM"</code>), set per call or by the option <code>LandWebUtils.ccAgeLayer</code> (<a href="https://github.com/PredictiveEcology/LandWebUtils/issues/3" class="external-link">#3</a>) (1.0.3.9058).</p></li>
+<li><p><code>LargePatches()</code> and <code>LeadingVegTypeByAgeClass()</code> gain <code>ccAgeLayer</code>: the current condition’s age classes come from time since fire (<code>"TSF"</code>, the default since 1.0.1) or stand age (<code>"SAM"</code>), set per call or by the option <code>LandWebUtils.ccAgeLayer</code> (<a href="https://github.com/PredictiveEcology/LandWebUtils/issues/3" class="external-link">#3</a>) (1.0.3.9058).</p></li>
 <li><p><code><a href="../reference/nationalReportingLayers.html">nationalReportingLayers()</a></code> gains <code>Intact</code>: the 2025 Intact Forest Landscapes (intactforests.org, CC BY 4.0) as one reporting unit, a stand-in for primary forest. A GeoPackage or GeoJSON downloaded as it is (not zipped) is no longer passed to the archive extractor (1.0.3.9057).</p></li>
 <li><p><code><a href="../reference/nationalReportingLayers.html">nationalReportingLayers()</a></code> takes provinces and territories from NRCan’s CanVec 1:1,000,000 boundaries (Open Government Licence - Canada), still named by two-letter code (<code>AB</code> … <code>YT</code>), not GADM, whose licence bars commercial use; its <code>Province</code> and <code>Protected</code> layers are dissolved, so overlapping protected areas count once. A layer table may have a <code>layer</code> column (which file of a multi-file download to read), a <code>dissolve</code> column, and a <code>labelMap</code> column renaming source labels to unit names. A shapefile-only reader is no longer handed a <code>.gdb</code>, a <code>.json</code> no longer outranks a shapefile, and <code>__MACOSX</code> copies are skipped. The landbase file search is again the one before 1.0.3.9055 (1.0.3.9056).</p></li>
 <li><p>New <code><a href="../reference/nationalReportingLayers.html">nationalReportingLayers()</a></code>: reporting layers that summarise a simulation by province or territory (GADM 4.1, named <code>AB</code> … <code>YT</code>), ecozone, protected area (CPCAD 2025, terrestrial protected areas as one unit, <code>Protected</code>) and federal boreal caribou range (ECCC’s 51 ranges, 2012 boundaries). Pass them as <code>layers</code> to <code><a href="../reference/buildReportingPolygons.html">buildReportingPolygons()</a></code> (1.0.3.9055). A layer table may now have a <code>query</code> column, an OGR SQL query read with the source, which names the layer of a multi-layer source and can select features and add a label. A File Geodatabase and a <code>.json</code> are now found in a download, and a URL whose name is a query string (<code>.../api/file?path=...</code>) is saved as <code>&lt;key&gt;.zip</code>.</p></li>
@@ -213,7 +217,7 @@
 <ul><li>require R &gt;= 4.2 due to changes in dependency packages;</li>
 <li>add <code>LandMine</code> module functions;</li>
 <li>add helper <code><a href="../reference/simfiles.html">findSimFile()</a></code> to check previously- and currently-used simulation file names;</li>
-<li>fix CC TSF filename issue in <code><a href="../reference/LeadingVegTypeByAgeClass.html">LeadingVegTypeByAgeClass()</a></code> and <code><a href="../reference/LargePatches.html">LargePatches()</a></code>;</li>
+<li>fix CC TSF filename issue in <code>LeadingVegTypeByAgeClass()</code> and <code>LargePatches()</code>;</li>
 <li>add LandWeb-specific functions form <code>LandR</code> package;</li>
 </ul></div>
     <div class="section level2">
@@ -223,13 +227,13 @@
 <li>add <code><a href="../reference/rasterListByPoly.html">rasterListByPoly()</a></code>;</li>
 <li>add <code>analysesOutputTimes()</code>;</li>
 <li>use <code>.ageClassCutOffs</code> as integer;</li>
-<li>improve documentation for <code><a href="../reference/LeadingVegTypeByAgeClass.html">LeadingVegTypeByAgeClass()</a></code> and <code><a href="../reference/LargePatches.html">LargePatches()</a></code>;</li>
-<li>add argument <code>crop2poly</code> to <code><a href="../reference/LargePatches.html">LargePatches()</a></code>;</li>
-<li>update <code><a href="../reference/LargePatches.html">LargePatches()</a></code> to handle VTM extents smaller than TSF;</li>
+<li>improve documentation for <code>LeadingVegTypeByAgeClass()</code> and <code>LargePatches()</code>;</li>
+<li>add argument <code>crop2poly</code> to <code>LargePatches()</code>;</li>
+<li>update <code>LargePatches()</code> to handle VTM extents smaller than TSF;</li>
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.1.4" id="landwebutils-014-2021-05-06">LandWebUtils 0.1.4 (2021-05-06)<a class="anchor" aria-label="anchor" href="#landwebutils-014-2021-05-06"></a></h2>
-<ul><li>fix <code><a href="../reference/LargePatches.html">LargePatches()</a></code> for <code>LBstatus</code>;</li>
+<ul><li>fix <code>LargePatches()</code> for <code>LBstatus</code>;</li>
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.1.3" id="landwebutils-013-2021-03-10">LandWebUtils 0.1.3 (2021-03-10)<a class="anchor" aria-label="anchor" href="#landwebutils-013-2021-03-10"></a></h2>
@@ -257,7 +261,7 @@
 <h2 class="page-header" data-toc-text="0.0.3" id="landwebutils-003-2020-05-07">LandWebUtils 0.0.3 (2020-05-07)<a class="anchor" aria-label="anchor" href="#landwebutils-003-2020-05-07"></a></h2>
 <ul><li>use <code>PredictiveEcology/map@LandWeb</code> and <code>PredictiveEcology/LandR@LandWeb</code>;</li>
 <li>restructure and fix issue in <code>updateSpeciesTable()</code>;</li>
-<li>use unique polygon names for leading <code>allCombos</code> in <code><a href="../reference/LeadingVegTypeByAgeClass.html">LeadingVegTypeByAgeClass()</a></code>;</li>
+<li>use unique polygon names for leading <code>allCombos</code> in <code>LeadingVegTypeByAgeClass()</code>;</li>
 <li>order boxplot age classes by age instead of alphabetically;</li>
 <li>add argument <code>ext</code> to <code>simFile()</code> to allow files other than <code>.rds</code>;</li>
 <li>ensure destination path for <code>.csv</code> files exists when creating plots;</li>
@@ -281,7 +285,7 @@
 <li>add <code>updateSpeciesTable()</code> from <code>Biomass_borealDataPrep</code> module;</li>
 <li>write leading boxplot data to <code>.csv</code>;</li>
 <li>improve figures and plots;</li>
-<li>fix calculation and plotting bugs in <code><a href="../reference/LargePatches.html">LargePatches()</a></code>;</li>
+<li>fix calculation and plotting bugs in <code>LargePatches()</code>;</li>
 <li>fix CC ‘red line’ calculation;</li>
 </ul></div>
     <div class="section level2">
