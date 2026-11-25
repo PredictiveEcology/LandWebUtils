@@ -18,13 +18,10 @@ NULL
 #' @importFrom data.table melt
 #' @importFrom data.table rbindlist
 #' @importFrom data.table set
-#' @importFrom data.table setDT
 #' @importFrom data.table setkey
 #' @importFrom data.table setnames
 #' @importFrom dplyr filter
-#' @importFrom dplyr group_by
 #' @importFrom dplyr pull
-#' @importFrom dplyr summarize
 #' @importFrom fs dir_ls
 #' @importFrom fs file_delete
 #' @importFrom fs file_info
@@ -56,21 +53,9 @@ NULL
 #' @importFrom ggplot2 theme_bw
 #' @importFrom ggplot2 xlab
 #' @importFrom ggplot2 ylab
-#' @importFrom graphics abline
-#' @importFrom graphics axis
-#' @importFrom graphics barplot
-#' @importFrom graphics boxplot
-#' @importFrom graphics hist
-#' @importFrom graphics points
 #' @importFrom grDevices dev.off
 #' @importFrom grDevices png
-#' @importFrom map .rasterToMemory
-#' @importFrom map areaAndPolyValue
-#' @importFrom map fasterize2
-#' @importFrom map rasterToMatch
 #' @importFrom pemisc createPrjFile
-#' @importFrom pemisc factorValues2
-#' @importFrom purrr pluck
 #' @importFrom purrr transpose
 #' @importFrom rasterVis levelplot
 #' @importFrom rasterVis PuOrTheme
@@ -78,7 +63,6 @@ NULL
 #' @importFrom reproducible Cache
 #' @importFrom reproducible checkPath
 #' @importFrom reproducible fixErrors
-#' @importFrom reproducible postProcess
 #' @importFrom reproducible prepInputs
 #' @importFrom scales hue_pal
 #' @importFrom sf st_as_sf
@@ -94,7 +78,6 @@ NULL
 #' @importFrom terra crop
 #' @importFrom terra crs
 #' @importFrom terra crs<-
-#' @importFrom terra extend
 #' @importFrom terra levels
 #' @importFrom terra NAflag<-
 #' @importFrom terra ncell
@@ -105,11 +88,8 @@ NULL
 #' @importFrom terra writeRaster
 #' @importFrom tibble tribble
 #' @importFrom tools file_path_sans_ext
-#' @importFrom tools toTitleCase
 #' @importFrom utils globalVariables
-#' @importFrom utils tail
 #' @importFrom utils write.csv
-#' @importFrom utils write.table
 #' @importFrom withr with_seed
 ## usethis namespace: end
 NULL

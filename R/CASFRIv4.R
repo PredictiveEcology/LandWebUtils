@@ -1,5 +1,5 @@
 utils::globalVariables(c(
-  "AGE", "GID", "keepSpecies", "pct", "value"
+  ".", "AGE", "GID", "keepSpecies", "pct", "value"
 ))
 
 #' Load CASFRI data for LandWeb

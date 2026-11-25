@@ -23,9 +23,7 @@ Imports:
     future.apply,
     ggplot2,
     googledrive,
-    graphics,
     grDevices,
-    map,
     nngeo,
     methods,
     pemisc,
@@ -57,7 +55,6 @@ Suggests:
 Remotes:
     FOR-CAST/spatialutils,
     FOR-CAST/workflowtools@development,
-    PredictiveEcology/map@development,
     PredictiveEcology/pemisc@development,
     PredictiveEcology/reproducible@development,
     PredictiveEcology/SpaDES.tools@development
@@ -71,11 +68,9 @@ Collate:
     'CASFRIv4.R'
     'LandWebUtils-package.R'
     'misc.R'
-    'boxplots.R'
     'caribou.R'
     'current-conditions.R'
     'equivalentName.R'
-    'histograms.R'
     'landmine-calibration-plot.R'
     'landmine-calibration.R'
     'landmine-events.R'
@@ -89,8 +84,6 @@ Collate:
     'landweb-reporting.R'
     'landweb-species-units.R'
     'landweb-species.R'
-    'largePatches.R'
-    'leading.R'
     'plotting.R'
     'polygon-clean.R'
     'rasterListByPoly.R'
