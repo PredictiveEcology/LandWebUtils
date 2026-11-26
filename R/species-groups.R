@@ -127,9 +127,13 @@ recode_cohorts <- function(cohortData, map) {
 #' @export
 top_species <- function(shares, n) {
   nms <- names(shares)
-  if (!is.numeric(shares) || is.null(nms) || anyNA(nms) || any(nms == "") || anyDuplicated(nms) > 0L) {
-    stop("`shares` must be a named numeric vector with non-missing, non-empty, unique names.",
-         call. = FALSE)
+  if (
+    !is.numeric(shares) || is.null(nms) || anyNA(nms) || any(nms == "") || anyDuplicated(nms) > 0L
+  ) {
+    stop(
+      "`shares` must be a named numeric vector with non-missing, non-empty, unique names.",
+      call. = FALSE
+    )
   }
   if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 0 || n != round(n)) {
     stop("`n` must be a single non-negative whole number.", call. = FALSE)
