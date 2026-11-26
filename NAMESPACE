@@ -196,7 +196,6 @@ importFrom(grDevices,
   png
 )
 importFrom(pemisc,createPrjFile)
-importFrom(purrr,transpose)
 importFrom(rasterVis,
   PuOrTheme,
   levelplot

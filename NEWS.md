@@ -4,6 +4,10 @@
 
 * Removed the v2 analysis functions `LargePatches()`, `LeadingVegTypeByAgeClass()`, `runBoxPlotsVegCover()`, `runHistsLargePatches()` and `runHistsVegCover()`, with the exported helper `.doPlotBoxplot()` and the option `LandWebUtils.ccAgeLayer` (use nrvtools: `leadingVegByAgeClass()`, `largePatchCounts()`); dropped the map and graphics dependencies (PredictiveEcology/LandWeb#160) (1.1.0.9001).
 
+## Bug fixes
+
+* `findOldSimFiles()` searches only replicate folders (`rep` and digits); it took any folder whose path contained `rep` and a digit, so every folder when the output path did. `rasterListByPoly()` keeps a polygon name that contains `.` or `_` whole, where it was cut at its first `.` or `_`; its `filter` is no longer used, and a file name without `_year<YYYY>` is an error. Drops purrr from Imports (1.1.0.9003).
+
 # LandWebUtils 1.1.0 (2026-11-24)
 
 * The package website is at <https://predictiveecology.github.io/LandWebUtils/> (`URL` in DESCRIPTION). The pkgdown site was built for LandWeb.predictiveecology.org, another server, and was not published.

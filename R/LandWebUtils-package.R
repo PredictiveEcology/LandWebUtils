@@ -56,7 +56,6 @@ NULL
 #' @importFrom grDevices dev.off
 #' @importFrom grDevices png
 #' @importFrom pemisc createPrjFile
-#' @importFrom purrr transpose
 #' @importFrom rasterVis levelplot
 #' @importFrom rasterVis PuOrTheme
 #' @importFrom reproducible asPath

@@ -15,12 +15,12 @@ rasterListByPoly(files, polys, names, col, filter)
 
 \item{col}{character string giving the column name in \code{poly} to use}
 
-\item{filter}{regex string giving partial filename in \code{files} to be filtered out
-(i.e., when extracting reps, times, etc. from filenames)
-(e.g., \code{'rstTimeSinceFire_'}, \code{'vegTypeMap_'})}
+\item{filter}{unused; kept for compatibility. The replicate, time and polygon name of each
+raster are parsed from its folder (\code{repXX}) and file name (\verb{<prefix>_year<YYYY>}).}
 }
 \value{
-list of \code{SpatRaster} objects with attributes \code{reps}, \code{times}, \code{polyNames}
+list of \code{SpatRaster} objects, named \verb{<repXX>.<prefix>_year<YYYY>_<polyName>},
+with attributes \code{reps}, \code{times}, \code{polyNames}
 }
 \description{
 Create a list of rasters in each rep, at each timestep, for each polygon area
