@@ -24,9 +24,8 @@ Additional utilities for [LandWeb](https://github.com/PredictiveEcology/LandWeb)
 **Install from GitHub:**
     
 ```r
-#install.packages("devtools")
-library("devtools")
-install_github("PredictiveEcology/LandWebUtils", dependencies = TRUE) 
+# install.packages("pak")
+pak::pak("PredictiveEcology/LandWebUtils")
 ```
 
 ### Development version
@@ -37,7 +36,6 @@ install_github("PredictiveEcology/LandWebUtils", dependencies = TRUE)
 **Install from GitHub:**
 
 ```r
-#install.packages("devtools")
-library("devtools")
-install_github("PredictiveEcology/LandWebUtils", ref = "development", dependencies = TRUE) 
+# install.packages("pak")
+pak::pak("PredictiveEcology/LandWebUtils@development")
 ```
