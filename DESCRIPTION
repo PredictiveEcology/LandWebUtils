@@ -27,7 +27,6 @@ Imports:
     nngeo,
     methods,
     pemisc,
-    purrr,
     rasterVis,
     reproducible,
     scales,

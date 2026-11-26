@@ -51,35 +51,53 @@ findOldSimFiles <- function(outputDir = NULL, rep = NULL, before = "2024-01-01")
   stopifnot(!is.null(outputDir))
 
   if (is.null(rep)) {
-    outputDir <- fs::dir_ls(outputDir, regexp = "rep([0-9])+", recurse = FALSE, type = "directory")
+    ## fs matches `regexp` against the whole path, so anchor it to the folder name
+    outputDir <- fs::dir_ls(
+      outputDir,
+      regexp = "(^|/)rep[0-9]+$",
+      recurse = FALSE,
+      type = "directory"
+    )
   } else if (is.numeric(rep)) {
     outputDir <- file.path(outputDir, sprintf("rep%02d", as.integer(rep)))
   }
 
-  f1 <- fs::dir_ls(outputDir, regexp = "vegTypeMap|rstTimeSinceFire|standAgeMap",
-                   recurse = FALSE, type = "file") |>
+  f1 <- fs::dir_ls(
+    outputDir,
+    regexp = "vegTypeMap|rstTimeSinceFire|standAgeMap",
+    recurse = FALSE,
+    type = "file"
+  ) |>
     grep("year([0-9]){3}[.](grd|gri|tif)", x = _, value = TRUE) |>
     fs::file_info() |>
     dplyr::filter(as.Date(modification_time) < as.Date("2025-01-15")) |>
     dplyr::pull(path)
 
-  f2 <- fs::dir_ls(outputDir, regexp = paste0(c(
-    "Abie_sp[.]tif",
-    "Pice_gla[.]tif",
-    "Pice_mar[.]tif",
-    "Pinu_sp[.]tif",
-    "Popu_sp[.]tif",
-    "CASFRIAbie_sp[.]tif",
-    "CASFRIPice_gla[.]tif",
-    "CASFRIPice_mar[.]tif",
-    "CASFRIPinu_sp[.]tif",
-    "CASFRIPopu_sp[.]tif",
-    "CHECKSUMS[.]txt",
-    "mySimOut[.](qs|rds)",
-    "mySimOut_0[0-9]00[.](qs|rds)",
-    "rstFlammable_year1000[.]grd",
-    "rstFlammable_year1000[.]gri"
-  ) , collapse = "|"), recurse = FALSE, type = "file") |>
+  f2 <- fs::dir_ls(
+    outputDir,
+    regexp = paste0(
+      c(
+        "Abie_sp[.]tif",
+        "Pice_gla[.]tif",
+        "Pice_mar[.]tif",
+        "Pinu_sp[.]tif",
+        "Popu_sp[.]tif",
+        "CASFRIAbie_sp[.]tif",
+        "CASFRIPice_gla[.]tif",
+        "CASFRIPice_mar[.]tif",
+        "CASFRIPinu_sp[.]tif",
+        "CASFRIPopu_sp[.]tif",
+        "CHECKSUMS[.]txt",
+        "mySimOut[.](qs|rds)",
+        "mySimOut_0[0-9]00[.](qs|rds)",
+        "rstFlammable_year1000[.]grd",
+        "rstFlammable_year1000[.]gri"
+      ),
+      collapse = "|"
+    ),
+    recurse = FALSE,
+    type = "file"
+  ) |>
     fs::file_info() |>
     dplyr::filter(as.Date(modification_time) < as.Date(!!before)) |>
     dplyr::pull(path)
