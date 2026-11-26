@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.0.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.1</span>
       </span>
     </div>
 
@@ -48,9 +48,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="development version" id="landwebutils-development-version">LandWebUtils (development version)<a class="anchor" aria-label="anchor" href="#landwebutils-development-version"></a></h2>
-<ul><li>Removed the v2 analysis functions <code>LargePatches()</code>, <code>LeadingVegTypeByAgeClass()</code>, <code>runBoxPlotsVegCover()</code>, <code>runHistsLargePatches()</code> and <code>runHistsVegCover()</code>, with the exported helper <code>.doPlotBoxplot()</code> and the option <code>LandWebUtils.ccAgeLayer</code> (use nrvtools: <code>leadingVegByAgeClass()</code>, <code>largePatchCounts()</code>); dropped the map and graphics dependencies (PredictiveEcology/LandWeb#160) (1.1.0.9001).</li>
+<h2 class="page-header" data-toc-text="1.1.1" id="landwebutils-111-2026-11-25">LandWebUtils 1.1.1 (2026-11-25)<a class="anchor" aria-label="anchor" href="#landwebutils-111-2026-11-25"></a></h2>
+<ul><li><p>New <code><a href="../reference/top_species.html">top_species()</a></code>: the <code>n</code> most abundant species of a landscape from their shares (ties by name, in C-locale order; <code>shares</code> names and <code>n</code> are checked), for reports that keep only the common species (1.1.0.9002).</p></li>
+<li><p>Removed the v2 analysis functions <code>LargePatches()</code>, <code>LeadingVegTypeByAgeClass()</code>, <code>runBoxPlotsVegCover()</code>, <code>runHistsLargePatches()</code> and <code>runHistsVegCover()</code>, with the exported helper <code>.doPlotBoxplot()</code> and the option <code>LandWebUtils.ccAgeLayer</code> (use nrvtools: <code>leadingVegByAgeClass()</code>, <code>largePatchCounts()</code>); dropped the map and graphics dependencies (PredictiveEcology/LandWeb#160) (1.1.0.9001).</p></li>
+</ul><div class="section level3">
+<h3 id="bug-fixes-1-1-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-1"></a></h3>
+<ul><li>
+<code><a href="../reference/simfiles.html">findOldSimFiles()</a></code> searches only replicate folders (<code>rep</code> and digits); it took any folder whose path contained <code>rep</code> and a digit, so every folder when the output path did. <code><a href="../reference/rasterListByPoly.html">rasterListByPoly()</a></code> keeps a polygon name that contains <code>.</code> or <code>_</code> whole, where it was cut at its first <code>.</code> or <code>_</code>; its <code>filter</code> is no longer used, and a file name without <code>_year&lt;YYYY&gt;</code> is an error. Drops purrr from Imports (1.1.0.9003).</li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.1.0" id="landwebutils-110-2026-11-24">LandWebUtils 1.1.0 (2026-11-24)<a class="anchor" aria-label="anchor" href="#landwebutils-110-2026-11-24"></a></h2>
 <ul><li><p>The package website is at <a href="https://predictiveecology.github.io/LandWebUtils/" class="uri">https://predictiveecology.github.io/LandWebUtils/</a> (<code>URL</code> in DESCRIPTION). The pkgdown site was built for LandWeb.predictiveecology.org, another server, and was not published.</p></li>

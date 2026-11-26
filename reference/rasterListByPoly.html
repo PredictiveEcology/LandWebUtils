@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">LandWebUtils</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.0.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.1</span>
       </span>
     </div>
 
@@ -77,14 +77,14 @@
 
 
 <dt id="arg-filter">filter<a class="anchor" aria-label="anchor" href="#arg-filter"></a></dt>
-<dd><p>regex string giving partial filename in <code>files</code> to be filtered out
-(i.e., when extracting reps, times, etc. from filenames)
-(e.g., <code>'rstTimeSinceFire_'</code>, <code>'vegTypeMap_'</code>)</p></dd>
+<dd><p>unused; kept for compatibility. The replicate, time and polygon name of each
+raster are parsed from its folder (<code>repXX</code>) and file name (<code>&lt;prefix&gt;_year&lt;YYYY&gt;</code>).</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>list of <code>SpatRaster</code> objects with attributes <code>reps</code>, <code>times</code>, <code>polyNames</code></p>
+    <p>list of <code>SpatRaster</code> objects, named <code>&lt;repXX&gt;.&lt;prefix&gt;_year&lt;YYYY&gt;_&lt;polyName&gt;</code>,
+with attributes <code>reps</code>, <code>times</code>, <code>polyNames</code></p>
     </div>
     <div id="note">
     <h2>Note</h2>
