@@ -1,3 +1,5 @@
+# LandWebUtils (development version)
+
 # LandWebUtils 1.1.1 (2026-11-25)
 
 * New `top_species()`: the `n` most abundant species of a landscape from their shares (ties by name, in C-locale order; `shares` names and `n` are checked), for reports that keep only the common species (1.1.0.9002).
