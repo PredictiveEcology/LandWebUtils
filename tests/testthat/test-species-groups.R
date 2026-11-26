@@ -68,3 +68,25 @@ test_that("recode_cohorts() returns a recoded copy and stops on a species with n
   cd2 <- data.table::data.table(pixelGroup = 1L, speciesCode = "Abie_bal", B = 100L)
   expect_error(recode_cohorts(cd2, grp$map), "No group for species: Abie_bal")
 })
+
+test_that("top_species keeps the n most abundant species, ties by name, none that are absent", {
+  s <- c(Pice_mar = 40, Popu_tre = 25, Pinu_con = 25, Betu_pap = 0, Abie_bal = NA, Pice_gla = 10)
+  expect_identical(top_species(s, 3), c("Pice_mar", "Pinu_con", "Popu_tre")) ## tie: Pinu_con before Popu_tre
+  expect_identical(top_species(rev(s), 3), top_species(s, 3)) ## input order does not matter
+  expect_identical(top_species(s, 10), c("Pice_mar", "Pinu_con", "Popu_tre", "Pice_gla")) ## 0 and NA never
+  expect_identical(top_species(s, 0), character(0))
+  expect_error(top_species(c(1, 2), 1), "named numeric")
+  expect_error(top_species(s, NA), "non-negative")
+  expect_error(top_species(s, -1), "non-negative")
+  expect_error(top_species(s, c(1, 2)), "non-negative")
+  expect_error(top_species(s, "3"), "non-negative")
+  expect_error(top_species(s, 2.5), "whole number")
+  expect_error(top_species(c(Pice_mar = 1, 5), 2), "unique names")
+  expect_error(
+    top_species(c(Pice_mar = 1, NA_real_)[1:2] |> stats::setNames(c("a", NA)), 2),
+    "unique names"
+  )
+  expect_error(top_species(c(a = 3, a = 2), 2), "unique names")
+  expect_identical(top_species(c(a = -5, b = NaN, c = 2, d = -1), 4), "c") ## negative and NaN dropped
+  expect_identical(top_species(c(abie = 1, Pice = 1), 2), c("Pice", "abie")) ## C-locale byte order on ties
+})

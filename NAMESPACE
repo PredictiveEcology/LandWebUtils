@@ -116,6 +116,7 @@ export(studyAreaCrosswalk)
 export(studyAreaIn)
 export(studyAreaProv)
 export(tenureShortNames)
+export(top_species)
 export(validateShortNames)
 import(methods)
 importFrom(SpaDES.tools,
