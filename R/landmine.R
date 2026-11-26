@@ -265,7 +265,7 @@ landmine_burn <- function(
       spreadProb = spreadProb,
       spreadState = a,
       persistence = 0,
-      neighProbs = transpose(as.list(b[
+      neighProbs = data.table::transpose(as.list(b[
         active == TRUE,
         c("pNoNewSpawn", "pSpawnNewActive")
       ])),
