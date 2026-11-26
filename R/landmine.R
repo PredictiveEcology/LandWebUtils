@@ -103,9 +103,18 @@ utils::globalVariables(c(
 #'
 #' @export
 #' @rdname landmine-burn
-landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
-                           spawnNewActive = c(0.46, 0.2, 0.26, 0.11), maxRetriesPerID = 10L, sizeCutoffs = c(8e3, 2e4),
-                           spreadProbRel = NA_real_, spreadProb = 0.77, omitPixels = NULL) {
+landmine_burn1 <- function(
+  landscape,
+  startCells,
+  fireSizes = 5,
+  nActiveCells1 = c(10, 36),
+  spawnNewActive = c(0.46, 0.2, 0.26, 0.11),
+  maxRetriesPerID = 10L,
+  sizeCutoffs = c(8e3, 2e4),
+  spreadProbRel = NA_real_,
+  spreadProb = 0.77,
+  omitPixels = NULL
+) {
   stopifnot(is.integer(maxRetriesPerID))
 
   ## convert to pixels
@@ -138,9 +147,7 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
 
   if (!is.null(omitPixels)) {
     ## ensure non-flammable pixels omitted from fire size calculations
-    for (i in a[
-      pixels %in% omitPixels & state == "activeSource",
-    ]$initialPixels) {
+    for (i in a[pixels %in% omitPixels & state == "activeSource", ]$initialPixels) {
       if (length(i)) {
         attr(a, "spreadState")$clusterDT[initialPixels == i, size := max(0L, size - 1L)]
       }
@@ -153,33 +160,20 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
     a[whActive, numActive := .N, by = initialPixels]
     b <- attr(a, "spreadState")$clusterDT
     b <- a[b, mult = "last"]
-    set(
-      b,
-      NULL,
-      c("numRetries", "maxSize", "exactSize", "id", "state", "pixels"),
-      NULL
-    )
+    set(b, NULL, c("numRetries", "maxSize", "exactSize", "id", "state", "pixels"), NULL)
     set(a, NULL, "numActive", NULL)
     set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
 
     b[
-      numActive >= nActiveCells1[1] &
-        numActive < nActiveCells1[2] &
-        size < sizeCutoffs[2],
+      numActive >= nActiveCells1[1] & numActive < nActiveCells1[2] & size < sizeCutoffs[2],
       pSpawnNewActive := spawnNewActive[2]
     ]
     ## NOTE: `>=`, not `>`. With `>`, `numActive == nActiveCells1[2]` matched none of the three
     ## rules and silently fell through to `spawnNewActive[1]` -- the value intended for a
     ## barely-active fire (`numActive < nActiveCells1[1]`). That applied the *highest* spawn
     ## probability to one of the most active states. See NEWS.
-    b[
-      numActive >= nActiveCells1[2] & size < sizeCutoffs[1],
-      pSpawnNewActive := spawnNewActive[4]
-    ]
-    b[
-      numActive < nActiveCells1[2] & size > sizeCutoffs[2],
-      pSpawnNewActive := spawnNewActive[3]
-    ]
+    b[numActive >= nActiveCells1[2] & size < sizeCutoffs[1], pSpawnNewActive := spawnNewActive[4]]
+    b[numActive < nActiveCells1[2] & size > sizeCutoffs[2], pSpawnNewActive := spawnNewActive[3]]
     set(b, NULL, "pNoNewSpawn", 1 - b$pSpawnNewActive)
     set(b, NULL, c("numActive"), NULL)
 
@@ -221,8 +215,15 @@ landmine_burn1 <- function(landscape, startCells, fireSizes = 5, nActiveCells1 =
 
 ## the original burn function below is no longer used:
 #' @rdname landmine-burn
-landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = c(10, 36),
-    spawnNewActive = c(0.46, 0.2, 0.26, 0.11), sizeCutoffs = c(8e3, 2e4), spreadProbRel = 0.23) {
+landmine_burn <- function(
+  landscape,
+  startCells,
+  fireSizes = 5,
+  nActiveCells1 = c(10, 36),
+  spawnNewActive = c(0.46, 0.2, 0.26, 0.11),
+  sizeCutoffs = c(8e3, 2e4),
+  spreadProbRel = 0.23
+) {
   .Deprecated("landmine_burn1", "LandWebUtils")
 
   a <- SpaDES.tools::spread(
@@ -249,19 +250,11 @@ landmine_burn <- function(landscape, startCells, fireSizes = 5, nActiveCells1 = 
     # set(b, NULL, "pSpawnNewActive", spawnNewActive[1])
     b[numActive < nActiveCells1[1], pSpawnNewActive := spawnNewActive[1]]
     b[
-      numActive >= nActiveCells1[1] &
-        numActive < nActiveCells1[2] &
-        size < sizeCutoffs[2],
+      numActive >= nActiveCells1[1] & numActive < nActiveCells1[2] & size < sizeCutoffs[2],
       pSpawnNewActive := spawnNewActive[2]
     ]
-    b[
-      numActive > nActiveCells1[2] & size < sizeCutoffs[1],
-      pSpawnNewActive := spawnNewActive[4]
-    ]
-    b[
-      numActive < nActiveCells1[2] & size > sizeCutoffs[2],
-      pSpawnNewActive := spawnNewActive[3]
-    ]
+    b[numActive > nActiveCells1[2] & size < sizeCutoffs[1], pSpawnNewActive := spawnNewActive[4]]
+    b[numActive < nActiveCells1[2] & size > sizeCutoffs[2], pSpawnNewActive := spawnNewActive[3]]
     set(b, NULL, "pNoNewSpawn", 1 - b$pSpawnNewActive)
 
     ## spawnNewActive must be joined sent in here as list...
