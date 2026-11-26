@@ -1,9 +1,7 @@
 # LandWebUtils
 
 <!-- badges: start -->
-[![R build status](https://github.com/PredictiveEcology/LandWebUtils/workflows/R-CMD-check/badge.svg)](https://github.com/PredictiveEcology/LandWebUtils/actions)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/LandWebUtils)](https://cran.r-project.org/package=LandWebUtils)
-[![CRAN Downloads](http://cranlogs.r-pkg.org/badges/grand-total/LandWebUtils)](https://cran.r-project.org/package=LandWebUtils)
+[![R-CMD-check](https://github.com/PredictiveEcology/LandWebUtils/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PredictiveEcology/LandWebUtils/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 Additional utilities for [LandWeb](https://github.com/PredictiveEcology/LandWeb) analyses.
@@ -12,14 +10,8 @@ Additional utilities for [LandWeb](https://github.com/PredictiveEcology/LandWeb)
 
 ### Current release
 
-[![R build status](https://github.com/PredictiveEcology/LandWebUtils/workflows/R-CMD-check/badge.svg?branch=master)](https://github.com/PredictiveEcology/LandWebUtils/actions)
-[![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/master/graph/badge.svg)](https://app.codecov.io/gh/PredictiveEcology/LandWebUtils?branch=master)
-
-**Install from CRAN:**
-
-```r
-#install.packages("LandWebUtils") ## not yet on CRAN
-```
+[![R-CMD-check](https://github.com/PredictiveEcology/LandWebUtils/actions/workflows/R-CMD-check.yaml/badge.svg?branch=main)](https://github.com/PredictiveEcology/LandWebUtils/actions/workflows/R-CMD-check.yaml?query=branch%3Amain)
+[![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/main/graph/badge.svg)](https://app.codecov.io/gh/PredictiveEcology/LandWebUtils?branch=main)
 
 **Install from GitHub:**
     
@@ -30,7 +22,7 @@ pak::pak("PredictiveEcology/LandWebUtils")
 
 ### Development version
 
-[![R build status](https://github.com/PredictiveEcology/LandWebUtils/workflows/R-CMD-check/badge.svg?branch=development)](https://github.com/PredictiveEcology/LandWebUtils/actions)
+[![R-CMD-check](https://github.com/PredictiveEcology/LandWebUtils/actions/workflows/R-CMD-check.yaml/badge.svg?branch=development)](https://github.com/PredictiveEcology/LandWebUtils/actions/workflows/R-CMD-check.yaml?query=branch%3Adevelopment)
 [![Codecov test coverage](https://codecov.io/gh/PredictiveEcology/LandWebUtils/branch/development/graph/badge.svg)](https://app.codecov.io/gh/PredictiveEcology/LandWebUtils?branch=development)
 
 **Install from GitHub:**
