@@ -77,4 +77,13 @@ test_that("top_species keeps the n most abundant species, ties by name, none tha
   expect_identical(top_species(s, 0), character(0))
   expect_error(top_species(c(1, 2), 1), "named numeric")
   expect_error(top_species(s, NA), "non-negative")
+  expect_error(top_species(s, -1), "non-negative")
+  expect_error(top_species(s, c(1, 2)), "non-negative")
+  expect_error(top_species(s, "3"), "non-negative")
+  expect_error(top_species(s, 2.5), "whole number")
+  expect_error(top_species(c(Pice_mar = 1, 5), 2), "unique names")
+  expect_error(top_species(c(Pice_mar = 1, NA_real_)[1:2] |> stats::setNames(c("a", NA)), 2), "unique names")
+  expect_error(top_species(c(a = 3, a = 2), 2), "unique names")
+  expect_identical(top_species(c(a = -5, b = NaN, c = 2, d = -1), 4), "c") ## negative and NaN dropped
+  expect_identical(top_species(c(abie = 1, Pice = 1), 2), c("Pice", "abie")) ## C-locale byte order on ties
 })

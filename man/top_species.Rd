@@ -9,7 +9,7 @@ top_species(shares, n)
 \arguments{
 \item{shares}{named numeric vector: the share of each species, named by species code.}
 
-\item{n}{integer; how many species to keep.}
+\item{n}{a single whole number, 0 or more; how many species to keep.}
 }
 \value{
 A character vector of at most \code{n} species codes, the most abundant first.
@@ -19,9 +19,11 @@ Picks the \code{n} species with the largest share (of the forested area, of the 
 the shares of one landscape, e.g. today's landscape, so that reports can drop the rare ones.
 }
 \details{
-Species with a share of \code{NA} or 0 are not abundant and are never returned, so fewer than \code{n}
+Species with a share of \code{NA}, \code{NaN}, 0 or below are not abundant and are never returned, so fewer than \code{n}
 names come back when fewer species occur. Species with equal shares are ordered by name, so the
-result does not depend on the order of \code{shares}.
+result does not depend on the order of \code{shares}. Names are compared in C-locale (byte) order,
+so every capitalised code sorts before every lower-case one (\code{"Pice"} before \code{"abie"}).
+The names must all be present, non-empty and unique; otherwise the function stops.
 }
 \seealso{
 \code{\link[=sppEquiv_groups]{sppEquiv_groups()}}

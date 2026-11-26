@@ -111,12 +111,14 @@ recode_cohorts <- function(cohortData, map) {
 #' the shares of one landscape, e.g. today's landscape, so that reports can drop the rare ones.
 #'
 #' @details
-#' Species with a share of `NA` or 0 are not abundant and are never returned, so fewer than `n`
+#' Species with a share of `NA`, `NaN`, 0 or below are not abundant and are never returned, so fewer than `n`
 #' names come back when fewer species occur. Species with equal shares are ordered by name, so the
-#' result does not depend on the order of `shares`.
+#' result does not depend on the order of `shares`. Names are compared in C-locale (byte) order,
+#' so every capitalised code sorts before every lower-case one (`"Pice"` before `"abie"`).
+#' The names must all be present, non-empty and unique; otherwise the function stops.
 #'
 #' @param shares named numeric vector: the share of each species, named by species code.
-#' @param n integer; how many species to keep.
+#' @param n a single whole number, 0 or more; how many species to keep.
 #'
 #' @return A character vector of at most `n` species codes, the most abundant first.
 #'
@@ -124,11 +126,13 @@ recode_cohorts <- function(cohortData, map) {
 #'
 #' @export
 top_species <- function(shares, n) {
-  if (!is.numeric(shares) || is.null(names(shares))) {
-    stop("`shares` must be a named numeric vector.", call. = FALSE)
+  nms <- names(shares)
+  if (!is.numeric(shares) || is.null(nms) || anyNA(nms) || any(nms == "") || anyDuplicated(nms) > 0L) {
+    stop("`shares` must be a named numeric vector with non-missing, non-empty, unique names.",
+         call. = FALSE)
   }
-  if (length(n) != 1L || is.na(n) || n < 0) {
-    stop("`n` must be a single non-negative number.", call. = FALSE)
+  if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 0 || n != round(n)) {
+    stop("`n` must be a single non-negative whole number.", call. = FALSE)
   }
   shares <- shares[!is.na(shares) & shares > 0]
   utils::head(names(shares)[order(-shares, names(shares), method = "radix")], n)
